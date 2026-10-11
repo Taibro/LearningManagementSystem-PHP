@@ -1,0 +1,131 @@
+/* src/SaaSAdminSystem/pages/Login/SaaSAdminLogin.css */
+.saas-login-portal {
+  --blue: #1565c0; --blue2: #1976d2; --blue3: #42a5f5;
+  --indigo: #4f46e5; --indigo2: #4338ca; --violet: #7c3aed;
+  --green: #16a34a; --red: #dc2626; --amber: #d97706;
+  --text: #0f172a; --muted: #64748b; --border: #e2e8f0;
+  
+  font-family: 'Be Vietnam Pro', sans-serif;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #0a0d14;
+}
+
+.saas-login-portal * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TRẠNG THÁI HIỂN THỊ ── */
+.saas-login-portal .screen { display: none; width: 100%; min-height: 100vh; }
+.saas-login-portal .screen.active { display: flex; }
+
+/* ── Ô NHẬP LIỆU ── */
+.saas-login-portal .inp-wrap { position: relative; width: 100%; }
+.saas-login-portal .inp-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #94a3b8; pointer-events: none; z-index: 1; }
+.saas-login-portal .inp-eye  { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #94a3b8; cursor: pointer; z-index: 1; transition: color .15s; }
+.saas-login-portal .inp-eye:hover { color: #475569; }
+.saas-login-portal .inp {
+  width: 100%; padding: 11px 42px 11px 42px;
+  border-radius: 10px; font-size: 14px;
+  font-family: inherit; outline: none; transition: all .2s;
+}
+.saas-login-portal .inp::placeholder { color: #94a3b8; }
+.saas-login-portal .inp:focus { box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.saas-login-portal .inp.no-left { padding-left: 14px; }
+
+/* ── NÚT BẤM ── */
+.saas-login-portal .btn-login {
+  width: 100%; padding: 13px; border-radius: 11px;
+  font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+  font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .2s; letter-spacing: .2px;
+}
+.saas-login-portal .btn-login:hover { transform: translateY(-1px); }
+.saas-login-portal .btn-login:active { transform: translateY(0); }
+.saas-login-portal .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* ── HIỆU ỨNG ĐỘNG ── */
+@keyframes saasFadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes saasFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes saasSpin { to { transform: rotate(360deg); } }
+@keyframes saasPulse { 0%,100%{opacity:.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.05);} }
+@keyframes saasShake { 0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);} }
+
+.saas-login-portal .anim-fadeup { animation: saasFadeUp .5s ease forwards; }
+.saas-login-portal .anim-float  { animation: saasFloat 4s ease-in-out infinite; }
+.saas-login-portal .anim-pulse  { animation: saasPulse 2.5s ease-in-out infinite; }
+.saas-login-portal .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: saasSpin .7s linear infinite; }
+.saas-login-portal .shake { animation: saasShake .4s ease; }
+
+.saas-login-portal .blob { position: absolute; border-radius: 50%; filter: blur(50px); animation: saasPulse 6s ease-in-out infinite; }
+.saas-login-portal .glass { background: rgba(255,255,255,.92); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.6); }
+
+/* ── CỔNG TRƯỜNG HỌC (SCHOOL VIEW) ── */
+.saas-login-portal .school-bg {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9ff 40%, #e8f5e9 100%);
+  position: relative; overflow: hidden; padding: 20px; align-items: center; justify-content: center;
+}
+.saas-login-portal .school-card {
+  width: 100%; max-width: 440px; border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(21,101,192,.12), 0 4px 16px rgba(0,0,0,.06);
+  overflow: hidden; position: relative; z-index: 10;
+}
+.saas-login-portal .school-header {
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%);
+  padding: 32px 32px 28px; text-align: center; position: relative; overflow: hidden;
+}
+.saas-login-portal .school-logo {
+  width: 64px; height: 64px; background: white; border-radius: 16px;
+  margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15); font-size: 22px; font-weight: 900; color: #1565c0;
+}
+.saas-login-portal .school-body { background: white; padding: 28px 32px 32px; }
+.saas-login-portal .school-inp { background: #f8fafc; border: 1.5px solid #e2e8f0; color: #0f172a; }
+.saas-login-portal .school-inp:focus { border-color: #1976d2; background: white; }
+.saas-login-portal .school-btn { background: linear-gradient(135deg, #1565c0, #1976d2, #42a5f5); color: white; box-shadow: 0 4px 16px rgba(21,101,192,.35); }
+.saas-login-portal .school-btn:hover { box-shadow: 0 8px 24px rgba(21,101,192,.45); }
+
+/* ── CỔNG HỆ THỐNG SAAS (SAAS VIEW) ── */
+.saas-login-portal .saas-left {
+  width: 52%; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #4c1d95 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 48px; position: relative; overflow: hidden;
+}
+.saas-login-portal .saas-right {
+  width: 48%; background: #f8fafc; display: flex; align-items: center; justify-content: center;
+  padding: 40px; position: relative;
+}
+.saas-login-portal .saas-card { width: 100%; max-width: 420px; }
+.saas-login-portal .saas-logo-mark {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(99,102,241,.4); font-size: 20px;
+}
+.saas-login-portal .saas-inp { background: white; border: 1.5px solid #e2e8f0; color: #0f172a; }
+.saas-login-portal .saas-inp:focus { border-color: #6366f1; }
+.saas-login-portal .saas-btn { background: linear-gradient(135deg, #6366f1, #7c3aed); color: white; box-shadow: 0 4px 16px rgba(99,102,241,.35); }
+.saas-login-portal .saas-btn:hover { box-shadow: 0 8px 24px rgba(99,102,241,.45); }
+.saas-login-portal .grid-lines {
+  position: absolute; inset: 0; opacity: .06;
+  background-image: linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.saas-login-portal .feat-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.saas-login-portal .feat-item:last-child { border-bottom: none; }
+.saas-login-portal .feat-icon { width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* ── Ô OTP KHỚP FILE GỐC ── */
+.saas-login-portal .otp-input {
+  width: 48px; height: 52px; border-radius: 10px; border: 2px solid #e2e8f0;
+  text-align: center; font-size: 20px; font-weight: 700; font-family: monospace;
+  outline: none; transition: all .15s; background: #f8fafc; color: #0f172a;
+}
+.saas-login-portal .otp-input:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+
+/* ── TOAST THÔNG BÁO ── */
+.saas-login-portal .toast-stack { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.saas-login-portal .toast {
+  background: white; border-radius: 12px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px; min-width: 280px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.12); border-left: 4px solid;
+  font-size: 13px; font-weight: 500; animation: saasFadeUp .3s ease;
+}

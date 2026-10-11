@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+.saas-portal {
+  --bg: #08090c;
+  --surface: #0f1117;
+  --surface2: #161820;
+  --border: #1e2130;
+  --accent: #7c6dfa;
+  --accent2: #fa6d8e;
+  --accent3: #6dfac2;
+  --accent4: #fac96d;
+  --text: #e8eaf0;
+  --muted: #5a5f7a;
+  
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.saas-portal::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px;
+}
+
+.saas-portal * { box-sizing: border-box; }
+
+/* Typography Helpers */
+.saas-portal .font-syne { font-family: 'Syne', sans-serif; }
+.saas-portal .font-mono { font-family: 'DM Mono', monospace; }
+.saas-portal .font-sans { font-family: 'DM Sans', sans-serif; }
+
+/* Sidebar & Main */
+.saas-portal .sidebar { width: 240px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--border); position: fixed; left: 0; top: 0; z-index: 50; }
+.saas-portal .main-content { margin-left: 240px; position: relative; z-index: 1; min-height: 100vh; padding: 24px; }
+
+.saas-portal .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all .2s; border-left: 2px solid transparent; font-family: 'DM Sans'; font-weight: 500; letter-spacing: .01em; text-decoration: none; }
+.saas-portal .nav-item:hover { color: var(--text); background: var(--surface2); }
+.saas-portal .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,109,250,.07); }
+.saas-portal .nav-icon { width: 16px; height: 16px; opacity: .7; }
+.saas-portal .nav-item.active .nav-icon { opacity: 1; }
+
+/* Cards & Stats */
+.saas-portal .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.saas-portal .card-sm { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; }
+.saas-portal .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -.02em; }
+
+/* Badges */
+.saas-portal .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'DM Mono'; letter-spacing: .02em; }
+.saas-portal .badge-green { background: rgba(109,250,194,.12); color: #6dfac2; border: 1px solid rgba(109,250,194,.2); }
+.saas-portal .badge-red { background: rgba(250,109,142,.12); color: #fa6d8e; border: 1px solid rgba(250,109,142,.2); }
+.saas-portal .badge-yellow { background: rgba(250,201,109,.12); color: #fac96d; border: 1px solid rgba(250,201,109,.2); }
+.saas-portal .badge-purple { background: rgba(124,109,250,.12); color: #7c6dfa; border: 1px solid rgba(124,109,250,.2); }
+.saas-portal .badge-blue { background: rgba(109,194,250,.12); color: #6dc2fa; border: 1px solid rgba(109,194,250,.2); }
+
+/* Tabs */
+.saas-portal .tab { padding: 6px 14px; font-size: 12px; font-weight: 600; font-family: 'DM Mono'; border-radius: 6px; cursor: pointer; color: var(--muted); transition: all .2s; }
+.saas-portal .tab.active { background: var(--accent); color: #fff; }
+.saas-portal .tab:not(.active):hover { color: var(--text); background: var(--surface2); }
+
+/* Tables */
+.saas-portal table { width: 100%; border-collapse: collapse; }
+.saas-portal th { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-family: 'DM Mono'; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.saas-portal td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid rgba(30,33,48,.6); }
+.saas-portal tr:last-child td { border-bottom: none; }
+.saas-portal tr:hover td { background: rgba(255,255,255,.015); }
+
+/* Toggle Switch */
+.saas-portal .toggle { position: relative; width: 36px; height: 20px; display: inline-block; }
+.saas-portal .toggle input { opacity: 0; width: 0; height: 0; }
+.saas-portal .slider { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: .3s; }
+.saas-portal .slider::before { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; left: 3px; top: 3px; transition: .3s; }
+.saas-portal .toggle input:checked + .slider { background: var(--accent3); }
+.saas-portal .toggle input:checked + .slider::before { transform: translateX(16px); }
+
+/* Progress */
+.saas-portal .progress { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.saas-portal .progress-fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+/* Modals */
+.saas-portal .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; animation: fadeIn .2s ease; }
+.saas-portal .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 480px; max-width: 95vw; animation: modalIn .25s ease; }
+@keyframes modalIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Form Inputs & Buttons */
+.saas-portal .inp { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 12px; font-size: 13px; font-family: 'DM Sans'; width: 100%; outline: none; transition: border-color .2s; }
+.saas-portal .inp:focus { border-color: var(--accent); }
+.saas-portal select.inp option { background: var(--surface2); }
+
+.saas-portal .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; border: none; font-family: 'DM Sans'; }
+.saas-portal .btn-primary { background: var(--accent); color: #fff; }
+.saas-portal .btn-primary:hover { background: #9585fb; }
+.saas-portal .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.saas-portal .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+.saas-portal .btn-danger { background: rgba(250,109,142,.15); color: var(--accent2); border: 1px solid rgba(250,109,142,.2); }
+.saas-portal .btn-danger:hover { background: rgba(250,109,142,.25); }
+.saas-portal .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* Kill switch animation */
+.saas-portal .pulse-red { animation: pulseRed 2s infinite; }
+@keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(250,109,142,.4);} 50%{box-shadow:0 0 0 6px rgba(250,109,142,0);} }
+.saas-portal .mrr-glow { text-shadow: 0 0 40px rgba(124,109,250,.5); }
+
+/* Tooltips */
+.saas-portal [data-tip] { position: relative; }
+.saas-portal [data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0f1117; border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 200; }
+.saas-portal [data-tip]:hover::after { opacity: 1; }
+
+/* Page Transition */
+.saas-portal .page-content { animation: fadeIn .3s ease; }

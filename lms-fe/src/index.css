@@ -1,0 +1,221 @@
+@import 'simplebar-react/dist/simplebar.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.simplebar-track.simplebar-vertical {
+  background-color: transparent !important;
+  width: 10px !important;
+}
+
+.simplebar-scrollbar::before {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  width: 4px !important;
+  border-radius: 4px !important;
+  right: 3px !important;
+  left: auto !important;
+  opacity: 1 !important;
+  transition: background-color 0.1s linear;
+}
+
+.simplebar-scrollbar:hover::before {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.sidebar-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+*{
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+}
+:root {
+  --hui-purple: #6B4FA0;
+  --hui-purple-light: #8B6BBF;
+  --hui-purple-dark: #4A3570;
+  --hui-accent: #E85D75;
+  --hui-gold: #F5A623;
+  --hui-green: #4CAF50;
+  --hui-bg: #F4F1F8;
+}
+
+* {
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+body {
+  @apply bg-[#F4F1F8] text-gray-800;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #4A3570 0%, #6B4FA0 60%, #8B6BBF 100%);
+}
+
+.sidebar-item {
+  @apply transition-all duration-200 rounded-lg mx-2 my-0.5 cursor-pointer;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.25);
+  border-left: 3px solid #F5A623;
+}
+
+.sidebar-sub-item {
+  @apply transition-all duration-200 rounded-md mx-1 my-px cursor-pointer;
+}
+
+.sidebar-sub-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-sub-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #F5A623;
+}
+
+.section-title {
+  @apply text-[10px] tracking-[1.5px] uppercase text-white/50 px-4 pt-4 pb-1.5 font-semibold;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden;
+  box-shadow: 0 2px 12px rgba(107, 79, 160, 0.08);
+}
+
+.topbar {
+  @apply bg-white border-b border-[#E8E0F5] px-6 h-[60px] flex items-center justify-between sticky top-0 z-50;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6B4FA0, #8B6BBF);
+  @apply text-white rounded-lg px-5 py-2 transition-all duration-200 border-none cursor-pointer font-medium;
+}
+
+.btn-primary:hover {
+  @apply -translate-y-px shadow-lg shadow-purple-900/30;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+  @apply text-white rounded-lg px-5 py-2 transition-all duration-200 border-none cursor-pointer;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #E85D75, #EF5350);
+  @apply text-white rounded-lg px-5 py-2 transition-all duration-200 border-none cursor-pointer;
+}
+
+.btn-outline {
+  @apply border-2 border-[#6B4FA0] text-[#6B4FA0] rounded-lg px-5 py-2 bg-transparent cursor-pointer transition-all duration-200 font-medium;
+}
+
+.btn-outline:hover {
+  @apply bg-[#6B4FA0] text-white;
+}
+
+.input-field {
+  @apply border-[1.5px] border-[#E0D8F0] rounded-lg px-3.5 py-2.5 w-full outline-none transition-all duration-200 bg-white text-sm;
+}
+
+.input-field:focus {
+  @apply border-[#6B4FA0] ring-4 ring-purple-600/10;
+}
+
+.badge-present { @apply bg-green-50 text-green-700 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+.badge-absent { @apply bg-red-50 text-red-700 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+
+.stat-card {
+  @apply rounded-xl p-5 relative overflow-hidden text-white;
+}
+
+.stat-card::after {
+  content: '';
+  @apply absolute -top-5 -right-5 w-20 h-20 rounded-full bg-white/10;
+}
+
+.week-grid {
+  @apply grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+}
+
+.week-header {
+  @apply bg-[#6B4FA0] text-white p-3 text-center font-semibold text-xs border-r border-white/10;
+}
+
+.week-cell {
+  @apply border border-[#E8E0F5] p-2 min-h-[100px] bg-white;
+}
+
+.week-cell.session-label {
+  @apply bg-[#F4F1F8] text-xs text-gray-400 font-semibold flex items-center justify-center;
+}
+
+.schedule-card {
+  @apply rounded-lg p-2.5 text-[11px] transition-all duration-200 cursor-pointer mb-2;
+}
+
+.schedule-card:hover {
+  @apply -translate-y-0.5 shadow-md;
+}
+
+.schedule-theory {
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-left: 3px solid #4CAF50;
+}
+
+.schedule-practice {
+  background: linear-gradient(135deg, #E8EAF6, #C5CAE9);
+  border-left: 3px solid #5C6BC0;
+}
+
+.schedule-online {
+  background: linear-gradient(135deg, #FFF8E1, #FFE082);
+  border-left: 3px solid #FFC107;
+}
+
+.collapse-content {
+  @apply max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-black/5;
+}
+
+.collapse-content.open {
+  max-height: 500px;
+}
+
+.qr-box {
+  @apply w-[200px] h-[200px] border-2 border-dashed border-[#6B4FA0] rounded-xl flex items-center justify-center mx-auto bg-[#F9F7FF];
+}
+
+.progress-bar {
+  @apply h-2 rounded-full bg-[#E0D8F0] overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-700 ease-out;
+  background: linear-gradient(90deg, #6B4FA0, #E85D75);
+}
+
+.notification {
+  @apply fixed top-5 right-5 bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-2xl z-[9999] translate-x-[150%] transition-transform duration-300 max-w-[320px];
+}
+
+.notification.show {
+  @apply translate-x-0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease forwards;
+}

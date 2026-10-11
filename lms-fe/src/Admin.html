@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUIT · Quản trị Trường học</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:      #1565c0;
+    --blue-mid:  #1976d2;
+    --blue-lt:   #2196f3;
+    --blue-bg:   #e3f2fd;
+    --blue-pale: #f0f7ff;
+    --teal:      #00897b;
+    --green:     #2e7d32;
+    --amber:     #e65100;
+    --red:       #c62828;
+    --purple:    #6a1b9a;
+    --gray-bg:   #f5f7fa;
+    --border:    #dde3ea;
+    --text:      #1a2332;
+    --muted:     #637381;
+    --muted2:    #919eab;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--gray-bg); color: var(--text); }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-thumb { background: #c4cdd6; border-radius: 3px; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 256px; height: 100vh; background: var(--blue);
+    position: fixed; top: 0; left: 0; display: flex; flex-direction: column;
+    z-index: 100; box-shadow: 3px 0 12px rgba(21,101,192,.18);
+  }
+  .logo-zone {
+    padding: 18px 20px 16px; border-bottom: 1px solid rgba(255,255,255,.12);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-badge {
+    width: 40px; height: 40px; background: white; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; color: var(--blue); letter-spacing: -.5px;
+  }
+  .logo-text { color: white; font-size: 14px; font-weight: 700; line-height: 1.3; }
+  .logo-sub  { color: rgba(255,255,255,.6); font-size: 10px; font-weight: 400; margin-top: 1px; }
+
+  .nav-wrap { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .nav-wrap::-webkit-scrollbar { width: 3px; }
+  .nav-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); }
+
+  .nav-section { padding: 4px 0; }
+  .nav-label {
+    padding: 10px 20px 4px; font-size: 9px; font-weight: 700;
+    letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255,255,255,.45);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 20px;
+    font-size: 13px; font-weight: 500; color: rgba(255,255,255,.75);
+    cursor: pointer; border-left: 3px solid transparent;
+    transition: all .15s; white-space: nowrap;
+  }
+  .nav-item:hover  { color: white; background: rgba(255,255,255,.1); border-left-color: rgba(255,255,255,.4); }
+  .nav-item.active { color: white; background: rgba(255,255,255,.18); border-left-color: white; font-weight: 600; }
+  .nav-icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 7px;
+    border-radius: 20px; background: rgba(255,255,255,.2); color: white;
+  }
+  .nav-badge.warn { background: #ff8f00; }
+  .nav-badge.danger { background: #c62828; }
+
+  .sidebar-bottom {
+    border-top: 1px solid rgba(255,255,255,.12); padding: 14px 16px;
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: 10px; cursor: pointer; transition: background .15s;
+  }
+  .user-chip:hover { background: rgba(255,255,255,.1); }
+  .user-av {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4);
+    background: linear-gradient(135deg,#42a5f5,#1565c0);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; color: white; flex-shrink: 0;
+  }
+  .user-name { font-size: 12.5px; font-weight: 600; color: white; }
+  .user-role { font-size: 10px; color: rgba(255,255,255,.55); }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: fixed; top: 0; left: 256px; right: 0; height: 58px;
+    background: white; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 90; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .bc-root { color: var(--muted); }
+  .bc-sep  { color: var(--muted2); }
+  .bc-cur  { color: var(--text); font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .top-btn {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: white; color: var(--muted); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 15px;
+    transition: all .15s; position: relative;
+  }
+  .top-btn:hover { border-color: #b0bec5; color: var(--text); background: var(--gray-bg); }
+  .top-btn .dot { position: absolute; top:7px; right:7px; width:7px; height:7px; background: var(--red); border-radius: 50%; border: 1.5px solid white; }
+  .school-chip {
+    display: flex; align-items: center; gap: 8px; padding: 5px 12px;
+    background: var(--blue-pale); border: 1px solid #b3d4f5;
+    border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--blue); cursor: pointer;
+  }
+  .search-wrap {
+    display: flex; align-items: center; gap: 8px; background: var(--gray-bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; width: 220px;
+  }
+  .search-wrap input { background: none; border: none; outline: none; font-size: 12.5px; font-family: inherit; width: 100%; color: var(--text); }
+  .search-wrap input::placeholder { color: var(--muted2); }
+
+  /* ── MAIN ── */
+  .main { margin-left: 256px; margin-top: 58px; padding: 24px; min-height: calc(100vh - 58px); }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── PAGE HEADER ── */
+  .ph { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .ph-title { font-size: 20px; font-weight: 800; color: var(--text); }
+  .ph-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── CARDS ── */
+  .card { background: white; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .card-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .card-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .card-body { padding: 20px; }
+
+  /* ── STAT CARDS ── */
+  .stat { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+  .stat:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .stat-top { height: 3px; position: absolute; top: 0; left: 0; right: 0; }
+  .stat-label { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .stat-num { font-size: 30px; font-weight: 800; line-height: 1; color: var(--text); }
+  .stat-foot { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .stat-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 32px; opacity: .12; }
+  .stat-foot.up   { color: var(--green); }
+  .stat-foot.down { color: var(--red); }
+
+  /* ── TABLES ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { background: #f8fafc; color: var(--muted); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .tbl td { padding: 11px 14px; border-bottom: 1px solid #f0f4f8; color: var(--text); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tbody tr:hover td { background: var(--blue-pale); }
+  .tbl th:first-child, .tbl td:first-child { padding-left: 20px; }
+  .tbl th:last-child,  .tbl td:last-child  { padding-right: 20px; }
+  .tbl .group-row td { background: #eff6ff; color: var(--blue-mid); font-weight: 700; font-size: 12px; padding: 8px 20px; }
+
+  /* ── BADGES ── */
+  .badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
+  .b-blue   { background: #dbeafe; color: #1d4ed8; }
+  .b-green  { background: #dcfce7; color: #15803d; }
+  .b-amber  { background: #fef3c7; color: #b45309; }
+  .b-red    { background: #fee2e2; color: #b91c1c; }
+  .b-purple { background: #f3e8ff; color: #7c3aed; }
+  .b-gray   { background: #f1f5f9; color: #475569; }
+  .b-teal   { background: #ccfbf1; color: #0f766e; }
+  .b-cyan   { background: #cffafe; color: #0e7490; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; font-family: inherit; }
+  .btn-blue   { background: var(--blue-mid); color: white; }
+  .btn-blue:hover { background: var(--blue); box-shadow: 0 3px 10px rgba(25,118,210,.35); }
+  .btn-ghost  { background: white; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: #b0bec5; color: var(--text); }
+  .btn-danger { background: #fee2e2; color: var(--red); border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-teal   { background: #ccfbf1; color: var(--teal); border: 1px solid #99f6e4; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
+
+  /* ── FORM ── */
+  .fl  { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 5px; }
+  .fc  { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--text); outline: none; background: white; transition: border-color .15s; }
+  .fc:focus { border-color: var(--blue-lt); box-shadow: 0 0 0 3px rgba(33,150,243,.1); }
+  .fc::placeholder { color: var(--muted2); }
+  select.fc option { background: white; }
+  .fg { margin-bottom: 16px; }
+
+  /* ── MODAL ── */
+  .ov { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding-top: 60px; }
+  .ov.open { display: flex; }
+  .modal { background: white; border-radius: 14px; width: 560px; max-width: 95vw; max-height: calc(100vh - 80px); overflow-y: auto; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.18); animation: slideUp .2s ease; }
+  @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-hd { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 1; }
+  .modal-title { font-size: 15px; font-weight: 800; color: var(--text); }
+  .modal-body { padding: 20px 24px; }
+  .modal-ft { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; border-radius: 0 0 14px 14px; }
+  .close-btn { width: 30px; height: 30px; border-radius: 6px; border: none; background: var(--gray-bg); cursor: pointer; font-size: 16px; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .close-btn:hover { background: #e2e8f0; }
+
+  /* ── MISC ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .grid5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; }
+  .mb4 { margin-bottom: 16px; }
+  .mb6 { margin-bottom: 24px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .prog-track { height: 7px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+  .prog-fill  { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+  /* avatar color variants */
+  .av-blue   { background: linear-gradient(135deg,#42a5f5,#1565c0); }
+  .av-pink   { background: linear-gradient(135deg,#f48fb1,#c2185b); }
+  .av-teal   { background: linear-gradient(135deg,#4db6ac,#00695c); }
+  .av-amber  { background: linear-gradient(135deg,#ffb74d,#e65100); }
+  .av-purple { background: linear-gradient(135deg,#ce93d8,#7b1fa2); }
+
+  .av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; color: white; flex-shrink: 0; }
+  .av-lg { width: 42px; height: 42px; font-size: 14px; }
+
+  /* Feed */
+  .feed-item { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f0f4f8; }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+  /* Tab */
+  .tabs-row { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+  .tab-btn { padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s; }
+  .tab-btn.active { color: var(--blue-mid); border-bottom-color: var(--blue-mid); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* Toast */
+  .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 280px; display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.12); animation: tIn .25s ease; font-size: 13px; }
+  @keyframes tIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  /* Search filter bar */
+  .filter-bar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #fafbfc; }
+
+  /* Status dot */
+  .dot-on  { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
+  .dot-off { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; display: inline-block; }
+
+  /* Week grid */
+  .wk-grid { display: grid; grid-template-columns: 60px repeat(7,1fr); }
+  .wk-head { background: var(--blue); color: white; padding: 10px 6px; text-align: center; font-size: 11.5px; font-weight: 700; }
+  .wk-cell { border: 1px solid var(--border); min-height: 90px; padding: 5px; vertical-align: top; background: white; }
+  .wk-cell.ca { background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: var(--blue); }
+  .sc-card { border-radius: 5px; padding: 5px 7px; font-size: 10px; line-height: 1.5; margin-bottom: 3px; }
+  .sc-reg { background: #dbeafe; border-left: 3px solid var(--blue-lt); color: #1e3a8a; }
+  .sc-lab { background: #dcfce7; border-left: 3px solid #22c55e; color: #14532d; }
+  .sc-ex  { background: #fef3c7; border-left: 3px solid #f59e0b; color: #78350f; }
+
+  /* Pagination */
+  .pg { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .pg-btns { display: flex; gap: 4px; }
+  .pg-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: white; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .pg-btn:hover { border-color: var(--blue-lt); color: var(--blue); }
+  .pg-btn.act { background: var(--blue-mid); color: white; border-color: var(--blue-mid); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar">
+  <div class="logo-zone">
+    <div class="logo-badge">HUIT</div>
+    <div>
+      <div class="logo-text">ĐH Bách Khoa HCM</div>
+      <div class="logo-sub">Quản trị cơ sở đào tạo</div>
+    </div>
+  </div>
+
+  <div class="nav-wrap">
+    <div class="nav-section">
+      <div class="nav-label">Tổng quan</div>
+      <div class="nav-item active" onclick="nav('dashboard')">
+        <span class="nav-icon">⬡</span> Dashboard
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Cơ sở hạ tầng</div>
+      <div class="nav-item" onclick="nav('branches')">
+        <span class="nav-icon">📍</span> Cơ sở &amp; Phòng học
+      </div>
+      <div class="nav-item" onclick="nav('departments')">
+        <span class="nav-icon">🏛</span> Khoa / Bộ môn
+      </div>
+      <div class="nav-item" onclick="nav('semesters')">
+        <span class="nav-icon">📆</span> Năm học &amp; Học kỳ
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Học vụ</div>
+      <div class="nav-item" onclick="nav('courses')">
+        <span class="nav-icon">📚</span> Môn học
+      </div>
+      <div class="nav-item" onclick="nav('classes')">
+        <span class="nav-icon">🎓</span> Lớp học <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="nav('schedule')">
+        <span class="nav-icon">🗓</span> Lịch học
+      </div>
+      <div class="nav-item" onclick="nav('exceptions')">
+        <span class="nav-icon">⚠️</span> Ngoại lệ lịch <span class="nav-badge warn">1</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Nhân sự &amp; Học sinh</div>
+      <div class="nav-item" onclick="nav('teachers')">
+        <span class="nav-icon">👨‍🏫</span> Giảng viên <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="nav('students')">
+        <span class="nav-icon">👨‍🎓</span> Sinh viên <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="nav('users')">
+        <span class="nav-icon">👤</span> Tài khoản
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Học tập</div>
+      <div class="nav-item" onclick="nav('enrollments')">
+        <span class="nav-icon">✅</span> Đăng ký học phần
+      </div>
+      <div class="nav-item" onclick="nav('attendance')">
+        <span class="nav-icon">📋</span> Điểm danh <span class="nav-badge danger">4</span>
+      </div>
+      <div class="nav-item" onclick="nav('grades')">
+        <span class="nav-icon">📊</span> Kết quả &amp; Học bổng
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tài chính</div>
+      <div class="nav-item" onclick="nav('tuition')">
+        <span class="nav-icon">💰</span> Học phí &amp; Công nợ
+      </div>
+      <div class="nav-item" onclick="nav('payments')">
+        <span class="nav-icon">🧾</span> Phiếu thu
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Hệ thống</div>
+      <div class="nav-item" onclick="nav('notifications')">
+        <span class="nav-icon">🔔</span> Thông báo <span class="nav-badge danger">12</span>
+      </div>
+      <div class="nav-item" onclick="nav('settings')">
+        <span class="nav-icon">⚙️</span> Cài đặt trường
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="user-av">AD</div>
+      <div>
+        <div class="user-name">Quản trị viên</div>
+        <div class="user-role">admin@hcmut.edu.vn</div>
+      </div>
+      <span style="margin-left:auto;color:rgba(255,255,255,.4);font-size:16px">⋮</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════ TOPBAR ══════════════ -->
+<header class="topbar">
+  <div class="breadcrumb">
+    <span class="bc-root">🏫 HCMUT</span>
+    <span class="bc-sep">/</span>
+    <span class="bc-cur" id="bc">Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <div class="search-wrap">
+      <span style="color:var(--muted2);font-size:13px">🔍</span>
+      <input placeholder="Tìm kiếm...">
+    </div>
+    <div class="school-chip">
+      🏫 HK2 · 2024-2025
+    </div>
+    <div class="top-btn" onclick="toast('Không có thông báo mới','green')">🔔<span class="dot"></span></div>
+    <div class="top-btn" onclick="nav('settings')">⚙️</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--blue-pale);border:1px solid #b3d4f5;border-radius:8px;cursor:pointer">
+      <div class="av av-blue" style="width:28px;height:28px;font-size:11px">AD</div>
+      <span style="font-size:12.5px;font-weight:700;color:var(--blue)">Admin</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+
+<!-- ════ DASHBOARD ════ -->
+<div id="page-dashboard" class="page active">
+  <div class="ph mb6">
+    <div>
+      <div class="ph-title">Tổng quan · Trường ĐH Bách Khoa TP.HCM</div>
+      <div class="ph-sub">Cập nhật: 23/04/2026 · Học kỳ 2 (2024-2025) đang hoạt động</div>
+    </div>
+    <button class="btn btn-blue" onclick="toast('Đã xuất báo cáo tổng hợp PDF','blue')">📄 Xuất báo cáo</button>
+  </div>
+
+  <!-- Stats row 1 -->
+  <div class="grid5 mb4">
+    <div class="stat" onclick="nav('students')">
+      <div class="stat-top" style="background:linear-gradient(90deg,#1976d2,#42a5f5)"></div>
+      <div class="stat-icon">👨‍🎓</div>
+      <div class="stat-label">Sinh viên</div>
+      <div class="stat-num">3</div>
+      <div class="stat-foot up">↑ 2 đăng ký mới</div>
+    </div>
+    <div class="stat" onclick="nav('teachers')">
+      <div class="stat-top" style="background:linear-gradient(90deg,#00897b,#4db6ac)"></div>
+      <div class="stat-icon">👨‍🏫</div>
+      <div class="stat-label">Giảng viên</div>
+      <div class="stat-num">3</div>
+      <div class="stat-foot">100% hoạt động</div>
+    </div>
+    <div class="stat" onclick="nav('classes')">
+      <div class="stat-top" style="background:linear-gradient(90deg,#e65100,#ffb74d)"></div>
+      <div class="stat-icon">🎓</div>
+      <div class="stat-label">Lớp học</div>
+      <div class="stat-num">3</div>
+      <div class="stat-foot">2 đang học · 1 mở</div>
+    </div>
+    <div class="stat" onclick="nav('attendance')">
+      <div class="stat-top" style="background:linear-gradient(90deg,#c62828,#ef5350)"></div>
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Vắng mặt hôm nay</div>
+      <div class="stat-num">2</div>
+      <div class="stat-foot down">↑ Tăng so với hôm qua</div>
+    </div>
+    <div class="stat" onclick="nav('tuition')">
+      <div class="stat-top" style="background:linear-gradient(90deg,#6a1b9a,#ce93d8)"></div>
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Công nợ học phí</div>
+      <div class="stat-num">0đ</div>
+      <div class="stat-foot up">✓ Không có công nợ</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 300px;gap:16px;margin-bottom:16px">
+    <!-- Lịch học hôm nay -->
+    <div class="card">
+      <div class="card-hd">
+        <div>
+          <div class="card-title">Lịch học hôm nay</div>
+          <div class="card-sub">Thứ 4 · 23/04/2026</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('schedule')">Xem tuần →</button>
+      </div>
+      <div style="padding:0">
+        <div style="display:flex;align-items:stretch;border-bottom:1px solid #f0f4f8">
+          <div style="width:58px;background:#eff6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;flex-shrink:0">
+            <div style="font-size:11px;font-weight:700;color:var(--blue)">07:30</div>
+            <div style="font-size:10px;color:var(--muted2)">–09:30</div>
+          </div>
+          <div style="padding:12px 16px;flex:1">
+            <div style="font-weight:700;font-size:13px">Nhập môn Lập trình</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">INT101-01 · Phòng A-101 · GV: Nguyễn Văn An</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="badge b-blue">REGULAR</span><span class="badge b-gray">Thứ 4</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch;border-bottom:1px solid #f0f4f8">
+          <div style="width:58px;background:#f0fdf4;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;flex-shrink:0">
+            <div style="font-size:11px;font-weight:700;color:var(--teal)">09:45</div>
+            <div style="font-size:10px;color:var(--muted2)">–11:45</div>
+          </div>
+          <div style="padding:12px 16px;flex:1">
+            <div style="font-weight:700;font-size:13px">CTDL &amp; Giải thuật</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">INT201-01 · Phòng B-102 (Lab) · GV: Trần Thị Bích</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="badge b-teal">LAB</span><span class="badge b-gray">Thứ 4</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch">
+          <div style="width:58px;background:#fefce8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;flex-shrink:0">
+            <div style="font-size:11px;font-weight:700;color:var(--amber)">13:30</div>
+            <div style="font-size:10px;color:var(--muted2)">–15:30</div>
+          </div>
+          <div style="padding:12px 16px;flex:1">
+            <div style="font-weight:700;font-size:13px">Nhập môn Lập trình</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">INT101-01 · Phòng A-101 · GV: Nguyễn Văn An</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="badge b-amber">MAKEUP</span><span class="badge b-gray">Dạy bù</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tình trạng lớp -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Tình trạng lớp học HK2</div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('classes')">Chi tiết →</button>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px">
+              <span style="font-weight:600">INT101-01 · Nhập môn Lập trình</span>
+              <span style="color:var(--blue);font-weight:700">2/40</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:5%;background:var(--blue-lt)"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Giảng viên: Nguyễn Văn An · Thứ 2 &amp; 4</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px">
+              <span style="font-weight:600">INT201-01 · CTDL &amp; Giải thuật</span>
+              <span style="color:var(--teal);font-weight:700">2/35</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:6%;background:var(--teal)"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Giảng viên: Trần Thị Bích · Thứ 3</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px">
+              <span style="font-weight:600">IEL101-Q1 · IELTS Foundation</span>
+              <span style="color:var(--amber);font-weight:700">1/20</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:5%;background:var(--amber)"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Giảng viên: Lê Minh Cường · Thứ 7</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div style="display:flex;gap:16px;font-size:12px">
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:var(--blue)">5</div><div style="color:var(--muted)">Đăng ký</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:var(--green)">5</div><div style="color:var(--muted)">Enrolled</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:var(--amber)">0</div><div style="color:var(--muted)">Pending</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:var(--red)">0</div><div style="color:var(--muted)">Dropped</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Hoạt động gần đây</div></div>
+      <div style="padding:0 16px;max-height:340px;overflow-y:auto">
+        <div class="feed-item">
+          <div class="feed-dot" style="background:#22c55e"></div>
+          <div><div style="font-size:12px"><strong>Phạm Văn Đức</strong> đăng ký INT101</div><div style="font-size:10px;color:var(--muted)">09/09/2024 07:00</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-dot" style="background:#f59e0b"></div>
+          <div><div style="font-size:12px">Ngoại lệ <strong>02/09</strong> – Nghỉ Quốc khánh</div><div style="font-size:10px;color:var(--muted)">01/09/2024</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-dot" style="background:var(--blue-lt)"></div>
+          <div><div style="font-size:12px">Tạo lớp <strong>IEL101-Q1</strong></div><div style="font-size:10px;color:var(--muted)">28/08/2024</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-dot" style="background:#a855f7"></div>
+          <div><div style="font-size:12px">Thêm phòng <strong>B-301</strong> (80 chỗ)</div><div style="font-size:10px;color:var(--muted)">26/08/2024</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-dot" style="background:#06b6d4"></div>
+          <div><div style="font-size:12px">SV mới: <strong>Vũ Quốc Hùng</strong></div><div style="font-size:10px;color:var(--muted)">25/08/2024</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="grid2">
+    <!-- Điểm danh -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Điểm danh gần nhất · Lớp INT101</div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('attendance')">Xem tất cả →</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Sinh viên</th><th>Ca học</th><th>Ngày</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-blue" style="width:26px;height:26px;font-size:10px">PD</div>Phạm Văn Đức</div></td><td>Thứ 2 – 07:30</td><td>09/09/2024</td><td><span class="badge b-green">✓ Có mặt</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-pink" style="width:26px;height:26px;font-size:10px">HL</div>Hoàng Thị Lan</div></td><td>Thứ 2 – 07:30</td><td>09/09/2024</td><td><span class="badge b-green">✓ Có mặt</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-blue" style="width:26px;height:26px;font-size:10px">PD</div>Phạm Văn Đức</div></td><td>Thứ 2 – 07:30</td><td>11/09/2024</td><td><span class="badge b-amber">⏰ Đi trễ</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-pink" style="width:26px;height:26px;font-size:10px">HL</div>Hoàng Thị Lan</div></td><td>Thứ 2 – 07:30</td><td>11/09/2024</td><td><span class="badge b-red">✗ Vắng mặt</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phòng học -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Tình trạng phòng học</div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('branches')">Quản lý →</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Phòng</th><th>Loại</th><th>Sức chứa</th><th>Cơ sở</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700">A-101</td><td>Classroom</td><td>50</td><td>CS1</td><td><span class="badge b-green">Đang dùng</span></td></tr>
+          <tr><td style="font-weight:700">B-102</td><td>Lab máy tính</td><td>30</td><td>CS1</td><td><span class="badge b-blue">Rảnh</span></td></tr>
+          <tr><td style="font-weight:700">B-301</td><td>Hội trường</td><td>80</td><td>CS1</td><td><span class="badge b-blue">Rảnh</span></td></tr>
+          <tr><td style="font-weight:700">C-201</td><td>Classroom</td><td>40</td><td>CS2</td><td><span class="badge b-blue">Rảnh</span></td></tr>
+          <tr><td style="font-weight:700">A-001</td><td>Seminar</td><td>20</td><td>Q1</td><td><span class="badge b-amber">Bảo trì</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BRANCHES & ROOMS ════ -->
+<div id="page-branches" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Cơ sở &amp; Phòng học</div><div class="ph-sub">Quản lý các cơ sở và phòng học của trường</div></div>
+    <button class="btn btn-blue" onclick="openModal('m-room')">+ Thêm phòng học</button>
+  </div>
+
+  <!-- Branch overview -->
+  <div class="grid4 mb4">
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:linear-gradient(90deg,#1976d2,#42a5f5)"></div><div class="stat-icon">🏢</div><div class="stat-label">CS1 – Lý Thường Kiệt</div><div style="font-size:11px;color:var(--muted);margin-top:6px">268 Lý Thường Kiệt, Q.10, TP.HCM</div><div style="margin-top:8px"><span class="badge b-green">Cơ sở chính</span></div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:linear-gradient(90deg,#00897b,#4db6ac)"></div><div class="stat-icon">🏢</div><div class="stat-label">CS2 – Dĩ An, Bình Dương</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Khu phố 6, Dĩ An, Bình Dương</div><div style="margin-top:8px"><span class="badge b-gray">Cơ sở phụ</span></div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:linear-gradient(90deg,#e65100,#ffb74d)"></div><div class="stat-icon">🏢</div><div class="stat-label">Chi nhánh Quận 1</div><div style="font-size:11px;color:var(--muted);margin-top:6px">123 Nguyễn Huệ, P. Bến Nghé, Q.1</div><div style="margin-top:8px"><span class="badge b-green">Chi nhánh chính</span></div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:linear-gradient(90deg,#6a1b9a,#ce93d8)"></div><div class="stat-icon">🏢</div><div class="stat-label">Chi nhánh Thủ Đức</div><div style="font-size:11px;color:var(--muted);margin-top:6px">456 Võ Văn Ngân, TP. Thủ Đức</div><div style="margin-top:8px"><span class="badge b-gray">Chi nhánh phụ</span></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title">Danh sách phòng học</div>
+      <div style="display:flex;gap:8px"><select class="fc" style="max-width:140px;padding:5px 10px;font-size:12px"><option>Tất cả cơ sở</option><option>CS1</option><option>CS2</option><option>Q1</option></select></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Số phòng</th><th>Tòa</th><th>Cơ sở</th><th>Loại phòng</th><th>Sức chứa</th><th>Thiết bị</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--muted)">1</td><td style="font-weight:700">A-101</td><td>A</td><td>CS1 – HCMUT</td><td><span class="badge b-blue">Classroom</span></td><td><strong>50</strong></td><td><span class="badge b-gray">projector</span> <span class="badge b-gray">ac</span></td><td><span class="badge b-green"><span class="dot-on"></span> Active</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-room')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+        <tr><td style="color:var(--muted)">2</td><td style="font-weight:700">B-102</td><td>B</td><td>CS1 – HCMUT</td><td><span class="badge b-teal">Lab</span></td><td><strong>30</strong></td><td><span class="badge b-gray">computers</span> <span class="badge b-gray">ac</span></td><td><span class="badge b-green"><span class="dot-on"></span> Active</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-room')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+        <tr><td style="color:var(--muted)">3</td><td style="font-weight:700">B-301</td><td>B</td><td>CS1 – HCMUT</td><td><span class="badge b-purple">Hội trường</span></td><td><strong>80</strong></td><td><span class="badge b-gray">projector</span> <span class="badge b-gray">mic</span></td><td><span class="badge b-green"><span class="dot-on"></span> Active</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-room')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+        <tr><td style="color:var(--muted)">4</td><td style="font-weight:700">C-201</td><td>C</td><td>CS2 – HCMUT</td><td><span class="badge b-blue">Classroom</span></td><td><strong>40</strong></td><td><span class="badge b-gray">smartboard</span></td><td><span class="badge b-green"><span class="dot-on"></span> Active</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-room')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+        <tr><td style="color:var(--muted)">5</td><td style="font-weight:700">A-001</td><td>A</td><td>IELTS Q1</td><td><span class="badge b-cyan">Seminar</span></td><td><strong>20</strong></td><td><span class="badge b-gray">tv_screen</span></td><td><span class="badge b-amber"><span class="dot-off"></span> Bảo trì</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-room')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ TEACHERS ════ -->
+<div id="page-teachers" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Quản lý Giảng viên</div><div class="ph-sub">3 giảng viên · Khoa CNTT &amp; IELTS</div></div>
+    <button class="btn btn-blue" onclick="openModal('m-teacher')">+ Thêm giảng viên</button>
+  </div>
+  <div class="filter-bar">
+    <input class="fc" style="max-width:260px" placeholder="🔍 Tìm theo tên, mã GV...">
+    <select class="fc" style="max-width:160px"><option>Tất cả khoa</option><option>CNTT</option><option>IELTS</option></select>
+    <select class="fc" style="max-width:140px"><option>Tất cả học vị</option><option>Tiến sĩ</option><option>Thạc sĩ</option></select>
+  </div>
+  <table class="tbl" style="background:white">
+    <thead><tr><th>Mã GV</th><th>Giảng viên</th><th>Khoa</th><th>Học vị</th><th>Chuyên ngành</th><th>Ngày vào</th><th>Lớp phụ trách</th><th>Thao tác</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:700;color:var(--blue)">GV001</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-blue av-lg">NA</div><div><div style="font-weight:700">Nguyễn Văn An</div><div style="font-size:11px;color:var(--muted)">an.nguyen@hcmut.edu.vn</div></div></div></td><td>CNTT</td><td><span class="badge b-purple">Tiến sĩ</span></td><td style="font-size:12px;color:var(--muted)">Trí tuệ nhân tạo</td><td style="font-size:12px">01/08/2018</td><td><span class="badge b-blue">INT101</span> <span class="badge b-cyan">IEL101 (TA)</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-teacher')">Sửa</button><button class="btn btn-teal btn-xs">Phân công</button></div></td></tr>
+      <tr><td style="font-weight:700;color:var(--blue)">GV002</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-pink av-lg">TB</div><div><div style="font-weight:700">Trần Thị Bích</div><div style="font-size:11px;color:var(--muted)">bich.tran@hcmut.edu.vn</div></div></div></td><td>CNTT</td><td><span class="badge b-amber">Thạc sĩ</span></td><td style="font-size:12px;color:var(--muted)">Kỹ thuật phần mềm</td><td style="font-size:12px">15/01/2020</td><td><span class="badge b-blue">INT201</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-teacher')">Sửa</button><button class="btn btn-teal btn-xs">Phân công</button></div></td></tr>
+      <tr><td style="font-weight:700;color:var(--blue)">GV003</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-teal av-lg">LC</div><div><div style="font-weight:700">Lê Minh Cường</div><div style="font-size:11px;color:var(--muted)">cuong.le@ieltspro.vn</div></div></div></td><td>IELTS</td><td><span class="badge b-amber">Thạc sĩ</span></td><td style="font-size:12px;color:var(--muted)">Ngôn ngữ học</td><td style="font-size:12px">01/06/2019</td><td><span class="badge b-blue">IEL101</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-teacher')">Sửa</button><button class="btn btn-teal btn-xs">Phân công</button></div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ════ STUDENTS ════ -->
+<div id="page-students" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Quản lý Sinh viên</div><div class="ph-sub">3 sinh viên đang theo học</div></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-ghost">📥 Import Excel</button><button class="btn btn-blue" onclick="openModal('m-student')">+ Thêm sinh viên</button></div>
+  </div>
+  <div class="filter-bar">
+    <input class="fc" style="max-width:260px" placeholder="🔍 MSSV, tên, email...">
+    <select class="fc" style="max-width:140px"><option>Tất cả khoa</option><option>CNTT</option><option>IELTS</option></select>
+    <select class="fc" style="max-width:140px"><option>Tất cả lớp</option><option>CNTT21A</option></select>
+    <select class="fc" style="max-width:120px"><option>Tất cả năm</option><option>2021</option><option>2024</option></select>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>MSSV</th><th>Sinh viên</th><th>Khoa</th><th>Chuyên ngành</th><th>Lớp HC</th><th>Năm nhập</th><th>Lớp học phần</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:700;color:var(--blue)">21IT001</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-blue av-lg">PD</div><div><div style="font-weight:700">Phạm Văn Đức</div><div style="font-size:11px;color:var(--muted)">duc.pham@student.hcmut.edu.vn · Nam</div></div></div></td><td>CNTT</td><td>Kỹ thuật phần mềm</td><td style="font-family:monospace">CNTT21A</td><td>2021</td><td><span class="badge b-blue">INT101</span> <span class="badge b-blue">INT201</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-student')">Xem</button><button class="btn btn-ghost btn-xs">Điểm</button></div></td></tr>
+        <tr><td style="font-weight:700;color:var(--blue)">21IT002</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-pink av-lg">HL</div><div><div style="font-weight:700">Hoàng Thị Lan</div><div style="font-size:11px;color:var(--muted)">lan.hoang@student.hcmut.edu.vn · Nữ</div></div></div></td><td>CNTT</td><td>Kỹ thuật phần mềm</td><td style="font-family:monospace">CNTT21A</td><td>2021</td><td><span class="badge b-blue">INT101</span> <span class="badge b-blue">INT201</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-student')">Xem</button><button class="btn btn-ghost btn-xs">Điểm</button></div></td></tr>
+        <tr><td style="font-weight:700;color:var(--blue)">IE240301</td><td><div style="display:flex;align-items:center;gap:9px"><div class="av av-amber av-lg">VH</div><div><div style="font-weight:700">Vũ Quốc Hùng</div><div style="font-size:11px;color:var(--muted)">hung.vu@ieltspro.vn · Nam</div></div></div></td><td>IELTS</td><td>IELTS General</td><td style="color:var(--muted)">—</td><td>2024</td><td><span class="badge b-purple">IEL101</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-student')">Xem</button><button class="btn btn-ghost btn-xs">Điểm</button></div></td></tr>
+      </tbody>
+    </table>
+    <div class="pg"><span>Hiển thị 3/3 sinh viên</span><div class="pg-btns"><button class="pg-btn">‹</button><button class="pg-btn act">1</button><button class="pg-btn">›</button></div></div>
+  </div>
+</div>
+
+<!-- ════ CLASSES ════ -->
+<div id="page-classes" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Quản lý Lớp học</div><div class="ph-sub">Tạo lớp · Phân công giảng viên · Quản lý sĩ số</div></div>
+    <button class="btn btn-blue" onclick="openModal('m-class')">+ Tạo lớp học</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Mã lớp</th><th>Môn học</th><th>Học kỳ</th><th>Cơ sở</th><th>Giảng viên</th><th>Sĩ số</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-family:monospace;font-size:12px;color:var(--blue);font-weight:700">INT101-01-HK1-2425</td>
+          <td><div style="font-weight:600">Nhập môn Lập trình</div><div style="font-size:11px;color:var(--muted)">3 TC · 30 buổi</div></td>
+          <td>HK1 · 2024-2025</td><td>CS1 – HCMUT</td>
+          <td><div style="display:flex;flex-direction:column;gap:3px"><span class="badge b-blue">main: Nguyễn Văn An</span></div></td>
+          <td><span style="font-weight:700;color:var(--blue)">2</span><span style="color:var(--muted)">/40</span></td>
+          <td><span class="badge b-blue">IN_PROGRESS</span></td>
+          <td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-class')">Sửa</button><button class="btn btn-teal btn-xs" onclick="openModal('m-assign')">+ GV</button><button class="btn btn-ghost btn-xs" onclick="nav('attendance')">Điểm danh</button></div></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px;color:var(--blue);font-weight:700">INT201-01-HK1-2425</td>
+          <td><div style="font-weight:600">CTDL &amp; Giải thuật</div><div style="font-size:11px;color:var(--muted)">3 TC · 30 buổi</div></td>
+          <td>HK1 · 2024-2025</td><td>CS1 – HCMUT</td>
+          <td><span class="badge b-blue">main: Trần Thị Bích</span></td>
+          <td><span style="font-weight:700;color:var(--blue)">2</span><span style="color:var(--muted)">/35</span></td>
+          <td><span class="badge b-blue">IN_PROGRESS</span></td>
+          <td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-class')">Sửa</button><button class="btn btn-teal btn-xs" onclick="openModal('m-assign')">+ GV</button><button class="btn btn-ghost btn-xs" onclick="nav('attendance')">Điểm danh</button></div></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px;color:var(--blue);font-weight:700">IEL101-Q1-T9-2024</td>
+          <td><div style="font-weight:600">IELTS Foundation</div><div style="font-size:11px;color:var(--muted)">0 TC · 40 buổi</div></td>
+          <td>Khóa T9 · 2024</td><td>IELTS Q1</td>
+          <td><div style="display:flex;flex-direction:column;gap:3px"><span class="badge b-blue">main: Lê Minh Cường</span><span class="badge b-cyan">TA: Nguyễn Văn An</span></div></td>
+          <td><span style="font-weight:700;color:var(--amber)">1</span><span style="color:var(--muted)">/20</span></td>
+          <td><span class="badge b-green">OPEN</span></td>
+          <td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-class')">Sửa</button><button class="btn btn-teal btn-xs" onclick="openModal('m-assign')">+ GV</button><button class="btn btn-ghost btn-xs" onclick="nav('attendance')">Điểm danh</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ SCHEDULE ════ -->
+<div id="page-schedule" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Lịch học theo tuần</div><div class="ph-sub">Tuần 21/04/2026 – 27/04/2026</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm">‹ Tuần trước</button>
+      <button class="btn btn-blue btn-sm">Hôm nay</button>
+      <button class="btn btn-ghost btn-sm">Tuần sau ›</button>
+      <button class="btn btn-blue" onclick="openModal('m-schedule')">+ Tạo lịch</button>
+    </div>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <div class="wk-grid">
+      <div class="wk-head" style="font-size:10px">Ca học</div>
+      <div class="wk-head"><div>Thứ 2</div><div style="font-size:10px;opacity:.75">21/04</div></div>
+      <div class="wk-head"><div>Thứ 3</div><div style="font-size:10px;opacity:.75">22/04</div></div>
+      <div class="wk-head"><div>Thứ 4</div><div style="font-size:10px;opacity:.75">23/04</div></div>
+      <div class="wk-head"><div>Thứ 5</div><div style="font-size:10px;opacity:.75">24/04</div></div>
+      <div class="wk-head"><div>Thứ 6</div><div style="font-size:10px;opacity:.75">25/04</div></div>
+      <div class="wk-head"><div>Thứ 7</div><div style="font-size:10px;opacity:.75">26/04</div></div>
+      <div class="wk-head"><div>CN</div><div style="font-size:10px;opacity:.75">27/04</div></div>
+
+      <div class="wk-cell ca">SÁNG</div>
+      <div class="wk-cell">
+        <div class="sc-card sc-reg"><strong>INT101-01</strong><br>07:30–09:30<br>Phòng A-101<br>GV: Nguyễn Văn An</div>
+      </div>
+      <div class="wk-cell">
+        <div class="sc-card sc-lab"><strong>INT201-01</strong><br>09:45–11:45<br>Phòng B-102 (Lab)<br>GV: Trần Thị Bích</div>
+      </div>
+      <div class="wk-cell">
+        <div class="sc-card sc-reg"><strong>INT101-01</strong><br>07:30–09:30<br>Phòng A-101<br>GV: Nguyễn Văn An</div>
+      </div>
+      <div class="wk-cell"></div><div class="wk-cell"></div>
+      <div class="wk-cell">
+        <div class="sc-card sc-lab"><strong>IEL101-Q1</strong><br>08:00–10:00<br>Phòng A-001<br>GV: Lê Minh Cường</div>
+      </div>
+      <div class="wk-cell"></div>
+
+      <div class="wk-cell ca">CHIỀU</div>
+      <div class="wk-cell"></div><div class="wk-cell"></div>
+      <div class="wk-cell">
+        <div class="sc-card sc-ex"><strong>INT101-01 (Bù)</strong><br>13:30–15:30<br>Phòng A-101</div>
+      </div>
+      <div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div>
+
+      <div class="wk-cell ca">TỐI</div>
+      <div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div>
+      <div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div>
+    </div>
+    <div style="padding:10px 16px;display:flex;gap:16px;font-size:11px;background:#f8fafc;border-top:1px solid var(--border)">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#dbeafe;border-left:3px solid var(--blue-lt);margin-right:4px;vertical-align:middle"></span>Regular</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#dcfce7;border-left:3px solid #22c55e;margin-right:4px;vertical-align:middle"></span>Lab</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#fef3c7;border-left:3px solid #f59e0b;margin-right:4px;vertical-align:middle"></span>Makeup/Exam</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ ATTENDANCE ════ -->
+<div id="page-attendance" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Quản lý Điểm danh</div><div class="ph-sub">Tra cứu và chỉnh sửa điểm danh theo buổi học</div></div>
+  </div>
+  <div class="card mb4">
+    <div class="filter-bar">
+      <select class="fc" style="max-width:240px"><option>INT101-01-HK1-2425</option><option>INT201-01-HK1-2425</option><option>IEL101-Q1-T9-2024</option></select>
+      <input type="date" class="fc" style="max-width:150px" value="2024-09-09">
+      <button class="btn btn-blue btn-sm">🔍 Tìm</button>
+      <button class="btn btn-ghost btn-sm">📊 Xuất Excel</button>
+    </div>
+  </div>
+
+  <div class="grid4 mb4">
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:var(--green)"></div><div class="stat-icon">✅</div><div class="stat-label">Có mặt</div><div class="stat-num">2</div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:var(--amber)"></div><div class="stat-icon">⏰</div><div class="stat-label">Đi trễ</div><div class="stat-num">1</div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:var(--red)"></div><div class="stat-icon">❌</div><div class="stat-label">Vắng không phép</div><div class="stat-num">1</div></div>
+    <div class="stat" style="cursor:default"><div class="stat-top" style="background:var(--blue-lt)"></div><div class="stat-icon">📝</div><div class="stat-label">Tổng bản ghi</div><div class="stat-num">4</div></div>
+  </div>
+
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Ca học</th><th>Sinh viên</th><th>Ngày điểm danh</th><th>Trạng thái</th><th>Ghi chú</th><th>Người điểm danh</th><th>Lúc</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td>Sch#1 · INT101 · T2</td><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-blue" style="width:26px;height:26px;font-size:10px">PD</div>Phạm Văn Đức</div></td><td>09/09/2024</td><td><span class="badge b-green">✓ PRESENT</span></td><td>—</td><td style="font-size:11px;color:var(--muted)">Nguyễn Văn An</td><td style="font-size:11px;color:var(--muted)">07:31</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-att')">Sửa</button></td></tr>
+        <tr><td>Sch#1 · INT101 · T2</td><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-pink" style="width:26px;height:26px;font-size:10px">HL</div>Hoàng Thị Lan</div></td><td>09/09/2024</td><td><span class="badge b-green">✓ PRESENT</span></td><td>—</td><td style="font-size:11px;color:var(--muted)">Nguyễn Văn An</td><td style="font-size:11px;color:var(--muted)">07:29</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-att')">Sửa</button></td></tr>
+        <tr><td>Sch#1 · INT101 · T2</td><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-blue" style="width:26px;height:26px;font-size:10px">PD</div>Phạm Văn Đức</div></td><td>11/09/2024</td><td><span class="badge b-amber">⏰ LATE</span></td><td>Xe hỏng</td><td style="font-size:11px;color:var(--muted)">Nguyễn Văn An</td><td style="font-size:11px;color:var(--muted)">07:52</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-att')">Sửa</button></td></tr>
+        <tr><td>Sch#1 · INT101 · T2</td><td><div style="display:flex;align-items:center;gap:7px"><div class="av av-pink" style="width:26px;height:26px;font-size:10px">HL</div>Hoàng Thị Lan</div></td><td>11/09/2024</td><td><span class="badge b-red">✗ ABSENT</span></td><td>—</td><td style="font-size:11px;color:var(--muted)">Nguyễn Văn An</td><td style="font-size:11px;color:var(--muted)">—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-att')">Sửa</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ ENROLLMENTS ════ -->
+<div id="page-enrollments" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Đăng ký học phần</div><div class="ph-sub">5 lượt đăng ký · 100% Enrolled</div></div>
+    <button class="btn btn-blue" onclick="openModal('m-enroll')">+ Đăng ký thủ công</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Sinh viên</th><th>Lớp học phần</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Điểm GK</th><th>Điểm CK</th><th>Điểm TK</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--muted)">1</td><td>Phạm Văn Đức</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">INT101-01</td><td>09/09/2024</td><td><span class="badge b-green">ENROLLED</span></td><td>—</td><td>—</td><td>—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-grade')">Nhập điểm</button></td></tr>
+        <tr><td style="color:var(--muted)">2</td><td>Hoàng Thị Lan</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">INT101-01</td><td>09/09/2024</td><td><span class="badge b-green">ENROLLED</span></td><td>—</td><td>—</td><td>—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-grade')">Nhập điểm</button></td></tr>
+        <tr><td style="color:var(--muted)">3</td><td>Phạm Văn Đức</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">INT201-01</td><td>09/09/2024</td><td><span class="badge b-green">ENROLLED</span></td><td>—</td><td>—</td><td>—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-grade')">Nhập điểm</button></td></tr>
+        <tr><td style="color:var(--muted)">4</td><td>Hoàng Thị Lan</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">INT201-01</td><td>09/09/2024</td><td><span class="badge b-green">ENROLLED</span></td><td>—</td><td>—</td><td>—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-grade')">Nhập điểm</button></td></tr>
+        <tr><td style="color:var(--muted)">5</td><td>Vũ Quốc Hùng</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">IEL101-Q1</td><td>01/03/2024</td><td><span class="badge b-green">ENROLLED</span></td><td>—</td><td>—</td><td>—</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('m-grade')">Nhập điểm</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ GRADES ════ -->
+<div id="page-grades" class="page">
+  <div class="ph"><div><div class="ph-title">Kết quả &amp; Học bổng</div><div class="ph-sub">GPA · Rèn luyện · Học bổng theo học kỳ</div></div></div>
+  <div class="card mb4">
+    <div class="filter-bar"><select class="fc" style="max-width:200px"><option>HK1 – 2024-2025</option><option>HK2 – 2024-2025</option></select><select class="fc" style="max-width:180px"><option>INT101-01 (Tất cả SV)</option></select><button class="btn btn-blue btn-sm">Xem</button></div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>MSSV</th><th>Sinh viên</th><th>Lớp HP</th><th>GPA HK</th><th>TC tích lũy</th><th>Điểm RLuyen</th><th>Xếp loại RL</th><th>Học bổng</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:700;color:var(--blue)">21IT001</td><td>Phạm Văn Đức</td><td>INT101 · INT201</td><td><span style="font-weight:700;color:var(--green)">—</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="font-weight:700;color:var(--blue)">21IT002</td><td>Hoàng Thị Lan</td><td>INT101 · INT201</td><td><span style="font-weight:700;color:var(--green)">—</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="font-weight:700;color:var(--blue)">IE240301</td><td>Vũ Quốc Hùng</td><td>IEL101</td><td><span style="font-weight:700;color:var(--green)">—</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div style="padding:14px 20px;background:#eff6ff;font-size:12px;color:var(--muted);border-top:1px solid var(--border)">ℹ️ Điểm chưa được nhập. Sử dụng nút "Nhập điểm" ở trang Đăng ký học phần.</div>
+  </div>
+</div>
+
+<!-- ════ EXCEPTIONS ════ -->
+<div id="page-exceptions" class="page">
+  <div class="ph">
+    <div><div class="ph-title">Ngoại lệ lịch học</div><div class="ph-sub">Nghỉ lễ · Dời lịch · Đổi phòng</div></div>
+    <button class="btn btn-blue" onclick="openModal('m-exc')">+ Thêm ngoại lệ</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Ca học</th><th>Ngày NL</th><th>Lý do</th><th>Loại</th><th>Ngày thay thế</th><th>Phòng thay thế</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--muted)">1</td><td style="font-family:monospace;font-size:12px;color:var(--blue)">Sch#1 · INT101 (Thứ 2)</td><td style="font-weight:700">02/09/2024</td><td>Nghỉ Quốc khánh 2/9</td><td><span class="badge b-amber">RESCHEDULED</span></td><td>07/09/2024</td><td>—</td><td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openModal('m-exc')">Sửa</button><button class="btn btn-danger btn-xs">Xóa</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ TUITION ════ -->
+<div id="page-tuition" class="page">
+  <div class="ph"><div><div class="ph-title">Học phí &amp; Công nợ</div><div class="ph-sub">Quản lý hóa đơn theo học kỳ</div></div><button class="btn btn-blue" onclick="openModal('m-invoice')">+ Tạo hóa đơn</button></div>
+  <div class="card"><div class="card-body" style="text-align:center;padding:50px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">💰</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">Chưa có hóa đơn học phí</div><div style="font-size:13px">Tạo hóa đơn mới cho sinh viên trong học kỳ hiện tại</div><button class="btn btn-blue" style="margin-top:16px" onclick="openModal('m-invoice')">+ Tạo hóa đơn đầu tiên</button></div></div>
+</div>
+
+<!-- ════ PAYMENTS ════ -->
+<div id="page-payments" class="page">
+  <div class="ph"><div><div class="ph-title">Phiếu thu</div><div class="ph-sub">Lịch sử giao dịch thanh toán</div></div></div>
+  <div class="card"><div class="card-body" style="text-align:center;padding:50px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">🧾</div><div>Chưa có giao dịch thanh toán nào</div></div></div>
+</div>
+
+<!-- ════ NOTIFICATIONS ════ -->
+<div id="page-notifications" class="page">
+  <div class="ph"><div><div class="ph-title">Quản lý Thông báo</div></div><button class="btn btn-blue" onclick="openModal('m-notif')">📢 Gửi thông báo</button></div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Người nhận</th><th>Tiêu đề</th><th>Loại</th><th>Đã đọc</th><th>Thời gian</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--muted)">1</td><td>Phạm Văn Đức</td><td style="font-weight:600">Lịch học INT101 thay đổi</td><td><span class="badge b-amber">SCHEDULE_CHANGE</span></td><td><span class="badge b-red">Chưa đọc</span></td><td style="font-size:11px;color:var(--muted)">09/09/2024 08:00</td><td><button class="btn btn-danger btn-xs">Xóa</button></td></tr>
+        <tr><td style="color:var(--muted)">2</td><td>Hoàng Thị Lan</td><td style="font-weight:600">Điểm môn INT101 đã cập nhật</td><td><span class="badge b-green">GRADE</span></td><td><span class="badge b-green">Đã đọc</span></td><td style="font-size:11px;color:var(--muted)">10/09/2024 14:20</td><td><button class="btn btn-danger btn-xs">Xóa</button></td></tr>
+        <tr><td style="color:var(--muted)">3</td><td>Vũ Quốc Hùng</td><td style="font-weight:600">Xác nhận đăng ký IEL101</td><td><span class="badge b-blue">ENROLLMENT</span></td><td><span class="badge b-red">Chưa đọc</span></td><td style="font-size:11px;color:var(--muted)">01/09/2024 09:00</td><td><button class="btn btn-danger btn-xs">Xóa</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ SETTINGS ════ -->
+<div id="page-settings" class="page">
+  <div class="ph"><div><div class="ph-title">Cài đặt Trường học</div><div class="ph-sub">Trường ĐH Bách Khoa TP.HCM · HCMUT</div></div></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Thông tin cơ bản</div></div>
+      <div class="card-body">
+        <div class="fg"><label class="fl">Mã trường</label><input class="fc" value="HCMUT" readonly style="background:#f8fafc"></div>
+        <div class="fg"><label class="fl">Tên đầy đủ</label><input class="fc" value="Trường Đại học Bách Khoa TP.HCM"></div>
+        <div class="fg"><label class="fl">Tên viết tắt</label><input class="fc" value="BK-HCM"></div>
+        <div class="fg"><label class="fl">Loại hình</label><select class="fc"><option>UNIVERSITY</option></select></div>
+        <div class="fg"><label class="fl">Ngày thành lập</label><input type="date" class="fc" value="1957-10-27"></div>
+        <div class="grid2"><div class="fg"><label class="fl">Email</label><input class="fc" value="info@hcmut.edu.vn"></div><div class="fg"><label class="fl">Điện thoại</label><input class="fc" value="028-3865-4086"></div></div>
+        <div class="fg"><label class="fl">Website</label><input class="fc" value="https://hcmut.edu.vn"></div>
+        <button class="btn btn-blue" onclick="toast('Đã lưu cài đặt trường','green')">💾 Lưu thay đổi</button>
+      </div>
+    </div>
+    <div>
+      <div class="card mb4">
+        <div class="card-hd"><div class="card-title">Thống kê hệ thống</div></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tổng sinh viên</span><strong>3</strong></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tổng giảng viên</span><strong>3</strong></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Lớp học đang chạy</span><strong>2</strong></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Phòng học</span><strong>5</strong></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Môn học</span><strong>3</strong></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bản ghi điểm danh</span><strong>4</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Học kỳ hiện tại</div></div>
+        <div class="card-body">
+          <div class="fg"><label class="fl">Học kỳ</label><select class="fc"><option>HK1 – 2024-2025</option><option>HK2 – 2024-2025</option></select></div>
+          <div class="grid2"><div class="fg"><label class="fl">Bắt đầu</label><input type="date" class="fc" value="2024-09-09"></div><div class="fg"><label class="fl">Kết thúc</label><input type="date" class="fc" value="2025-01-10"></div></div>
+          <button class="btn btn-teal" onclick="toast('Đã cập nhật học kỳ','green')">Cập nhật học kỳ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Placeholder pages -->
+<div id="page-departments" class="page"><div class="ph"><div class="ph-title">Khoa / Bộ môn</div></div><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Mã khoa</th><th>Tên khoa</th><th>Số GV</th><th>Số SV</th><th>Số môn</th><th>Thao tác</th></tr></thead><tbody><tr><td>1</td><td style="font-weight:700;color:var(--blue)">CNTT</td><td>Công nghệ Thông tin</td><td>2</td><td>2</td><td>2</td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td>2</td><td style="font-weight:700;color:var(--blue)">KTKT</td><td>Kỹ thuật Kinh tế</td><td>0</td><td>0</td><td>0</td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td>3</td><td style="font-weight:700;color:var(--blue)">IELTS</td><td>Bộ môn IELTS</td><td>1</td><td>1</td><td>1</td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr></tbody></table></div></div>
+<div id="page-semesters" class="page"><div class="ph"><div class="ph-title">Năm học &amp; Học kỳ</div></div><div class="card"><table class="tbl"><thead><tr><th>Tên HK</th><th>Năm học</th><th>Bắt đầu</th><th>Kết thúc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody><tr><td style="font-weight:700">Học kỳ 1</td><td>2024-2025</td><td>09/09/2024</td><td>10/01/2025</td><td><span class="badge b-blue">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td style="font-weight:700">Học kỳ 2</td><td>2024-2025</td><td>10/02/2025</td><td>13/06/2025</td><td><span class="badge b-gray">Chưa bắt đầu</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td style="font-weight:700">Khóa tháng 9</td><td>2024-2025</td><td>02/09/2024</td><td>30/11/2024</td><td><span class="badge b-blue">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr></tbody></table></div></div>
+<div id="page-courses" class="page"><div class="ph"><div class="ph-title">Môn học</div></div><div class="card"><table class="tbl"><thead><tr><th>Mã môn</th><th>Tên môn</th><th>Số TC</th><th>Tổng buổi</th><th>Khoa</th><th>Tiên quyết</th><th>Thao tác</th></tr></thead><tbody><tr><td style="font-weight:700;color:var(--blue)">INT101</td><td>Nhập môn Lập trình</td><td>3</td><td>30</td><td>CNTT</td><td>—</td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td style="font-weight:700;color:var(--blue)">INT201</td><td>CTDL &amp; Giải thuật</td><td>3</td><td>30</td><td>CNTT</td><td><span class="badge b-blue">INT101</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td style="font-weight:700;color:var(--blue)">IEL101</td><td>IELTS Foundation</td><td>0</td><td>40</td><td>IELTS</td><td>—</td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr></tbody></table></div></div>
+<div id="page-users" class="page"><div class="ph"><div class="ph-title">Tài khoản</div></div><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody><tr><td>1</td><td>Nguyễn Văn An</td><td>an.nguyen@hcmut.edu.vn</td><td><span class="badge b-purple">teacher</span></td><td><span class="badge b-green">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td>2</td><td>Trần Thị Bích</td><td>bich.tran@hcmut.edu.vn</td><td><span class="badge b-purple">teacher</span></td><td><span class="badge b-green">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td>3</td><td>Phạm Văn Đức</td><td>duc.pham@student.hcmut.edu.vn</td><td><span class="badge b-teal">student</span></td><td><span class="badge b-green">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr><tr><td>4</td><td>Hoàng Thị Lan</td><td>lan.hoang@student.hcmut.edu.vn</td><td><span class="badge b-teal">student</span></td><td><span class="badge b-green">Active</span></td><td><button class="btn btn-ghost btn-xs">Sửa</button></td></tr></tbody></table></div></div>
+
+</main>
+
+<!-- ══════════════ MODALS ══════════════ -->
+<!-- Room Modal -->
+<div class="ov" id="m-room">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">🚪 Thêm / Sửa Phòng học</span><button class="close-btn" onclick="closeM('m-room')">×</button></div>
+    <div class="modal-body">
+      <div class="grid2"><div class="fg"><label class="fl">Cơ sở</label><select class="fc"><option>CS1 – Lý Thường Kiệt</option><option>CS2 – Dĩ An</option><option>Q1 – Quận 1</option></select></div><div class="fg"><label class="fl">Tòa nhà</label><input class="fc" placeholder="A, B, C..."></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Số phòng</label><input class="fc" placeholder="101, 301..."></div><div class="fg"><label class="fl">Sức chứa (người)</label><input type="number" class="fc" placeholder="40"></div></div>
+      <div class="fg"><label class="fl">Loại phòng</label><select class="fc"><option>classroom</option><option>lab</option><option>seminar</option><option>lecture_hall</option><option>online</option></select></div>
+      <div class="fg"><label class="fl">Thiết bị (phân cách bằng dấu phẩy)</label><input class="fc" placeholder="projector, ac, whiteboard..."></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-room')">Hủy</button><button class="btn btn-blue" onclick="save('m-room','Đã lưu thông tin phòng học!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Teacher Modal -->
+<div class="ov" id="m-teacher">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">👨‍🏫 Thêm / Sửa Giảng viên</span><button class="close-btn" onclick="closeM('m-teacher')">×</button></div>
+    <div class="modal-body">
+      <div class="grid2"><div class="fg"><label class="fl">Họ và tên</label><input class="fc" placeholder="Nguyễn Văn A"></div><div class="fg"><label class="fl">Mã giảng viên</label><input class="fc" placeholder="GV001"></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Email</label><input class="fc" type="email" placeholder="gv@hcmut.edu.vn"></div><div class="fg"><label class="fl">Điện thoại</label><input class="fc" placeholder="09xxxxxxxx"></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Khoa / Bộ môn</label><select class="fc"><option>CNTT</option><option>KTKT</option><option>IELTS</option></select></div><div class="fg"><label class="fl">Học vị</label><select class="fc"><option>Cử nhân</option><option>Thạc sĩ</option><option>Tiến sĩ</option><option>Giáo sư</option></select></div></div>
+      <div class="fg"><label class="fl">Chuyên ngành</label><input class="fc" placeholder="Trí tuệ nhân tạo, Ngôn ngữ học..."></div>
+      <div class="fg"><label class="fl">Ngày vào trường</label><input type="date" class="fc"></div>
+      <div class="fg"><label class="fl">Giới thiệu ngắn</label><textarea class="fc" rows="3" placeholder="Thông tin giới thiệu..."></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-teacher')">Hủy</button><button class="btn btn-blue" onclick="save('m-teacher','Đã lưu thông tin giảng viên!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Student Modal -->
+<div class="ov" id="m-student">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">👨‍🎓 Thêm / Xem Sinh viên</span><button class="close-btn" onclick="closeM('m-student')">×</button></div>
+    <div class="modal-body">
+      <div class="grid2"><div class="fg"><label class="fl">Họ và tên</label><input class="fc" placeholder="Nguyễn Văn A"></div><div class="fg"><label class="fl">MSSV</label><input class="fc" placeholder="21IT001"></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Email</label><input class="fc" type="email" placeholder="sv@student.hcmut.edu.vn"></div><div class="fg"><label class="fl">Giới tính</label><select class="fc"><option>Nam</option><option>Nữ</option><option>Khác</option></select></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Khoa</label><select class="fc"><option>CNTT</option><option>KTKT</option><option>IELTS</option></select></div><div class="fg"><label class="fl">Lớp hành chính</label><input class="fc" placeholder="CNTT21A"></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Chuyên ngành</label><input class="fc" placeholder="Kỹ thuật phần mềm"></div><div class="fg"><label class="fl">Năm nhập học</label><input type="number" class="fc" placeholder="2021"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-student')">Hủy</button><button class="btn btn-blue" onclick="save('m-student','Đã lưu thông tin sinh viên!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Class Modal -->
+<div class="ov" id="m-class">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">🎓 Tạo / Sửa Lớp học</span><button class="close-btn" onclick="closeM('m-class')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Mã lớp</label><input class="fc" placeholder="INT101-01-HK1-2425"></div>
+      <div class="grid2"><div class="fg"><label class="fl">Môn học</label><select class="fc"><option>INT101 – Nhập môn Lập trình</option><option>INT201 – CTDL & Giải thuật</option><option>IEL101 – IELTS Foundation</option></select></div><div class="fg"><label class="fl">Học kỳ</label><select class="fc"><option>HK1 – 2024-2025</option><option>HK2 – 2024-2025</option><option>Khóa T9 – 2024</option></select></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Cơ sở học</label><select class="fc"><option>CS1 – Lý Thường Kiệt</option><option>CS2 – Dĩ An</option><option>Q1 – Quận 1</option></select></div><div class="fg"><label class="fl">Sĩ số tối đa</label><input type="number" class="fc" value="40" min="1"></div></div>
+      <div class="fg"><label class="fl">Trạng thái</label><select class="fc"><option>OPEN</option><option>IN_PROGRESS</option><option>COMPLETED</option><option>CANCELLED</option></select></div>
+      <div class="fg"><label class="fl">Ghi chú</label><textarea class="fc" rows="2" placeholder="Ghi chú về lớp học..."></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-class')">Hủy</button><button class="btn btn-blue" onclick="save('m-class','Đã tạo lớp học!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Assign teacher modal -->
+<div class="ov" id="m-assign">
+  <div class="modal" style="width:460px">
+    <div class="modal-hd"><span class="modal-title">🔗 Phân công Giảng viên vào Lớp</span><button class="close-btn" onclick="closeM('m-assign')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Lớp học</label><select class="fc"><option>INT101-01-HK1-2425</option><option>INT201-01-HK1-2425</option><option>IEL101-Q1-T9-2024</option></select></div>
+      <div class="fg"><label class="fl">Giảng viên</label><select class="fc"><option>GV001 – Nguyễn Văn An (TS. AI)</option><option>GV002 – Trần Thị Bích (ThS. KTPM)</option><option>GV003 – Lê Minh Cường (ThS. NNH)</option></select></div>
+      <div class="fg"><label class="fl">Vai trò trong lớp</label><select class="fc"><option>main – Giảng viên chính</option><option>assistant – Trợ giảng</option><option>guest – Thỉnh giảng</option></select></div>
+      <div style="background:#eff6ff;border:1px solid #b3d4f5;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--blue)">ℹ️ Mỗi lớp có thể có nhiều giảng viên (N-N). Một giảng viên đóng vai main, các người còn lại là assistant hoặc guest.</div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-assign')">Hủy</button><button class="btn btn-blue" onclick="save('m-assign','Phân công giảng viên thành công!')">✓ Phân công</button></div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="ov" id="m-schedule">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">🗓 Tạo / Sửa Lịch học</span><button class="close-btn" onclick="closeM('m-schedule')">×</button></div>
+    <div class="modal-body">
+      <div class="grid2"><div class="fg"><label class="fl">Lớp học</label><select class="fc"><option>INT101-01</option><option>INT201-01</option><option>IEL101-Q1</option></select></div><div class="fg"><label class="fl">Phòng học</label><select class="fc"><option>A-101 (Classroom · 50)</option><option>B-102 (Lab · 30)</option><option>B-301 (HT · 80)</option><option>A-001 (Seminar · 20)</option></select></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Thứ trong tuần</label><select class="fc"><option value="2">Thứ 2</option><option value="3">Thứ 3</option><option value="4">Thứ 4</option><option value="5">Thứ 5</option><option value="6">Thứ 6</option><option value="7">Thứ 7</option><option value="1">Chủ nhật</option></select></div><div class="fg"><label class="fl">Loại buổi</label><select class="fc"><option>REGULAR</option><option>MAKEUP</option><option>EXAM</option><option>LAB</option><option>SEMINAR</option></select></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Giờ bắt đầu</label><input type="time" class="fc" value="07:30"></div><div class="fg"><label class="fl">Giờ kết thúc</label><input type="time" class="fc" value="09:30"></div></div>
+      <div class="grid2"><div class="fg"><label class="fl">Áp dụng từ ngày</label><input type="date" class="fc"></div><div class="fg"><label class="fl">Áp dụng đến ngày</label><input type="date" class="fc"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-schedule')">Hủy</button><button class="btn btn-blue" onclick="save('m-schedule','Đã tạo lịch học!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Exception Modal -->
+<div class="ov" id="m-exc">
+  <div class="modal" style="width:500px">
+    <div class="modal-hd"><span class="modal-title">⚠️ Thêm Ngoại lệ Lịch học</span><button class="close-btn" onclick="closeM('m-exc')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Ca học</label><select class="fc"><option>Sch#1 – INT101 (Thứ 2 · 07:30)</option><option>Sch#2 – INT101 (Thứ 4 · 13:30)</option><option>Sch#3 – INT201 (Thứ 3 · 09:45)</option><option>Sch#4 – IEL101 (Thứ 7 · 08:00)</option></select></div>
+      <div class="fg"><label class="fl">Ngày ngoại lệ</label><input type="date" class="fc"></div>
+      <div class="fg"><label class="fl">Lý do</label><input class="fc" placeholder="Nghỉ Quốc khánh, GV ốm, Sự kiện..."></div>
+      <div class="fg"><label class="fl">Loại ngoại lệ</label><select class="fc"><option>cancelled – Hủy buổi học</option><option>rescheduled – Dời sang ngày khác</option><option>room_change – Đổi phòng học</option></select></div>
+      <div class="grid2"><div class="fg"><label class="fl">Ngày dạy bù (nếu có)</label><input type="date" class="fc"></div><div class="fg"><label class="fl">Phòng thay thế</label><select class="fc"><option>— Giữ nguyên —</option><option>A-101</option><option>B-102</option><option>B-301</option></select></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-exc')">Hủy</button><button class="btn btn-blue" onclick="save('m-exc','Đã thêm ngoại lệ lịch học!')">💾 Lưu</button></div>
+  </div>
+</div>
+
+<!-- Attendance Modal -->
+<div class="ov" id="m-att">
+  <div class="modal" style="width:440px">
+    <div class="modal-hd"><span class="modal-title">📋 Chỉnh sửa Điểm danh</span><button class="close-btn" onclick="closeM('m-att')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Sinh viên</label><select class="fc"><option>21IT001 – Phạm Văn Đức</option><option>21IT002 – Hoàng Thị Lan</option></select></div>
+      <div class="grid2"><div class="fg"><label class="fl">Ca học</label><select class="fc"><option>Sch#1 – INT101 · Thứ 2</option></select></div><div class="fg"><label class="fl">Ngày</label><input type="date" class="fc" value="2024-09-11"></div></div>
+      <div class="fg"><label class="fl">Trạng thái</label><select class="fc"><option>PRESENT – Có mặt</option><option>ABSENT – Vắng mặt</option><option>LATE – Đi trễ</option><option>EXCUSED – Vắng có phép</option></select></div>
+      <div class="fg"><label class="fl">Ghi chú</label><textarea class="fc" rows="2" placeholder="Lý do vắng, đi trễ..."></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-att')">Hủy</button><button class="btn btn-blue" onclick="save('m-att','Đã cập nhật điểm danh!')">✓ Cập nhật</button></div>
+  </div>
+</div>
+
+<!-- Enroll Modal -->
+<div class="ov" id="m-enroll">
+  <div class="modal" style="width:440px">
+    <div class="modal-hd"><span class="modal-title">✅ Đăng ký học phần thủ công</span><button class="close-btn" onclick="closeM('m-enroll')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Sinh viên</label><select class="fc"><option>21IT001 – Phạm Văn Đức</option><option>21IT002 – Hoàng Thị Lan</option><option>IE240301 – Vũ Quốc Hùng</option></select></div>
+      <div class="fg"><label class="fl">Lớp học phần</label><select class="fc"><option>INT101-01 – Nhập môn Lập trình</option><option>INT201-01 – CTDL</option><option>IEL101-Q1 – IELTS Foundation</option></select></div>
+      <div class="fg"><label class="fl">Trạng thái đăng ký</label><select class="fc"><option>ENROLLED</option><option>PENDING</option></select></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-enroll')">Hủy</button><button class="btn btn-blue" onclick="save('m-enroll','Đăng ký học phần thành công!')">✓ Đăng ký</button></div>
+  </div>
+</div>
+
+<!-- Grade Modal -->
+<div class="ov" id="m-grade">
+  <div class="modal" style="width:440px">
+    <div class="modal-hd"><span class="modal-title">📊 Nhập điểm</span><button class="close-btn" onclick="closeM('m-grade')">×</button></div>
+    <div class="modal-body">
+      <div style="background:#eff6ff;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px"><strong>Sinh viên:</strong> Phạm Văn Đức · <strong>Lớp:</strong> INT101-01</div>
+      <div class="grid3">
+        <div class="fg"><label class="fl">Điểm GK (0–10)</label><input type="number" class="fc" placeholder="0.00" min="0" max="10" step="0.01"></div>
+        <div class="fg"><label class="fl">Điểm CK (0–10)</label><input type="number" class="fc" placeholder="0.00" min="0" max="10" step="0.01"></div>
+        <div class="fg"><label class="fl">Điểm TK (0–10)</label><input type="number" class="fc" placeholder="0.00" min="0" max="10" step="0.01"></div>
+      </div>
+      <div class="fg"><label class="fl">Xếp loại (chữ)</label><select class="fc"><option>— Tự động —</option><option>A+</option><option>A</option><option>B+</option><option>B</option><option>C+</option><option>C</option><option>D+</option><option>D</option><option>F</option></select></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-grade')">Hủy</button><button class="btn btn-blue" onclick="save('m-grade','Đã lưu điểm số!')">💾 Lưu điểm</button></div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="ov" id="m-notif">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">📢 Gửi Thông báo</span><button class="close-btn" onclick="closeM('m-notif')">×</button></div>
+    <div class="modal-body">
+      <div class="grid2"><div class="fg"><label class="fl">Gửi đến</label><select class="fc"><option>Tất cả sinh viên</option><option>Tất cả giảng viên</option><option>Lớp INT101-01</option><option>Lớp INT201-01</option><option>Lớp IEL101-Q1</option><option>Cá nhân cụ thể</option></select></div><div class="fg"><label class="fl">Loại thông báo</label><select class="fc"><option>SCHEDULE_CHANGE</option><option>GRADE</option><option>ENROLLMENT</option><option>SYSTEM</option><option>REMINDER</option></select></div></div>
+      <div class="fg"><label class="fl">Tiêu đề</label><input class="fc" placeholder="VD: Lịch học ngày 25/04 thay đổi"></div>
+      <div class="fg"><label class="fl">Nội dung</label><textarea class="fc" rows="4" placeholder="Nội dung chi tiết của thông báo..."></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-notif')">Hủy</button><button class="btn btn-blue" onclick="save('m-notif','🔔 Đã gửi thông báo thành công!')">📤 Gửi ngay</button></div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="ov" id="m-invoice">
+  <div class="modal" style="width:460px">
+    <div class="modal-hd"><span class="modal-title">💰 Tạo Hóa đơn học phí</span><button class="close-btn" onclick="closeM('m-invoice')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Sinh viên</label><select class="fc"><option>21IT001 – Phạm Văn Đức</option><option>21IT002 – Hoàng Thị Lan</option><option>IE240301 – Vũ Quốc Hùng</option></select></div>
+      <div class="fg"><label class="fl">Học kỳ</label><select class="fc"><option>HK1 – 2024-2025</option><option>HK2 – 2024-2025</option></select></div>
+      <div class="grid2"><div class="fg"><label class="fl">Tổng học phí (VNĐ)</label><input type="number" class="fc" placeholder="15000000"></div><div class="fg"><label class="fl">Hạn đóng</label><input type="date" class="fc"></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-invoice')">Hủy</button><button class="btn btn-blue" onclick="save('m-invoice','Đã tạo hóa đơn học phí!')">💾 Tạo hóa đơn</button></div>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── NAV ──
+const bcMap = {
+  dashboard:'Dashboard', branches:'Cơ sở & Phòng học', departments:'Khoa / Bộ môn',
+  semesters:'Năm học & Học kỳ', courses:'Môn học', classes:'Lớp học',
+  schedule:'Lịch học theo tuần', exceptions:'Ngoại lệ lịch học',
+  teachers:'Giảng viên', students:'Sinh viên', users:'Tài khoản',
+  enrollments:'Đăng ký học phần', attendance:'Điểm danh',
+  grades:'Kết quả & Học bổng', tuition:'Học phí & Công nợ',
+  payments:'Phiếu thu', notifications:'Thông báo', settings:'Cài đặt trường',
+};
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.remove('active');
+    if (el.getAttribute('onclick') === `nav('${id}')`) el.classList.add('active');
+  });
+  document.getElementById('bc').textContent = bcMap[id] || id;
+  window.scrollTo(0, 0);
+}
+
+// ── MODAL ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeM(id)    { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.ov').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+function save(id, msg) { closeM(id); toast(msg, 'green'); }
+
+// ── TOAST ──
+function toast(msg, type='blue') {
+  const w = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  const c = { green:'#2e7d32', blue:'#1565c0', amber:'#e65100', red:'#c62828' };
+  const i = { green:'✅', blue:'ℹ️', amber:'⚠️', red:'❌' };
+  el.className = 'toast';
+  el.style.borderLeft = `4px solid ${c[type]||c.blue}`;
+  el.innerHTML = `<span>${i[type]||'ℹ️'}</span><span style="color:var(--text);font-size:13px">${msg}</span>`;
+  w.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(100%)'; el.style.transition = '.25s ease'; setTimeout(() => el.remove(), 260); }, 3200);
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.ov.open').forEach(m => m.classList.remove('open'));
+  if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault(); document.querySelector('.search-wrap input')?.focus();
+  }
+});
+
+// ── Progress bars animation ──
+setTimeout(() => {
+  document.querySelectorAll('.prog-fill').forEach(b => {
+    const w = b.style.width; b.style.width = '0';
+    setTimeout(() => b.style.width = w, 100);
+  });
+}, 150);
+
+// ── Init toast ──
+toast('Chào mừng quay trở lại, Admin! · HK2 · 2024-2025', 'blue');
+</script>
+</body>
+</html>

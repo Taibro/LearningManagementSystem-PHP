@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUIT E-Office - Hệ thống quản lý giảng dạy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Be Vietnam Pro', sans-serif; }
+  :root {
+    --hui-purple: #6B4FA0;
+    --hui-purple-light: #8B6BBF;
+    --hui-purple-dark: #4A3570;
+    --hui-accent: #E85D75;
+    --hui-gold: #F5A623;
+    --hui-green: #4CAF50;
+    --hui-bg: #F4F1F8;
+  }
+  .sidebar { background: linear-gradient(180deg, #4A3570 0%, #6B4FA0 60%, #8B6BBF 100%); }
+  .sidebar-item { transition: all 0.2s; border-radius: 8px; margin: 2px 8px; }
+  .sidebar-item:hover { background: rgba(255,255,255,0.15); }
+  .sidebar-item.active { background: rgba(255,255,255,0.25); border-left: 3px solid #F5A623; }
+  .sidebar-sub-item { transition: all 0.2s; border-radius: 6px; margin: 1px 4px; }
+  .sidebar-sub-item:hover { background: rgba(255,255,255,0.1); }
+  .sidebar-sub-item.active { background: rgba(255,255,255,0.2); color: #F5A623; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(107,79,160,0.08); }
+  .btn-primary { background: linear-gradient(135deg, #6B4FA0, #8B6BBF); color: white; border-radius: 8px; padding: 8px 20px; transition: all 0.2s; border: none; cursor: pointer; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(107,79,160,0.3); }
+  .btn-success { background: linear-gradient(135deg, #4CAF50, #66BB6A); color: white; border-radius: 8px; padding: 8px 20px; transition: all 0.2s; border: none; cursor: pointer; }
+  .btn-danger { background: linear-gradient(135deg, #E85D75, #EF5350); color: white; border-radius: 8px; padding: 8px 20px; transition: all 0.2s; border: none; cursor: pointer; }
+  .btn-outline { border: 1.5px solid #6B4FA0; color: #6B4FA0; border-radius: 8px; padding: 8px 20px; background: transparent; cursor: pointer; transition: all 0.2s; }
+  .btn-outline:hover { background: #6B4FA0; color: white; }
+  .badge-present { background: #E8F5E9; color: #2E7D32; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  .badge-absent { background: #FFEBEE; color: #C62828; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  .stat-card { border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+  .stat-card::after { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+  .schedule-card { border-radius: 10px; padding: 10px 12px; font-size: 12px; transition: all 0.2s; cursor: pointer; }
+  .schedule-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .schedule-theory { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-left: 3px solid #4CAF50; }
+  .schedule-practice { background: linear-gradient(135deg, #E8EAF6, #C5CAE9); border-left: 3px solid #5C6BC0; }
+  .schedule-online { background: linear-gradient(135deg, #FFF8E1, #FFE082); border-left: 3px solid #FFC107; }
+  .input-field { border: 1.5px solid #E0D8F0; border-radius: 8px; padding: 10px 14px; width: 100%; outline: none; transition: all 0.2s; background: white; font-size: 14px; }
+  .input-field:focus { border-color: #6B4FA0; box-shadow: 0 0 0 3px rgba(107,79,160,0.1); }
+  select.input-field { appearance: auto; }
+  .table-row:hover { background: #F9F7FF; }
+  .notification { position: fixed; top: 20px; right: 20px; background: white; border-left: 4px solid #4CAF50; border-radius: 8px; padding: 14px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; transform: translateX(150%); transition: transform 0.3s ease; max-width: 320px; }
+  .notification.show { transform: translateX(0); }
+  .logo-area { padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .section-title { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 16px 16px 6px; }
+  .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+  .collapse-content.open { max-height: 500px; }
+  .qr-box { width: 200px; height: 200px; border: 3px dashed #6B4FA0; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto; background: #F9F7FF; }
+  .chart-bar { transition: height 0.5s ease; border-radius: 4px 4px 0 0; }
+  .progress-bar { height: 8px; border-radius: 4px; background: #E0D8F0; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #6B4FA0, #E85D75); transition: width 0.8s ease; }
+  .timeline-dot { width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 3px #6B4FA0; }
+  .tab-btn { padding: 10px 20px; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 14px; }
+  .tab-btn.active { background: white; color: #6B4FA0; border-bottom: 3px solid #6B4FA0; }
+  .tab-btn:not(.active) { background: #F4F1F8; color: #888; }
+  .main-content { min-height: 100vh; background: #F4F1F8; }
+  .topbar { background: white; border-bottom: 1px solid #E8E0F5; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .page.active { animation: fadeIn 0.3s ease; }
+  .sidebar-scroll { overflow-y: auto; height: calc(100vh - 100px); }
+  .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+  .week-grid { display: grid; grid-template-columns: 80px repeat(7, 1fr); }
+  .week-header { background: #6B4FA0; color: white; padding: 12px 8px; text-align: center; font-weight: 600; font-size: 13px; }
+  .week-cell { border: 1px solid #E8E0F5; padding: 8px; min-height: 100px; background: white; }
+  .week-cell.session-label { background: #F4F1F8; font-size: 12px; color: #888; font-weight: 600; display: flex; align-items: center; justify-content: center; writing-mode: initial; }
+</style>
+</head>
+<body class="flex h-screen overflow-hidden bg-gray-100">
+
+<!-- SIDEBAR -->
+<aside class="sidebar w-64 flex-shrink-0 h-screen flex flex-col">
+  <div class="logo-area">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center font-bold text-purple-700 text-sm">HUIT</div>
+      <div>
+        <div class="text-white font-bold text-sm leading-tight">HO CHI MINH CITY</div>
+        <div class="text-purple-200 text-xs">University of Industry and Trade</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-scroll">
+    <div class="section-title">E-OFFICE</div>
+
+    <div class="section-title">CÔNG TÁC GIẢNG DẠY</div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('ho-so')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      Hồ sơ cá nhân
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('luong')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Thông tin lương
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('khai-bao')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Khai báo thông tin
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('tai-lieu')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      Quản lý tài liệu bài giảng
+    </div>
+
+    <!-- Chuyên cần dropdown -->
+    <div>
+      <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center justify-between" onclick="toggleMenu('chuyen-can')">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Chuyên cần - Rèn luyện
+        </div>
+        <svg id="arrow-chuyen-can" class="w-3 h-3 opacity-60 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </div>
+      <div id="menu-chuyen-can" class="collapse-content">
+        <div class="sidebar-sub-item cursor-pointer px-8 py-2 text-purple-200 text-sm" onclick="navigate('diem-danh')">Điểm danh sinh viên</div>
+        <div class="sidebar-sub-item cursor-pointer px-8 py-2 text-purple-200 text-sm" onclick="navigate('qr-code')">Điểm danh QR Code</div>
+        <div class="sidebar-sub-item cursor-pointer px-8 py-2 text-purple-200 text-sm" onclick="navigate('phieu-danh-gia')">Phiếu đánh giá</div>
+      </div>
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('ket-qua')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Quản lý kết quả học tập
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('lich-tien-do')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Lịch theo tiến độ
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('lich-tuan')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      Lịch theo tuần
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('de-xuat-ngung')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Đề xuất tạm ngừng lịch dạy
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('day-bu')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Đề xuất dạy bù
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('day-thay')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+      Đề xuất dạy thay
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('thong-ke')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Thống kê thực giảng, coi thi
+    </div>
+
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('khao-sat')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      Khảo sát
+    </div>
+
+    <div class="section-title">HỆ THỐNG</div>
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Cài đặt hệ thống
+    </div>
+
+    <div class="section-title">THỜI KHÓA BIỂU</div>
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2" onclick="navigate('lich-tuan')">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      Xem thời khóa biểu
+    </div>
+
+    <div class="section-title">HRM - QUẢN LÝ NHÂN SỰ</div>
+    <div class="sidebar-item cursor-pointer px-4 py-2.5 text-white text-sm flex items-center gap-2">
+      <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Quản lý nhân sự
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN AREA -->
+<div class="flex-1 flex flex-col overflow-hidden">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-purple-50 text-purple-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <nav class="flex items-center gap-1 text-sm text-gray-500">
+        <span class="text-purple-700 font-medium">Dashboard</span>
+        <span>/</span>
+        <span id="breadcrumb" class="text-gray-700">Lịch theo tuần</span>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="p-2 rounded-lg hover:bg-purple-50 relative">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+      <div class="flex items-center gap-2 cursor-pointer hover:bg-purple-50 rounded-lg px-3 py-1.5">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">GV</div>
+        <div>
+          <div class="text-sm font-semibold text-gray-700">Nguyễn Văn A</div>
+          <div class="text-xs text-gray-400">Giảng viên</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div class="flex-1 overflow-y-auto p-6">
+
+    <!-- ===== PAGE: LỊCH THEO TUẦN ===== -->
+    <div id="page-lich-tuan" class="page active">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Lịch theo tuần</h1>
+          <p class="text-gray-400 text-sm mt-1">Tuần 20/04/2026 – 26/04/2026</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-outline text-sm flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Tuần trước
+          </button>
+          <button class="btn-primary text-sm">Hôm nay</button>
+          <button class="btn-outline text-sm flex items-center gap-1">
+            Tuần sau
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex gap-4 mb-4 text-sm">
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-green-400"></div><span class="text-gray-600">Lịch dạy lý thuyết</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-indigo-400"></div><span class="text-gray-600">Lịch dạy thực hành</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-yellow-400"></div><span class="text-gray-600">Lịch trực tuyến</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-red-400"></div><span class="text-gray-600">Lịch tạm ngừng</span></div>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="week-grid">
+          <!-- Header -->
+          <div class="week-header text-xs">Ca học</div>
+          <div class="week-header"><div>Thứ 2</div><div class="text-purple-200 font-normal text-xs">20/04/2026</div></div>
+          <div class="week-header"><div>Thứ 3</div><div class="text-purple-200 font-normal text-xs">21/04/2026</div></div>
+          <div class="week-header"><div>Thứ 4</div><div class="text-purple-200 font-normal text-xs">22/04/2026</div></div>
+          <div class="week-header"><div>Thứ 5</div><div class="text-purple-200 font-normal text-xs">23/04/2026</div></div>
+          <div class="week-header"><div>Thứ 6</div><div class="text-purple-200 font-normal text-xs">24/04/2026</div></div>
+          <div class="week-header"><div>Thứ 7</div><div class="text-purple-200 font-normal text-xs">25/04/2026</div></div>
+          <div class="week-header"><div>CN</div><div class="text-purple-200 font-normal text-xs">26/04/2026</div></div>
+
+          <!-- Sáng -->
+          <div class="week-cell session-label text-xs font-semibold text-purple-600">SÁNG</div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-theory">
+              <div class="font-semibold text-green-800 text-xs">Kiến trúc máy tính (LT)</div>
+              <div class="text-green-600 text-xs mt-1">010100228915 - 16DHTH10</div>
+              <div class="text-green-600 text-xs">Tiết 1–3</div>
+              <div class="text-green-700 text-xs font-medium mt-1">📍 A401 - 140 Lê Trọng Tấn</div>
+            </div>
+          </div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-theory">
+              <div class="font-semibold text-green-800 text-xs">Kiến trúc máy tính (LT)</div>
+              <div class="text-green-600 text-xs mt-1">010100228913 - 16DHTH08</div>
+              <div class="text-green-600 text-xs">Tiết 7–9</div>
+              <div class="text-green-700 text-xs font-medium mt-1">📍 B407 - 140 Lê Trọng Tấn</div>
+            </div>
+          </div>
+          <div class="week-cell"></div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-theory mb-2">
+              <div class="font-semibold text-green-800 text-xs">Quản trị hệ thống mạng (LT)</div>
+              <div class="text-green-600 text-xs mt-1">010110197304 - 14DHTH04</div>
+              <div class="text-green-600 text-xs">Tiết 7–9</div>
+              <div class="text-green-700 text-xs font-medium mt-1">📍 A202 - 140 Lê Trọng Tấn</div>
+            </div>
+            <div class="schedule-card schedule-theory">
+              <div class="font-semibold text-green-800 text-xs">Quản trị hệ thống mạng (LT)</div>
+              <div class="text-green-600 text-xs mt-1">010110197303 - 14DHTH03</div>
+              <div class="text-green-600 text-xs">Tiết 10–12</div>
+              <div class="text-green-700 text-xs font-medium mt-1">📍 A301 - 140 Lê Trọng Tấn</div>
+            </div>
+          </div>
+          <div class="week-cell"></div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-online">
+              <div class="font-semibold text-yellow-800 text-xs">Các vấn đề biên đại trong an toàn thông tin (LT)</div>
+              <div class="text-yellow-600 text-xs mt-1">932210293002 - 09CUICMITUE02</div>
+              <div class="text-yellow-600 text-xs">Tiết 2–6</div>
+              <div class="text-yellow-700 text-xs font-medium mt-1">📍 DP01 - Công ty CP Tin học Đại phát</div>
+            </div>
+          </div>
+          <div class="week-cell"></div>
+
+          <!-- Chiều -->
+          <div class="week-cell session-label text-xs font-semibold text-purple-600">CHIỀU</div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+
+          <!-- Tối -->
+          <div class="week-cell session-label text-xs font-semibold text-purple-600">TỐI</div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-practice">
+              <div class="font-semibold text-indigo-800 text-xs">Thực hành quản trị hệ thống mạng (TH)</div>
+              <div class="text-indigo-600 text-xs mt-1">010110192400 - 14DHTH40</div>
+              <div class="text-indigo-600 text-xs">Tiết 13–15</div>
+              <div class="text-indigo-700 text-xs font-medium mt-1">📍 A107 - Phòng máy BM</div>
+            </div>
+          </div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-practice">
+              <div class="font-semibold text-indigo-800 text-xs">Thực hành quản trị hệ thống mạng (TH)</div>
+              <div class="text-indigo-600 text-xs mt-1">010110192401 - 14DHTH41</div>
+              <div class="text-indigo-600 text-xs">Tiết 13–15</div>
+              <div class="text-indigo-700 text-xs font-medium mt-1">📍 A107 - Phòng máy BM</div>
+            </div>
+          </div>
+          <div class="week-cell"></div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-practice">
+              <div class="font-semibold text-indigo-800 text-xs">Thực hành QTHTM (TH)</div>
+              <div class="text-indigo-600 text-xs mt-1">010110192402 - 14DHTH42</div>
+              <div class="text-indigo-600 text-xs">Tiết 13–15</div>
+              <div class="text-indigo-700 text-xs font-medium mt-1">📍 A108 - Phòng máy</div>
+            </div>
+          </div>
+          <div class="week-cell">
+            <div class="schedule-card schedule-practice">
+              <div class="font-semibold text-indigo-800 text-xs">Thực hành QTHTM (TH)</div>
+              <div class="text-indigo-600 text-xs mt-1">010110192403 - 14DHTH43</div>
+              <div class="text-indigo-600 text-xs">Tiết 13–15</div>
+              <div class="text-indigo-700 text-xs font-medium mt-1">📍 A108 - Phòng máy</div>
+            </div>
+          </div>
+          <div class="week-cell"></div>
+          <div class="week-cell"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: ĐIỂM DANH SINH VIÊN ===== -->
+    <div id="page-diem-danh" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Điểm danh sinh viên</h1>
+        <p class="text-gray-400 text-sm mt-1">Quản lý điểm danh theo buổi học</p>
+      </div>
+
+      <!-- Filter card -->
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Học kỳ</label>
+            <select class="input-field">
+              <option>HK2 - 2025-2026</option>
+              <option>HK1 - 2025-2026</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Ngày điểm danh (*)</label>
+            <input type="date" class="input-field" value="2026-02-03">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Chọn lớp học phần (*)</label>
+            <select class="input-field">
+              <option>010110195604 - 14DHTH04</option>
+              <option>010110195603 - 14DHTH03</option>
+              <option>010110195602 - 14DHTH02</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button class="btn-primary text-sm" onclick="loadAttendance()">🔍 Tìm lịch</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-4 gap-4 mb-5">
+        <div class="stat-card" style="background: linear-gradient(135deg,#6B4FA0,#8B6BBF)">
+          <div class="text-white text-xs opacity-75 font-medium">SĨ SỐ</div>
+          <div class="text-white text-3xl font-bold mt-1">60</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#4CAF50,#66BB6A)">
+          <div class="text-white text-xs opacity-75 font-medium">CÓ MẶT</div>
+          <div class="text-white text-3xl font-bold mt-1">58</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#E85D75,#EF5350)">
+          <div class="text-white text-xs opacity-75 font-medium">VẮNG KHÔNG PHÉP</div>
+          <div class="text-white text-3xl font-bold mt-1">1</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#F5A623,#FFB74D)">
+          <div class="text-white text-xs opacity-75 font-medium">VẮNG CÓ PHÉP</div>
+          <div class="text-white text-3xl font-bold mt-1">1</div>
+        </div>
+      </div>
+
+      <!-- Comment + Actions -->
+      <div class="card p-5 mb-5">
+        <label class="block text-sm font-medium text-gray-600 mb-2">Nhận xét lớp</label>
+        <textarea class="input-field" rows="2" placeholder="Nhập nhận xét về buổi học...">Lớp học nghiêm túc, đúng giờ.</textarea>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button class="btn-primary text-sm">💾 Lưu điểm danh</button>
+          <button class="btn-outline text-sm">📊 Xuất Excel</button>
+          <button class="btn-outline text-sm">📄 Xuất file tổng hợp</button>
+          <button class="btn-danger text-sm">🔄 Đồng bộ điểm danh</button>
+        </div>
+      </div>
+
+      <!-- Student Table -->
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-semibold text-gray-700">Danh sách sinh viên</h3>
+          <input type="text" placeholder="Tìm kiếm sinh viên..." class="input-field w-56">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">STT</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Họ đệm</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Tên</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Ngày sinh</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Lớp học</th>
+                <th class="px-4 py-3 text-center font-semibold text-gray-600">Có phép</th>
+                <th class="px-4 py-3 text-center font-semibold text-gray-600">Không phép</th>
+              </tr>
+            </thead>
+            <tbody id="studentTable">
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">1</td><td class="px-4 py-3">Giếng Phát</td><td class="px-4 py-3 font-medium">Ninh</td><td class="px-4 py-3 text-gray-500">25/04/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH04</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">2</td><td class="px-4 py-3">Kiều Tấn</td><td class="px-4 py-3 font-medium">Phát</td><td class="px-4 py-3 text-gray-500">10/09/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH13</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">3</td><td class="px-4 py-3">Lê Trần</td><td class="px-4 py-3 font-medium">Phú</td><td class="px-4 py-3 text-gray-500">20/03/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH08</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" checked class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">4</td><td class="px-4 py-3">Nguyễn Lê Quang</td><td class="px-4 py-3 font-medium">Phú</td><td class="px-4 py-3 text-gray-500">05/04/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH16</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">5</td><td class="px-4 py-3">Lê Trần Hoàng</td><td class="px-4 py-3 font-medium">Phúc</td><td class="px-4 py-3 text-gray-500">05/04/2004</td><td class="px-4 py-3"><span class="badge-present">14DHTH07</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">6</td><td class="px-4 py-3">Nguyễn Hoài</td><td class="px-4 py-3 font-medium">Phúc</td><td class="px-4 py-3 text-gray-500">09/11/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH12</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">7</td><td class="px-4 py-3">Đinh Tấn</td><td class="px-4 py-3 font-medium">Phương</td><td class="px-4 py-3 text-gray-500">29/11/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH13</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">8</td><td class="px-4 py-3">Âu Gia</td><td class="px-4 py-3 font-medium">Quốc</td><td class="px-4 py-3 text-gray-500">17/08/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH12</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">9</td><td class="px-4 py-3">Đoàn Anh</td><td class="px-4 py-3 font-medium">Khôi</td><td class="px-4 py-3 text-gray-500">14/09/2004</td><td class="px-4 py-3"><span class="badge-present">13DHTH06</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">10</td><td class="px-4 py-3">Nguyễn Duy</td><td class="px-4 py-3 font-medium">Linh</td><td class="px-4 py-3 text-gray-500">02/12/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH04</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">11</td><td class="px-4 py-3">Cao Đức</td><td class="px-4 py-3 font-medium">Mạnh</td><td class="px-4 py-3 text-gray-500">16/11/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH12</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" checked class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">12</td><td class="px-4 py-3">Phan Trọng</td><td class="px-4 py-3 font-medium">Nghiêm</td><td class="px-4 py-3 text-gray-500">12/10/2003</td><td class="px-4 py-3"><span class="badge-present">12DHBM05</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" checked class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">13</td><td class="px-4 py-3">Võ Hồ Trọng</td><td class="px-4 py-3 font-medium">Nhật</td><td class="px-4 py-3 text-gray-500">02/08/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH16</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+              <tr class="table-row"><td class="px-4 py-3 text-gray-500">14</td><td class="px-4 py-3">Đặng Đình</td><td class="px-4 py-3 font-medium">Sang</td><td class="px-4 py-3 text-gray-500">20/04/2005</td><td class="px-4 py-3"><span class="badge-present">14DHTH09</span></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-purple-600"></td><td class="px-4 py-3 text-center"><input type="checkbox" class="w-4 h-4 accent-red-500"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: QR CODE ===== -->
+    <div id="page-qr-code" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Điểm danh QR Code</h1>
+        <p class="text-gray-400 text-sm mt-1">Sinh viên quét mã QR để điểm danh</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-6">
+          <h3 class="font-semibold text-gray-700 mb-4">Tạo mã QR điểm danh</h3>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label>
+            <select class="input-field mb-3">
+              <option>010110195604 - 14DHTH04</option>
+              <option>010110195603 - 14DHTH03</option>
+            </select>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Thời gian hiệu lực (phút)</label>
+            <input type="number" class="input-field mb-3" value="15" min="5" max="60">
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Buổi học</label>
+            <select class="input-field mb-4">
+              <option>Buổi sáng - 03/02/2026</option>
+              <option>Buổi chiều - 03/02/2026</option>
+            </select>
+            <button class="btn-primary w-full" onclick="generateQR()">🔲 Tạo mã QR</button>
+          </div>
+        </div>
+        <div class="card p-6 flex flex-col items-center justify-center">
+          <div id="qrDisplay" class="qr-box mb-4">
+            <div class="text-center text-gray-400">
+              <div class="text-5xl mb-2">🔲</div>
+              <div class="text-sm">Nhấn "Tạo mã QR" để hiển thị</div>
+            </div>
+          </div>
+          <div id="qrTimer" class="hidden text-center">
+            <div class="text-4xl font-bold text-purple-700" id="qrCountdown">15:00</div>
+            <div class="text-sm text-gray-500 mt-1">Thời gian còn lại</div>
+            <div class="progress-bar w-48 mt-3">
+              <div class="progress-fill" id="qrProgress" style="width:100%"></div>
+            </div>
+            <button class="btn-outline mt-4 text-sm">🔄 Làm mới QR</button>
+          </div>
+        </div>
+      </div>
+      <div class="card p-5 mt-5">
+        <h3 class="font-semibold text-gray-700 mb-3">Sinh viên đã điểm danh QR hôm nay</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50"><th class="px-4 py-2.5 text-left font-semibold text-gray-600">Họ tên</th><th class="px-4 py-2.5 text-left font-semibold text-gray-600">MSSV</th><th class="px-4 py-2.5 text-left font-semibold text-gray-600">Thời gian quét</th><th class="px-4 py-2.5 text-left font-semibold text-gray-600">Trạng thái</th></tr></thead>
+            <tbody>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-2.5 font-medium">Kiều Tấn Phát</td><td class="px-4 py-2.5 text-gray-500">14DHTH13001</td><td class="px-4 py-2.5 text-gray-500">07:32:15</td><td class="px-4 py-2.5"><span class="badge-present">✓ Đúng giờ</span></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-2.5 font-medium">Âu Gia Quốc</td><td class="px-4 py-2.5 text-gray-500">14DHTH12005</td><td class="px-4 py-2.5 text-gray-500">07:35:42</td><td class="px-4 py-2.5"><span class="badge-present">✓ Đúng giờ</span></td></tr>
+              <tr class="table-row"><td class="px-4 py-2.5 font-medium">Cao Đức Mạnh</td><td class="px-4 py-2.5 text-gray-500">14DHTH12007</td><td class="px-4 py-2.5 text-gray-500">07:42:01</td><td class="px-4 py-2.5"><span class="badge-absent">! Trễ</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: LỊCH THEO TIẾN ĐỘ ===== -->
+    <div id="page-lich-tien-do" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Lịch theo tiến độ</h1>
+        <p class="text-gray-400 text-sm mt-1">Xem tiến độ giảng dạy theo từng môn học</p>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Học kỳ</label><select class="input-field"><option>HK2 - 2025-2026</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Môn học</label><select class="input-field"><option>Tất cả môn học</option><option>Kiến trúc máy tính</option><option>Quản trị hệ thống mạng</option></select></div>
+          <div class="flex items-end"><button class="btn-primary w-full">🔍 Xem tiến độ</button></div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-800">Kiến trúc máy tính (LT)</h3>
+              <div class="text-sm text-gray-400">010100228915 - 16DHTH10 | 45 tiết</div>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Đang dạy</span>
+          </div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="progress-bar flex-1"><div class="progress-fill" style="width:65%"></div></div>
+            <span class="text-sm font-semibold text-purple-700">65%</span>
+          </div>
+          <div class="text-xs text-gray-400">Đã dạy: 29/45 tiết | Còn lại: 16 tiết</div>
+          <div class="mt-3 flex gap-2 flex-wrap">
+            <div class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded">Chương 1: ✓</div>
+            <div class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded">Chương 2: ✓</div>
+            <div class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded">Chương 3: ✓</div>
+            <div class="text-xs px-2 py-1 bg-yellow-50 text-yellow-600 rounded">Chương 4: 60%</div>
+            <div class="text-xs px-2 py-1 bg-gray-50 text-gray-400 rounded">Chương 5: Chưa</div>
+          </div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-800">Quản trị hệ thống mạng (LT)</h3>
+              <div class="text-sm text-gray-400">010110197304 - 14DHTH04 | 60 tiết</div>
+            </div>
+            <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Đang dạy</span>
+          </div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="progress-bar flex-1"><div class="progress-fill" style="width:40%"></div></div>
+            <span class="text-sm font-semibold text-purple-700">40%</span>
+          </div>
+          <div class="text-xs text-gray-400">Đã dạy: 24/60 tiết | Còn lại: 36 tiết</div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-800">TH Quản trị hệ thống mạng (TH)</h3>
+              <div class="text-sm text-gray-400">010110192400 - 14DHTH40 | 30 tiết</div>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Đang dạy</span>
+          </div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="progress-bar flex-1"><div class="progress-fill" style="width:80%"></div></div>
+            <span class="text-sm font-semibold text-purple-700">80%</span>
+          </div>
+          <div class="text-xs text-gray-400">Đã dạy: 24/30 tiết | Còn lại: 6 tiết</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: QUẢN LÝ KẾT QUẢ ===== -->
+    <div id="page-ket-qua" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Quản lý kết quả học tập</h1>
+        <p class="text-gray-400 text-sm mt-1">Nhập và quản lý điểm số sinh viên</p>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Học kỳ</label><select class="input-field"><option>HK2 - 2025-2026</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label><select class="input-field"><option>010110195604 - 14DHTH04</option></select></div>
+          <div class="flex items-end gap-2"><button class="btn-primary flex-1">🔍 Tìm</button><button class="btn-outline">📊 Xuất Excel</button></div>
+        </div>
+      </div>
+
+      <!-- Score summary cards -->
+      <div class="grid grid-cols-4 gap-4 mb-5">
+        <div class="card p-4 text-center"><div class="text-2xl font-bold text-purple-700">7.8</div><div class="text-xs text-gray-400 mt-1">Điểm TB lớp</div></div>
+        <div class="card p-4 text-center"><div class="text-2xl font-bold text-green-600">42</div><div class="text-xs text-gray-400 mt-1">Đạt (≥5.0)</div></div>
+        <div class="card p-4 text-center"><div class="text-2xl font-bold text-red-500">3</div><div class="text-xs text-gray-400 mt-1">Không đạt</div></div>
+        <div class="card p-4 text-center"><div class="text-2xl font-bold text-yellow-600">15</div><div class="text-xs text-gray-400 mt-1">Xuất sắc (≥9.0)</div></div>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50 border-b"><th class="px-4 py-3 text-left font-semibold text-gray-600">STT</th><th class="px-4 py-3 text-left font-semibold text-gray-600">Họ tên</th><th class="px-4 py-3 text-center font-semibold text-gray-600">MSSV</th><th class="px-4 py-3 text-center font-semibold text-gray-600">CC (10%)</th><th class="px-4 py-3 text-center font-semibold text-gray-600">GK (30%)</th><th class="px-4 py-3 text-center font-semibold text-gray-600">CK (60%)</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Tổng</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Xếp loại</th></tr></thead>
+            <tbody>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">1</td><td class="px-4 py-3 font-medium">Kiều Tấn Phát</td><td class="px-4 py-3 text-center text-gray-500">14DHTH13001</td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="9" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="8.5" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="9.2" min="0" max="10"></td><td class="px-4 py-3 text-center font-bold text-green-600">9.1</td><td class="px-4 py-3 text-center"><span class="badge-present">Xuất sắc</span></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">2</td><td class="px-4 py-3 font-medium">Cao Đức Mạnh</td><td class="px-4 py-3 text-center text-gray-500">14DHTH12007</td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="7" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="6.5" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="7.8" min="0" max="10"></td><td class="px-4 py-3 text-center font-bold text-blue-600">7.3</td><td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Khá</span></td></tr>
+              <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 text-gray-500">3</td><td class="px-4 py-3 font-medium">Phan Trọng Nghiêm</td><td class="px-4 py-3 text-center text-gray-500">12DHBM05001</td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="4" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="3.5" min="0" max="10"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="4.2" min="0" max="10"></td><td class="px-4 py-3 text-center font-bold text-red-500">3.9</td><td class="px-4 py-3 text-center"><span class="badge-absent">Không đạt</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 border-t border-gray-100 flex gap-2">
+          <button class="btn-primary text-sm">💾 Lưu điểm</button>
+          <button class="btn-outline text-sm">🔄 Khóa điểm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: KHAI BÁO THÔNG TIN ===== -->
+    <div id="page-khai-bao" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Khai báo thông tin</h1>
+        <p class="text-gray-400 text-sm mt-1">Cập nhật thông tin giảng dạy học kỳ</p>
+      </div>
+      <div class="card p-6">
+        <div class="grid grid-cols-2 gap-5">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Họ và tên giảng viên</label><input class="input-field" value="Nguyễn Văn A" readonly></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Mã giảng viên</label><input class="input-field" value="GV001" readonly></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Khoa / Bộ môn</label><input class="input-field" value="Công nghệ thông tin" readonly></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Học kỳ khai báo</label><select class="input-field"><option>HK2 - 2025-2026</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Số tiết dạy dự kiến</label><input type="number" class="input-field" value="120"></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Số lớp phụ trách</label><input type="number" class="input-field" value="5"></div>
+          <div class="col-span-2"><label class="block text-sm font-medium text-gray-600 mb-1.5">Ghi chú</label><textarea class="input-field" rows="3" placeholder="Nhập ghi chú (nếu có)..."></textarea></div>
+        </div>
+        <div class="flex gap-3 mt-5">
+          <button class="btn-primary">💾 Lưu khai báo</button>
+          <button class="btn-outline">🔄 Đặt lại</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: THÔNG TIN LƯƠNG ===== -->
+    <div id="page-luong" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Thông tin lương</h1>
+        <p class="text-gray-400 text-sm mt-1">Tra cứu bảng lương theo tháng</p>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Năm</label><select class="input-field"><option>2026</option><option>2025</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Tháng</label><select class="input-field"><option>Tháng 3/2026</option><option>Tháng 2/2026</option><option>Tháng 1/2026</option></select></div>
+          <div class="flex items-end"><button class="btn-primary w-full">🔍 Xem bảng lương</button></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4 mb-5">
+        <div class="stat-card" style="background: linear-gradient(135deg,#4CAF50,#66BB6A)"><div class="text-white text-xs opacity-75">Lương cơ bản</div><div class="text-white text-2xl font-bold mt-1">12,500,000đ</div></div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#6B4FA0,#8B6BBF)"><div class="text-white text-xs opacity-75">Phụ cấp & thưởng</div><div class="text-white text-2xl font-bold mt-1">3,200,000đ</div></div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#E85D75,#EF5350)"><div class="text-white text-xs opacity-75">Thực nhận (sau KT)</div><div class="text-white text-2xl font-bold mt-1">14,800,000đ</div></div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-100"><h3 class="font-semibold text-gray-700">Chi tiết bảng lương - Tháng 3/2026</h3></div>
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50"><th class="px-4 py-3 text-left font-semibold text-gray-600">Khoản mục</th><th class="px-4 py-3 text-right font-semibold text-gray-600">Số tiền</th><th class="px-4 py-3 text-left font-semibold text-gray-600">Ghi chú</th></tr></thead>
+          <tbody>
+            <tr class="border-b border-gray-50"><td class="px-4 py-3">Lương cơ bản</td><td class="px-4 py-3 text-right font-medium text-green-600">12,500,000đ</td><td class="px-4 py-3 text-gray-400 text-xs">Hệ số 3.0</td></tr>
+            <tr class="border-b border-gray-50"><td class="px-4 py-3">Phụ cấp chức vụ</td><td class="px-4 py-3 text-right font-medium text-green-600">800,000đ</td><td class="px-4 py-3 text-gray-400 text-xs"></td></tr>
+            <tr class="border-b border-gray-50"><td class="px-4 py-3">Phụ cấp thâm niên</td><td class="px-4 py-3 text-right font-medium text-green-600">1,200,000đ</td><td class="px-4 py-3 text-gray-400 text-xs">8% lương CB</td></tr>
+            <tr class="border-b border-gray-50"><td class="px-4 py-3">Thưởng tiết dạy vượt</td><td class="px-4 py-3 text-right font-medium text-green-600">1,200,000đ</td><td class="px-4 py-3 text-gray-400 text-xs">12 tiết × 100,000đ</td></tr>
+            <tr class="border-b border-gray-50 bg-red-50"><td class="px-4 py-3 text-red-600">Bảo hiểm xã hội (8%)</td><td class="px-4 py-3 text-right font-medium text-red-500">-1,000,000đ</td><td class="px-4 py-3 text-gray-400 text-xs"></td></tr>
+            <tr class="border-b border-gray-50 bg-red-50"><td class="px-4 py-3 text-red-600">Thuế TNCN</td><td class="px-4 py-3 text-right font-medium text-red-500">-1,100,000đ</td><td class="px-4 py-3 text-gray-400 text-xs"></td></tr>
+            <tr class="bg-purple-50"><td class="px-4 py-3 font-bold text-purple-800">THỰC NHẬN</td><td class="px-4 py-3 text-right font-bold text-purple-800 text-base">14,800,000đ</td><td class="px-4 py-3"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: HỒ SƠ CÁ NHÂN ===== -->
+    <div id="page-ho-so" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Hồ sơ cá nhân</h1>
+        <p class="text-gray-400 text-sm mt-1">Thông tin cá nhân giảng viên</p>
+      </div>
+      <div class="grid grid-cols-3 gap-5">
+        <div class="card p-6 flex flex-col items-center">
+          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold mb-4">GV</div>
+          <h3 class="font-bold text-gray-800 text-lg">Nguyễn Văn A</h3>
+          <p class="text-gray-400 text-sm">Giảng viên chính</p>
+          <p class="text-purple-600 text-sm font-medium mt-1">Bộ môn Mạng máy tính</p>
+          <button class="btn-outline mt-4 text-sm w-full">📷 Đổi ảnh đại diện</button>
+        </div>
+        <div class="card p-5 col-span-2">
+          <h3 class="font-semibold text-gray-700 mb-4">Thông tin cơ bản</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Họ và tên</label><input class="input-field text-sm" value="Nguyễn Văn A"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Ngày sinh</label><input type="date" class="input-field text-sm" value="1985-05-15"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Giới tính</label><select class="input-field text-sm"><option>Nam</option><option>Nữ</option></select></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Số CMND/CCCD</label><input class="input-field text-sm" value="079085012345"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Email</label><input class="input-field text-sm" value="nguyenvana@huit.edu.vn"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Số điện thoại</label><input class="input-field text-sm" value="0901234567"></div>
+            <div class="col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">Địa chỉ</label><input class="input-field text-sm" value="140 Lê Trọng Tấn, Tân Phú, TP.HCM"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Trình độ học vấn</label><select class="input-field text-sm"><option>Thạc sĩ</option><option>Tiến sĩ</option></select></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Chuyên ngành</label><input class="input-field text-sm" value="Khoa học máy tính"></div>
+          </div>
+          <button class="btn-primary mt-4 text-sm">💾 Cập nhật thông tin</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: TÀI LIỆU BÀI GIẢNG ===== -->
+    <div id="page-tai-lieu" class="page">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Quản lý tài liệu bài giảng</h1>
+          <p class="text-gray-400 text-sm mt-1">Upload và quản lý slide, tài liệu giảng dạy</p>
+        </div>
+        <button class="btn-primary text-sm">+ Thêm tài liệu</button>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label><select class="input-field"><option>Tất cả lớp</option><option>014DHTH04</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Loại tài liệu</label><select class="input-field"><option>Tất cả</option><option>Slide bài giảng</option><option>Bài tập</option><option>Đề thi</option></select></div>
+          <div class="flex items-end"><button class="btn-primary w-full">🔍 Tìm kiếm</button></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="card p-4 hover:shadow-md transition-shadow cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-red-500 text-lg flex-shrink-0">📊</div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-gray-800 text-sm truncate">Slide Chương 1 - Giới thiệu</h4>
+              <p class="text-xs text-gray-400 mt-0.5">Kiến trúc máy tính</p>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs text-gray-400">2.3 MB</span>
+                <span class="text-xs text-gray-300">|</span>
+                <span class="text-xs text-gray-400">15/01/2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1 mt-3">
+            <button class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100">👁 Xem</button>
+            <button class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">📥 Tải</button>
+            <button class="text-xs px-2 py-1 bg-red-50 text-red-500 rounded hover:bg-red-100">🗑 Xóa</button>
+          </div>
+        </div>
+        <div class="card p-4 hover:shadow-md transition-shadow cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500 text-lg flex-shrink-0">📝</div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-gray-800 text-sm truncate">Bài tập Chương 2</h4>
+              <p class="text-xs text-gray-400 mt-0.5">QTHTM - 14DHTH04</p>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs text-gray-400">450 KB</span>
+                <span class="text-xs text-gray-300">|</span>
+                <span class="text-xs text-gray-400">20/01/2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1 mt-3">
+            <button class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded">👁 Xem</button>
+            <button class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded">📥 Tải</button>
+            <button class="text-xs px-2 py-1 bg-red-50 text-red-500 rounded">🗑 Xóa</button>
+          </div>
+        </div>
+        <div class="card p-4 hover:shadow-md transition-shadow cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-500 text-lg flex-shrink-0">📋</div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-gray-800 text-sm truncate">Đề cương môn học</h4>
+              <p class="text-xs text-gray-400 mt-0.5">Kiến trúc máy tính</p>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs text-gray-400">128 KB</span>
+                <span class="text-xs text-gray-300">|</span>
+                <span class="text-xs text-gray-400">01/01/2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1 mt-3">
+            <button class="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded">👁 Xem</button>
+            <button class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded">📥 Tải</button>
+            <button class="text-xs px-2 py-1 bg-red-50 text-red-500 rounded">🗑 Xóa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: PHIẾU ĐÁNH GIÁ ===== -->
+    <div id="page-phieu-danh-gia" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Phiếu đánh giá</h1>
+        <p class="text-gray-400 text-sm mt-1">Đánh giá chuyên cần và rèn luyện sinh viên</p>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Học kỳ</label><select class="input-field"><option>HK2 - 2025-2026</option></select></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label><select class="input-field"><option>010110195604 - 14DHTH04</option></select></div>
+          <div class="flex items-end"><button class="btn-primary w-full">🔍 Tải danh sách</button></div>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+          <h3 class="font-semibold text-gray-700">Đánh giá rèn luyện - HK2 2025-2026</h3>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50"><th class="px-4 py-3 text-left font-semibold text-gray-600">Họ tên</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Thái độ</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Chuyên cần</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Kết quả HT</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Tổng điểm</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Xếp loại</th></tr></thead>
+          <tbody>
+            <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 font-medium">Kiều Tấn Phát</td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="25" max="25"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="30" max="30"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="40" max="40"></td><td class="px-4 py-3 text-center font-bold text-green-600">95</td><td class="px-4 py-3 text-center"><span class="badge-present">Xuất sắc</span></td></tr>
+            <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 font-medium">Cao Đức Mạnh</td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="20" max="25"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="25" max="30"></td><td class="px-4 py-3 text-center"><input type="number" class="w-14 text-center border rounded p-1 text-xs" value="30" max="40"></td><td class="px-4 py-3 text-center font-bold text-blue-600">75</td><td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Khá</span></td></tr>
+          </tbody>
+        </table>
+        <div class="p-4 border-t border-gray-100 flex gap-2">
+          <button class="btn-primary text-sm">💾 Lưu đánh giá</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: ĐỀ XUẤT TẠM NGỪNG ===== -->
+    <div id="page-de-xuat-ngung" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Đề xuất tạm ngừng lịch dạy</h1>
+        <p class="text-gray-400 text-sm mt-1">Yêu cầu tạm ngừng buổi dạy có lý do</p>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-700 mb-4">Tạo đề xuất mới</h3>
+          <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label><select class="input-field"><option>010110195604 - 14DHTH04</option><option>010110195603 - 14DHTH03</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ngày xin ngừng</label><input type="date" class="input-field" value="2026-04-25"></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ca học</label><select class="input-field"><option>Sáng (Tiết 1-3)</option><option>Chiều (Tiết 7-9)</option><option>Tối (Tiết 13-15)</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lý do</label><textarea class="input-field" rows="3" placeholder="Nhập lý do xin tạm ngừng..."></textarea></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Đính kèm minh chứng</label><input type="file" class="input-field text-sm"></div>
+            <button class="btn-primary w-full">📤 Gửi đề xuất</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-700 mb-4">Lịch sử đề xuất</h3>
+          <div class="space-y-3">
+            <div class="border border-gray-100 rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-medium text-sm">14DHTH04 - 15/03/2026</span>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold">Đã duyệt</span>
+              </div>
+              <p class="text-xs text-gray-500">Lý do: Tham dự hội thảo khoa học quốc tế</p>
+              <p class="text-xs text-gray-400 mt-1">Gửi lúc: 10/03/2026 08:30</p>
+            </div>
+            <div class="border border-gray-100 rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-medium text-sm">14DHTH03 - 22/02/2026</span>
+                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-semibold">Chờ duyệt</span>
+              </div>
+              <p class="text-xs text-gray-500">Lý do: Ốm, có giấy tờ y tế</p>
+              <p class="text-xs text-gray-400 mt-1">Gửi lúc: 20/02/2026 14:15</p>
+            </div>
+            <div class="border border-gray-100 rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-medium text-sm">16DHTH10 - 10/01/2026</span>
+                <span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-semibold">Từ chối</span>
+              </div>
+              <p class="text-xs text-gray-500">Lý do: Việc gia đình</p>
+              <p class="text-xs text-gray-400 mt-1">Gửi lúc: 08/01/2026 09:00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: DẠY BÙ ===== -->
+    <div id="page-day-bu" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Đề xuất dạy bù</h1>
+        <p class="text-gray-400 text-sm mt-1">Lên lịch bù cho các buổi đã nghỉ</p>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-700 mb-4">Tạo lịch dạy bù</h3>
+          <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần</label><select class="input-field"><option>010110195604 - 14DHTH04</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Buổi nghỉ gốc</label><select class="input-field"><option>22/02/2026 - Ca sáng</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ngày dạy bù</label><input type="date" class="input-field" value="2026-04-26"></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ca học bù</label><select class="input-field"><option>Sáng (Tiết 1-3)</option><option>Chiều</option><option>Tối</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Phòng học đề xuất</label><input class="input-field" placeholder="VD: A401"></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ghi chú</label><textarea class="input-field" rows="2" placeholder="Ghi chú thêm..."></textarea></div>
+            <button class="btn-primary w-full">📤 Gửi đề xuất dạy bù</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-700 mb-4">Trạng thái dạy bù</h3>
+          <div class="space-y-3">
+            <div class="p-3 border border-green-200 bg-green-50 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="font-medium text-sm text-green-800">14DHTH04 - Bù 15/03</span>
+                <span class="text-xs bg-green-200 text-green-700 px-2 py-0.5 rounded-full font-semibold">✓ Đã dạy bù</span>
+              </div>
+              <p class="text-xs text-green-600 mt-1">Ca sáng, Phòng A401, 15/03/2026</p>
+            </div>
+            <div class="p-3 border border-yellow-200 bg-yellow-50 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="font-medium text-sm text-yellow-800">14DHTH03 - Bù 26/04</span>
+                <span class="text-xs bg-yellow-200 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">⏳ Chờ duyệt</span>
+              </div>
+              <p class="text-xs text-yellow-600 mt-1">Ca sáng, Phòng đề xuất A202</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: DẠY THAY ===== -->
+    <div id="page-day-thay" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Đề xuất dạy thay</h1>
+        <p class="text-gray-400 text-sm mt-1">Yêu cầu giảng viên khác dạy thay</p>
+      </div>
+      <div class="card p-5">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lớp học phần cần thay</label><select class="input-field"><option>010110195604 - 14DHTH04</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ngày dạy cần thay</label><input type="date" class="input-field" value="2026-04-22"></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Ca học</label><select class="input-field"><option>Chiều (Tiết 7-9)</option></select></div>
+            <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Giảng viên thay thế</label><select class="input-field"><option>Trần Thị B - Bộ môn CNTT</option><option>Lê Văn C - Bộ môn Mạng</option></select></div>
+          </div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Nội dung bài cần dạy thay</label><textarea class="input-field" rows="3" placeholder="Mô tả nội dung buổi học cần dạy thay..."></textarea></div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1.5">Lý do</label><textarea class="input-field" rows="2" placeholder="Lý do cần dạy thay..."></textarea></div>
+          <div class="flex gap-3">
+            <button class="btn-primary">📤 Gửi đề xuất</button>
+            <button class="btn-outline">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: THỐNG KÊ ===== -->
+    <div id="page-thong-ke" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Thống kê thực giảng, coi thi</h1>
+        <p class="text-gray-400 text-sm mt-1">Báo cáo giờ dạy thực tế và coi thi</p>
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-5">
+        <div class="stat-card" style="background: linear-gradient(135deg,#6B4FA0,#8B6BBF)"><div class="text-white text-xs opacity-75">Tổng số tiết dạy</div><div class="text-white text-3xl font-bold mt-1">186</div><div class="text-purple-200 text-xs mt-1">HK2 - 2025-2026</div></div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#4CAF50,#66BB6A)"><div class="text-white text-xs opacity-75">Tiết dạy lý thuyết</div><div class="text-white text-3xl font-bold mt-1">120</div></div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#2196F3,#42A5F5)"><div class="text-white text-xs opacity-75">Tiết dạy thực hành</div><div class="text-white text-3xl font-bold mt-1">66</div></div>
+        <div class="stat-card" style="background: linear-gradient(135deg,#F5A623,#FFB74D)"><div class="text-white text-xs opacity-75">Ca coi thi</div><div class="text-white text-3xl font-bold mt-1">4</div></div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card p-5 mb-5">
+        <h3 class="font-semibold text-gray-700 mb-4">Biểu đồ tiết dạy theo tháng</h3>
+        <div class="flex items-end gap-3 h-40">
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-purple-400" style="height:60px"></div><span class="text-xs text-gray-400">T1</span></div>
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-purple-400" style="height:90px"></div><span class="text-xs text-gray-400">T2</span></div>
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-purple-600" style="height:120px"></div><span class="text-xs text-gray-400">T3</span></div>
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-purple-400" style="height:80px"></div><span class="text-xs text-gray-400">T4</span></div>
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-gray-200" style="height:40px"></div><span class="text-xs text-gray-400">T5</span></div>
+          <div class="flex flex-col items-center gap-1 flex-1"><div class="chart-bar w-full bg-gray-200" style="height:0px"></div><span class="text-xs text-gray-400">T6</span></div>
+        </div>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-semibold text-gray-700">Danh sách môn dạy HK2 - 2025-2026</h3>
+          <button class="btn-outline text-sm">📊 Xuất báo cáo</button>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50"><th class="px-4 py-3 text-left font-semibold text-gray-600">Môn học</th><th class="px-4 py-3 text-left font-semibold text-gray-600">Lớp</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Tổng tiết</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Đã dạy</th><th class="px-4 py-3 text-center font-semibold text-gray-600">Tiến độ</th></tr></thead>
+          <tbody>
+            <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 font-medium">Kiến trúc máy tính (LT)</td><td class="px-4 py-3 text-gray-500">16DHTH10</td><td class="px-4 py-3 text-center">45</td><td class="px-4 py-3 text-center">29</td><td class="px-4 py-3"><div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div></td></tr>
+            <tr class="table-row border-b border-gray-50"><td class="px-4 py-3 font-medium">QTHTM (LT)</td><td class="px-4 py-3 text-gray-500">14DHTH04</td><td class="px-4 py-3 text-center">60</td><td class="px-4 py-3 text-center">24</td><td class="px-4 py-3"><div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div></td></tr>
+            <tr class="table-row"><td class="px-4 py-3 font-medium">TH QTHTM</td><td class="px-4 py-3 text-gray-500">14DHTH40</td><td class="px-4 py-3 text-center">30</td><td class="px-4 py-3 text-center">24</td><td class="px-4 py-3"><div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: KHẢO SÁT ===== -->
+    <div id="page-khao-sat" class="page">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Khảo sát</h1>
+        <p class="text-gray-400 text-sm mt-1">Kết quả khảo sát giảng dạy từ sinh viên</p>
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-5">
+        <div class="card p-4 text-center"><div class="text-3xl font-bold text-purple-700">4.6</div><div class="text-yellow-400 text-lg">★★★★★</div><div class="text-xs text-gray-400 mt-1">Điểm TB giảng dạy</div></div>
+        <div class="card p-4 text-center"><div class="text-3xl font-bold text-green-600">95%</div><div class="text-xs text-gray-400 mt-1">Sinh viên hài lòng</div></div>
+        <div class="card p-4 text-center"><div class="text-3xl font-bold text-blue-600">3</div><div class="text-xs text-gray-400 mt-1">Lớp đã khảo sát</div></div>
+        <div class="card p-4 text-center"><div class="text-3xl font-bold text-orange-500">128</div><div class="text-xs text-gray-400 mt-1">Lượt phản hồi</div></div>
+      </div>
+      <div class="card p-5 mb-5">
+        <h3 class="font-semibold text-gray-700 mb-4">Kết quả theo tiêu chí</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-600">Kiến thức chuyên môn</span><span class="font-semibold text-purple-700">4.8/5</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:96%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-600">Phương pháp giảng dạy</span><span class="font-semibold text-purple-700">4.5/5</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-600">Tương tác với sinh viên</span><span class="font-semibold text-purple-700">4.7/5</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:94%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-600">Tài liệu giảng dạy</span><span class="font-semibold text-purple-700">4.4/5</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-600">Đúng giờ, kỷ luật</span><span class="font-semibold text-purple-700">4.9/5</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-semibold text-gray-700 mb-3">Nhận xét từ sinh viên</h3>
+        <div class="space-y-3">
+          <div class="p-3 bg-purple-50 rounded-lg"><p class="text-sm text-gray-700">"Thầy giảng rất rõ ràng và dễ hiểu. Có nhiều ví dụ thực tế."</p><p class="text-xs text-gray-400 mt-1">14DHTH04 • ẩn danh</p></div>
+          <div class="p-3 bg-purple-50 rounded-lg"><p class="text-sm text-gray-700">"Bài giảng được chuẩn bị kỹ lưỡng. Thầy nhiệt tình hỗ trợ sinh viên."</p><p class="text-xs text-gray-400 mt-1">16DHTH10 • ẩn danh</p></div>
+          <div class="p-3 bg-yellow-50 rounded-lg"><p class="text-sm text-gray-700">"Mong thầy cho thêm bài tập thực hành để củng cố kiến thức."</p><p class="text-xs text-gray-400 mt-1">14DHTH03 • ẩn danh</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end page content -->
+</div><!-- end main -->
+
+<!-- NOTIFICATION -->
+<div class="notification" id="toast">
+  <div class="flex items-center gap-3">
+    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</div>
+    <div>
+      <div class="font-semibold text-gray-800 text-sm" id="toastTitle">Thông báo</div>
+      <div class="text-gray-500 text-xs" id="toastMsg">Điểm danh thành công.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const pages = {
+  'lich-tuan': 'Lịch theo tuần',
+  'diem-danh': 'Điểm danh sinh viên',
+  'qr-code': 'Điểm danh QR Code',
+  'lich-tien-do': 'Lịch theo tiến độ',
+  'ket-qua': 'Quản lý kết quả học tập',
+  'khai-bao': 'Khai báo thông tin',
+  'luong': 'Thông tin lương',
+  'ho-so': 'Hồ sơ cá nhân',
+  'tai-lieu': 'Quản lý tài liệu bài giảng',
+  'phieu-danh-gia': 'Phiếu đánh giá',
+  'de-xuat-ngung': 'Đề xuất tạm ngừng lịch dạy',
+  'day-bu': 'Đề xuất dạy bù',
+  'day-thay': 'Đề xuất dạy thay',
+  'thong-ke': 'Thống kê thực giảng',
+  'khao-sat': 'Khảo sát'
+};
+
+function navigate(pageId) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show target
+  const target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.classList.add('active');
+    document.getElementById('breadcrumb').textContent = pages[pageId] || pageId;
+  }
+  // Update sidebar active states
+  document.querySelectorAll('.sidebar-item, .sidebar-sub-item').forEach(el => el.classList.remove('active'));
+}
+
+function toggleMenu(id) {
+  const menu = document.getElementById('menu-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  menu.classList.toggle('open');
+  if (menu.classList.contains('open')) {
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    arrow.style.transform = '';
+  }
+}
+
+function showToast(title, msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg;
+  toast.style.borderLeftColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#E85D75' : '#F5A623';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function loadAttendance() {
+  showToast('Thông báo', 'Điểm danh thành công.', 'success');
+}
+
+let qrInterval = null;
+function generateQR() {
+  const display = document.getElementById('qrDisplay');
+  const timer = document.getElementById('qrTimer');
+  const countdown = document.getElementById('qrCountdown');
+  const progress = document.getElementById('qrProgress');
+
+  display.innerHTML = `
+    <svg viewBox="0 0 100 100" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="5" width="35" height="35" rx="3" fill="none" stroke="#6B4FA0" stroke-width="4"/>
+      <rect x="15" y="15" width="15" height="15" rx="1" fill="#6B4FA0"/>
+      <rect x="60" y="5" width="35" height="35" rx="3" fill="none" stroke="#6B4FA0" stroke-width="4"/>
+      <rect x="70" y="15" width="15" height="15" rx="1" fill="#6B4FA0"/>
+      <rect x="5" y="60" width="35" height="35" rx="3" fill="none" stroke="#6B4FA0" stroke-width="4"/>
+      <rect x="15" y="70" width="15" height="15" rx="1" fill="#6B4FA0"/>
+      <rect x="50" y="50" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="62" y="50" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="74" y="50" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="86" y="50" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="50" y="62" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="74" y="62" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="50" y="74" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="62" y="74" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="86" y="74" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="62" y="86" width="8" height="8" fill="#6B4FA0"/>
+      <rect x="86" y="86" width="8" height="8" fill="#6B4FA0"/>
+    </svg>`;
+
+  timer.classList.remove('hidden');
+
+  let totalSeconds = 15 * 60;
+  let remaining = totalSeconds;
+
+  if (qrInterval) clearInterval(qrInterval);
+  qrInterval = setInterval(() => {
+    remaining--;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    countdown.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    progress.style.width = (remaining / totalSeconds * 100) + '%';
+    if (remaining <= 0) {
+      clearInterval(qrInterval);
+      countdown.textContent = 'Hết hạn';
+      showToast('QR hết hạn', 'Mã QR đã hết hiệu lực. Vui lòng tạo lại.', 'warn');
+    }
+  }, 1000);
+
+  showToast('QR đã tạo', 'Mã QR điểm danh có hiệu lực 15 phút.', 'success');
+}
+
+// Auto-open Chuyên cần menu on load
+toggleMenu('chuyen-can');
+
+// Initial notification demo
+setTimeout(() => showToast('Chào mừng!', 'Đăng nhập hệ thống thành công.', 'success'), 800);
+</script>
+</body>
+</html>

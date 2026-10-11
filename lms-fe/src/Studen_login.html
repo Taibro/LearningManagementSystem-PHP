@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EduSpace — Đăng nhập Sinh viên</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;min-height:100vh;overflow:hidden;}
+.layout{display:grid;grid-template-columns:48% 52%;min-height:100vh;}
+
+/* ── LEFT – Indigo/Violet dark ── */
+.left{
+  position:relative;
+  background:linear-gradient(145deg,#0C0820 0%,#160E38 30%,#1E1250 60%,#2A1870 100%);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:44px 52px;overflow:hidden;
+}
+.left::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(139,92,246,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(139,92,246,.07) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+.blob{position:absolute;border-radius:50%;filter:blur(65px);pointer-events:none;}
+.blob-1{width:380px;height:380px;top:-100px;right:-80px;background:rgba(124,58,237,.16);}
+.blob-2{width:240px;height:240px;bottom:60px;left:-80px;background:rgba(99,102,241,.12);}
+.blob-3{width:180px;height:180px;top:40%;right:40px;background:rgba(167,139,250,.08);}
+.left::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size:200px;
+}
+
+/* Logo */
+.logo-wrap{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.logo-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,#4C1D95,#7C3AED);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Crimson Pro',serif;font-size:22px;font-weight:700;color:#fff;
+  box-shadow:0 4px 16px rgba(124,58,237,.35);
+}
+.logo-text{color:#fff;font-weight:700;font-size:15px;}
+.logo-sub{color:rgba(167,139,250,.65);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-top:1px;font-family:'JetBrains Mono',monospace;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 12px;border-radius:100px;
+  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);
+  color:rgba(167,139,250,.9);
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:.07em;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.headline{
+  font-family:'Crimson Pro',serif;font-size:50px;line-height:1.08;
+  font-weight:700;color:#fff;letter-spacing:-.01em;
+}
+.headline .accent{color:#a78bfa;font-style:italic;}
+.desc{color:rgba(255,255,255,.45);font-size:13px;line-height:1.75;max-width:320px;font-weight:300;}
+
+.feature-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.6);font-size:11.5px;font-weight:500;
+}
+.feature-chip svg{color:rgba(167,139,250,.85);}
+
+.stat-box{
+  padding:14px 18px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(8px);
+}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:#fff;}
+.stat-lbl{font-size:10.5px;color:rgba(255,255,255,.4);margin-top:2px;letter-spacing:.04em;text-transform:uppercase;}
+
+/* ── RIGHT ── */
+.right{
+  background:#F7F8FA;display:flex;flex-direction:column;
+  padding:36px 80px;position:relative;overflow:hidden;
+}
+.right::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(rgba(0,0,0,.055) 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  color:#64748B;font-size:13px;font-weight:500;text-decoration:none;
+  padding:7px 14px;border-radius:8px;background:#fff;
+  border:1px solid #E2E8F0;transition:all .2s;width:fit-content;
+  position:relative;z-index:1;
+}
+.back-btn:hover{border-color:#94a3b8;color:#334155;}
+
+.form-section{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:400px;position:relative;z-index:1;}
+.form-title{font-family:'Crimson Pro',serif;font-size:38px;font-weight:700;color:#0F172A;letter-spacing:-.02em;line-height:1.15;}
+.form-sub{color:#64748B;font-size:13.5px;margin-top:6px;line-height:1.5;}
+.hr{width:40px;height:3px;background:linear-gradient(90deg,#7C3AED,#a78bfa);border-radius:2px;margin:18px 0;}
+
+.lbl{display:block;font-size:11.5px;font-weight:600;color:#374151;letter-spacing:.05em;text-transform:uppercase;margin-bottom:7px;}
+.field{position:relative;margin-bottom:18px;}
+.field-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;pointer-events:none;}
+.inp{
+  width:100%;padding:13px 14px 13px 44px;
+  border-radius:10px;border:1.5px solid #E2E8F0;
+  background:#fff;font-family:'Sora',sans-serif;font-size:13.5px;color:#0F172A;
+  outline:none;transition:all .2s;
+}
+.inp:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.inp::placeholder{color:#94A3B8;}
+.inp-pass{padding-right:44px;}
+
+/* School select */
+.inp-select{appearance:none;cursor:pointer;}
+.select-wrap{position:relative;}
+.select-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:#94A3B8;}
+
+.eye-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:#94A3B8;transition:color .2s;background:none;border:none;}
+.eye-btn:hover{color:#475569;}
+
+/* 2FA row */
+.tfa-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-radius:10px;background:#fff;
+  border:1.5px solid #E2E8F0;margin-bottom:18px;
+}
+.tfa-left{display:flex;align-items:center;gap:12px;}
+.tfa-icon{width:36px;height:36px;border-radius:8px;background:#F5F3FF;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.tfa-title{font-size:13px;font-weight:600;color:#0F172A;}
+.tfa-desc{font-size:11px;color:#94A3B8;margin-top:1px;}
+
+.toggle{position:relative;width:44px;height:24px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;border-radius:24px;background:#E2E8F0;transition:.3s;}
+.slider::before{
+  content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;
+  left:3px;top:3px;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.15);
+}
+input:checked+.slider{background:linear-gradient(135deg,#5B21B6,#7C3AED);}
+input:checked+.slider::before{transform:translateX(20px);}
+
+.row-mid{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.check-row{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.custom-cb{
+  width:17px;height:17px;border-radius:5px;
+  border:1.5px solid #CBD5E1;background:#fff;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;
+}
+.custom-cb.on{background:#7C3AED;border-color:#7C3AED;}
+.cb-lbl{font-size:12.5px;color:#475569;}
+.forgot{font-size:12.5px;font-weight:600;color:#7C3AED;text-decoration:none;}
+.forgot:hover{text-decoration:underline;}
+
+.err{font-size:11.5px;color:#EF4444;margin-top:4px;display:none;}
+.err.on{display:block;}
+
+.btn-login{
+  width:100%;padding:14px;border-radius:11px;border:none;
+  background:linear-gradient(135deg,#3B0764 0%,#5B21B6 40%,#7C3AED 70%,#8B5CF6 100%);
+  color:#fff;font-family:'Sora',sans-serif;font-size:14.5px;font-weight:700;
+  cursor:pointer;transition:all .25s;position:relative;overflow:hidden;letter-spacing:.01em;
+}
+.btn-login::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.12),transparent);}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,58,237,.38);}
+.btn-login:active{transform:none;box-shadow:none;}
+.btn-login.loading .btn-txt{display:none;}
+.btn-login.loading .spinner{display:flex;}
+.spinner{display:none;align-items:center;justify-content:center;gap:8px;}
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.divider{display:flex;align-items:center;gap:10px;color:#CBD5E1;font-size:11.5px;margin:18px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#E2E8F0;}
+
+.btn-sso{
+  width:100%;padding:12px;border-radius:10px;
+  border:1.5px solid #E2E8F0;background:#fff;
+  font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:#334155;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-sso:hover{border-color:#94A3B8;background:#F8FAFC;}
+
+.form-footer{font-size:12px;color:#94A3B8;text-align:center;margin-top:20px;}
+.form-footer a{color:#7C3AED;font-weight:600;text-decoration:none;}
+.form-footer a:hover{text-decoration:underline;}
+
+/* Success */
+.success-wrap{
+  position:absolute;inset:0;background:#F7F8FA;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  z-index:20;opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.success-wrap.show{opacity:1;pointer-events:all;}
+.success-icon-wrap{width:68px;height:68px;border-radius:50%;background:#F5F3FF;display:flex;align-items:center;justify-content:center;font-size:30px;}
+.success-title{font-family:'Crimson Pro',serif;font-size:26px;font-weight:700;color:#0F172A;}
+.success-sub{font-size:13px;color:#64748B;}
+.progress-bar{width:140px;height:3px;background:#E2E8F0;border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7C3AED,#a78bfa);width:0%;border-radius:2px;}
+
+@keyframes shake{0%,100%{transform:none;}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.shake{animation:shake .35s ease;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:none;}}
+.fu{animation:fadeUp .6s ease both;}
+.fl{animation:fadeLeft .6s ease both;}
+.d1{animation-delay:.08s;}.d2{animation-delay:.16s;}.d3{animation-delay:.24s;}
+.d4{animation-delay:.32s;}.d5{animation-delay:.4s;}.d6{animation-delay:.48s;}
+
+@media(max-width:900px){.left{display:none;}.layout{grid-template-columns:1fr;}.right{padding:40px 32px;}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ══════════ LEFT ══════════ -->
+  <div class="left">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="logo-wrap fl">
+      <div class="logo-icon">E</div>
+      <div>
+        <div class="logo-text">EduSpace</div>
+        <div class="logo-sub">Student Portal</div>
+      </div>
+    </div>
+
+    <div style="position:relative;z-index:1;">
+      <div class="badge fl d1" style="margin-bottom:24px;">
+        <span class="badge-dot"></span>
+        CỔNG SINH VIÊN
+      </div>
+      <h1 class="headline fl d2">
+        Học tập.<br/>
+        <span class="accent">Phát triển</span><br/>
+        toàn diện.
+      </h1>
+      <div style="width:40px;height:3px;background:rgba(167,139,250,.5);border-radius:2px;margin:22px 0;" class="fl d3"></div>
+      <p class="desc fl d3">Xem lịch học, đăng ký môn học, tra cứu điểm số và nhận thông báo từ giảng viên mọi lúc mọi nơi.</p>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;" class="fl d4">
+        <div class="feature-chip">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Lịch học cá nhân
+        </div>
+        <div class="feature-chip">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Đăng ký môn học
+        </div>
+        <div class="feature-chip">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Tra cứu điểm số
+        </div>
+        <div class="feature-chip">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Tài liệu học tập
+        </div>
+        <div class="feature-chip">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Học phí & Học bổng
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;position:relative;z-index:1;" class="fl d5">
+      <div class="stat-box"><div class="stat-num">62,840</div><div class="stat-lbl">Sinh viên</div></div>
+      <div class="stat-box"><div class="stat-num">38</div><div class="stat-lbl">Trường / TT</div></div>
+      <div class="stat-box"><div class="stat-num">4.8★</div><div class="stat-lbl">Đánh giá</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ RIGHT ══════════ -->
+  <div class="right">
+
+    <div class="success-wrap" id="success">
+      <div class="success-icon-wrap">📚</div>
+      <div class="success-title">Chào mừng trở lại!</div>
+      <div class="success-sub">Đang chuyển đến trang Sinh viên...</div>
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="transition:width 2s ease;"></div></div>
+    </div>
+
+    <a href="login-giang-vien.html" class="back-btn fu" style="margin-bottom:auto;">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Cổng Giảng viên
+    </a>
+
+    <div class="form-section" style="margin:auto 0;">
+      <div class="fu d1">
+        <h2 class="form-title">Đăng nhập<br/>Sinh viên</h2>
+        <p class="form-sub">Nhập thông tin tài khoản được cấp bởi nhà trường</p>
+      </div>
+      <div class="hr fu d2"></div>
+
+      <!-- Mã SV -->
+      <div class="fu d2">
+        <label class="lbl">Mã sinh viên / Email</label>
+        <div class="field">
+          <svg class="field-ico" style="color:#94A3B8;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <input id="email" class="inp" type="text" placeholder="21IT001 hoặc sv@truong.edu.vn" autocomplete="username"/>
+        </div>
+        <div class="err" id="email-err">Vui lòng nhập mã sinh viên hoặc email</div>
+      </div>
+
+      <!-- Mật khẩu -->
+      <div class="fu d3">
+        <label class="lbl">Mật khẩu</label>
+        <div class="field">
+          <svg class="field-ico" style="color:#94A3B8;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <input id="pass" class="inp inp-pass" type="password" placeholder="••••••••••••" autocomplete="current-password"/>
+          <button class="eye-btn" onclick="toggleEye('pass',this)" type="button">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+        </div>
+        <div class="err" id="pass-err">Mật khẩu không được để trống</div>
+      </div>
+
+      <!-- Chọn trường -->
+      <div class="fu d3">
+        <label class="lbl">Trường / Trung tâm</label>
+        <div class="field select-wrap">
+          <svg class="field-ico" style="color:#94A3B8;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m9-7h-4"/></svg>
+          <select id="school" class="inp inp-select">
+            <option value="">-- Chọn trường của bạn --</option>
+            <option>ĐH Bách Khoa TP.HCM</option>
+            <option>ĐH Kinh tế Quốc dân</option>
+            <option>CĐ FPT Polytechnic</option>
+            <option>TT Ngoại ngữ IELTS Pro</option>
+            <option>THPT Chuyên Lê Hồng Phong</option>
+          </select>
+          <svg class="select-arrow" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="err" id="school-err">Vui lòng chọn trường của bạn</div>
+      </div>
+
+      <!-- 2FA -->
+      <div class="tfa-row fu d3">
+        <div class="tfa-left">
+          <div class="tfa-icon">🔒</div>
+          <div>
+            <div class="tfa-title">Xác thực 2 bước (2FA)</div>
+            <div class="tfa-desc">Bảo vệ tài khoản sinh viên</div>
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="tfa"/>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Remember / Forgot -->
+      <div class="row-mid fu d4">
+        <div class="check-row" onclick="toggleCb()">
+          <div class="custom-cb" id="cb"></div>
+          <span class="cb-lbl">Ghi nhớ đăng nhập</span>
+        </div>
+        <a href="#" class="forgot">Quên mật khẩu?</a>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-login fu d4" id="btn" onclick="doLogin()">
+        <span class="btn-txt">Đăng nhập ngay</span>
+        <div class="spinner">
+          <div class="spin"></div>
+          <span style="font-size:13px;">Đang xác thực...</span>
+        </div>
+      </button>
+
+      <div class="divider fu d5">hoặc tiếp tục với</div>
+
+      <button class="btn-sso fu d5" onclick="alert('Redirect đến Google Workspace của trường')">
+        <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.79-3-.79-4.59s.29-3.14.79-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.97 6.19C12.43 13.72 17.74 9.5 24 9.5z"/></svg>
+        Tiếp tục với Google Workspace
+      </button>
+
+      <p class="form-footer fu d6">
+        Giảng viên? <a href="login-giang-vien.html">Đăng nhập tại đây →</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleEye(id,btn){
+  const i=document.getElementById(id);
+  i.type=i.type==='password'?'text':'password';
+  btn.style.color=i.type==='text'?'#475569':'#94A3B8';
+}
+function toggleCb(){
+  const c=document.getElementById('cb');
+  c.classList.toggle('on');
+}
+function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('pass').value;
+  const school=document.getElementById('school').value;
+  let ok=true;
+  document.getElementById('email-err').classList.toggle('on',!email);
+  document.getElementById('pass-err').classList.toggle('on',!pass);
+  document.getElementById('school-err').classList.toggle('on',!school);
+  if(!email||!pass||!school){
+    const btn=document.getElementById('btn');
+    btn.classList.add('shake');
+    setTimeout(()=>btn.classList.remove('shake'),350);
+    return;
+  }
+  const btn=document.getElementById('btn');
+  btn.classList.add('loading');btn.disabled=true;
+  setTimeout(()=>{
+    btn.classList.remove('loading');btn.disabled=false;
+    const s=document.getElementById('success');
+    s.classList.add('show');
+    const prog=document.getElementById('prog');
+    setTimeout(()=>{prog.style.width='100%';},50);
+    setTimeout(()=>{
+      s.classList.remove('show');
+      setTimeout(()=>{prog.style.transition='none';prog.style.width='0%';setTimeout(()=>{prog.style.transition='width 2s ease';},50);},400);
+    },3200);
+  },1800);
+}
+</script>
+</body>
+</html>

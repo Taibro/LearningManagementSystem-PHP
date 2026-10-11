@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EduSpace — SaaS Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        syne: ['Syne', 'sans-serif'],
+        mono: ['DM Mono', 'monospace'],
+        sans: ['DM Sans', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --bg: #08090c;
+    --surface: #0f1117;
+    --surface2: #161820;
+    --border: #1e2130;
+    --accent: #7c6dfa;
+    --accent2: #fa6d8e;
+    --accent3: #6dfac2;
+    --accent4: #fac96d;
+    --text: #e8eaf0;
+    --muted: #5a5f7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* Noise grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 256px;
+  }
+
+  .sidebar { width: 240px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--border); position: fixed; left: 0; top: 0; z-index: 50; }
+  .main { margin-left: 240px; position: relative; z-index: 1; }
+
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all .2s; border-left: 2px solid transparent; font-family: 'DM Sans'; font-weight: 500; letter-spacing: .01em; }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,109,250,.07); }
+  .nav-icon { width: 16px; height: 16px; opacity: .7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .card-sm { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; }
+
+  /* Stat numbers */
+  .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -.02em; }
+
+  /* Badge */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'DM Mono'; letter-spacing: .02em; }
+  .badge-green { background: rgba(109,250,194,.12); color: #6dfac2; border: 1px solid rgba(109,250,194,.2); }
+  .badge-red { background: rgba(250,109,142,.12); color: #fa6d8e; border: 1px solid rgba(250,109,142,.2); }
+  .badge-yellow { background: rgba(250,201,109,.12); color: #fac96d; border: 1px solid rgba(250,201,109,.2); }
+  .badge-purple { background: rgba(124,109,250,.12); color: #7c6dfa; border: 1px solid rgba(124,109,250,.2); }
+  .badge-blue { background: rgba(109,194,250,.12); color: #6dc2fa; border: 1px solid rgba(109,194,250,.2); }
+
+  /* Tab */
+  .tab { padding: 6px 14px; font-size: 12px; font-weight: 600; font-family: 'DM Mono'; border-radius: 6px; cursor: pointer; color: var(--muted); transition: all .2s; }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:not(.active):hover { color: var(--text); background: var(--surface2); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-family: 'DM Mono'; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid rgba(30,33,48,.6); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.015); }
+
+  /* Toggle switch */
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: .3s; }
+  .slider::before { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; left: 3px; top: 3px; transition: .3s; }
+  input:checked + .slider { background: var(--accent3); }
+  input:checked + .slider::before { transform: translateX(16px); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Progress bar */
+  .progress { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+  /* Page animation */
+  .page { display: none; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 480px; max-width: 95vw; animation: modalIn .25s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+
+  /* Input */
+  .inp { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 12px; font-size: 13px; font-family: 'DM Sans'; width: 100%; outline: none; transition: border-color .2s; }
+  .inp:focus { border-color: var(--accent); }
+  select.inp option { background: var(--surface2); }
+
+  /* Btn */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; border: none; font-family: 'DM Sans'; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #9585fb; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-danger { background: rgba(250,109,142,.15); color: var(--accent2); border: 1px solid rgba(250,109,142,.2); }
+  .btn-danger:hover { background: rgba(250,109,142,.25); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* Kill switch animation */
+  .pulse-red { animation: pulseRed 2s infinite; }
+  @keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(250,109,142,.4);} 50%{box-shadow:0 0 0 6px rgba(250,109,142,0);} }
+
+  /* MRR counter */
+  .mrr-glow { text-shadow: 0 0 40px rgba(124,109,250,.5); }
+
+  /* Log item */
+  .log-item { padding: 10px 14px; border-bottom: 1px solid rgba(30,33,48,.6); font-size: 12px; font-family: 'DM Mono'; }
+  .log-item:last-child { border-bottom: none; }
+
+  /* Tooltip */
+  [data-tip] { position: relative; }
+  [data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0f1117; border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 200; }
+  [data-tip]:hover::after { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar flex flex-col">
+  <div class="px-5 py-5 border-b" style="border-color:var(--border)">
+    <div class="flex items-center gap-2 mb-1">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold" style="background:var(--accent)">E</div>
+      <span class="font-syne font-bold text-base tracking-tight">EduSpace</span>
+    </div>
+    <span class="text-xs font-mono px-2 py-0.5 rounded" style="background:rgba(250,109,142,.12);color:var(--accent2)">SaaS Command Center</span>
+  </div>
+
+  <div class="px-3 py-4 flex-1">
+    <p class="text-xs px-2 mb-2 font-mono tracking-widest" style="color:var(--muted)">OVERVIEW</p>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('tenants')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m9-7h-4"/></svg>
+      Khách hàng (Tenant)
+    </div>
+    <div class="nav-item" onclick="showPage('subscriptions')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Gói cước & Billing
+    </div>
+    <div class="nav-item" onclick="showPage('plans')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+      Quản lý Gói cước
+    </div>
+
+    <p class="text-xs px-2 mt-5 mb-2 font-mono tracking-widest" style="color:var(--muted)">MONITORING</p>
+    <div class="nav-item" onclick="showPage('logs')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Error Logs
+    </div>
+    <div class="nav-item" onclick="showPage('audit')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      Audit Log
+    </div>
+  </div>
+
+  <!-- SaaS Admin badge -->
+  <div class="px-4 py-4 border-t" style="border-color:var(--border)">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:linear-gradient(135deg,var(--accent),var(--accent2))">SA</div>
+      <div>
+        <p class="text-xs font-semibold">Super Admin</p>
+        <p class="text-xs" style="color:var(--muted)">admin@eduspace.vn</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main p-6 min-h-screen">
+
+  <!-- TOP BAR -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="font-syne font-bold text-xl tracking-tight" id="page-title">Dashboard</h1>
+      <p class="text-xs mt-0.5" style="color:var(--muted)" id="page-sub">Tổng quan hệ thống EduSpace · Cập nhật realtime</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-xs font-mono px-3 py-1.5 rounded-lg" style="background:var(--surface2);color:var(--muted)">
+        🕐 <span id="clock"></span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-tenant')">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Thêm Tenant
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: DASHBOARD ═══════════════ -->
+  <div id="page-dashboard" class="page active">
+
+    <!-- KPI Row -->
+    <div class="grid grid-cols-4 gap-4 mb-5">
+      <!-- MRR -->
+      <div class="card p-5 col-span-1" style="background:linear-gradient(135deg,rgba(124,109,250,.15),rgba(124,109,250,.04));border-color:rgba(124,109,250,.25)">
+        <p class="text-xs font-mono mb-3" style="color:var(--muted)">MRR (THÁNG NÀY)</p>
+        <p class="stat-num text-3xl mrr-glow" style="color:var(--accent)">₫127.5M</p>
+        <p class="text-xs mt-2" style="color:var(--accent3)">▲ +12.4% so với tháng trước</p>
+      </div>
+      <!-- Tenants -->
+      <div class="card p-5">
+        <p class="text-xs font-mono mb-3" style="color:var(--muted)">TỔNG TRƯỜNG / TT</p>
+        <p class="stat-num text-3xl">38</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="badge badge-green">+4 tháng này</span>
+        </div>
+      </div>
+      <!-- Users -->
+      <div class="card p-5">
+        <p class="text-xs font-mono mb-3" style="color:var(--muted)">TỔNG USERS</p>
+        <p class="stat-num text-3xl">84,291</p>
+        <p class="text-xs mt-2" style="color:var(--muted)">62,840 SV · 21,451 GV</p>
+      </div>
+      <!-- Storage -->
+      <div class="card p-5">
+        <p class="text-xs font-mono mb-3" style="color:var(--muted)">STORAGE DÙNG</p>
+        <p class="stat-num text-3xl">1.84<span class="text-lg font-sans font-normal ml-1" style="color:var(--muted)">TB</span></p>
+        <div class="progress mt-3">
+          <div class="progress-fill" style="width:61%;background:var(--accent4)"></div>
+        </div>
+        <p class="text-xs mt-1.5" style="color:var(--muted)">61% / 3TB quota</p>
+      </div>
+    </div>
+
+    <!-- Charts + Expiry -->
+    <div class="grid grid-cols-3 gap-4 mb-5">
+      <!-- Revenue chart -->
+      <div class="card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <p class="font-syne font-bold text-sm">Doanh thu 6 tháng gần nhất</p>
+          <div class="flex gap-2">
+            <div class="flex items-center gap-1.5 text-xs" style="color:var(--muted)"><span class="w-2.5 h-2.5 rounded-sm inline-block" style="background:var(--accent)"></span> MRR</div>
+            <div class="flex items-center gap-1.5 text-xs" style="color:var(--muted)"><span class="w-2.5 h-2.5 rounded-sm inline-block" style="background:var(--accent3)"></span> Khách mới</div>
+          </div>
+        </div>
+        <canvas id="revenueChart" height="120"></canvas>
+      </div>
+      <!-- Plan distribution -->
+      <div class="card p-5">
+        <p class="font-syne font-bold text-sm mb-4">Phân bổ Gói cước</p>
+        <canvas id="planChart" height="160"></canvas>
+        <div class="space-y-2 mt-4">
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#7c6dfa"></span>Enterprise</span>
+            <span class="font-mono">8 trường</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#6dfac2"></span>Pro</span>
+            <span class="font-mono">18 trường</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#fac96d"></span>Starter</span>
+            <span class="font-mono">12 trường</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row: Expiring + Alerts -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Expiring soon -->
+      <div class="card">
+        <div class="flex items-center justify-between p-4 border-b" style="border-color:var(--border)">
+          <p class="font-syne font-bold text-sm">Sắp hết hạn <span class="ml-1 badge badge-yellow">5 trường</span></p>
+          <span class="text-xs" style="color:var(--muted)">trong 30 ngày tới</span>
+        </div>
+        <div class="divide-y" style="border-color:var(--border)">
+          <div class="p-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold">ĐH Kinh tế Quốc dân</p>
+              <p class="text-xs mt-0.5" style="color:var(--muted)">Gói Enterprise · 4,200 SV</p>
+            </div>
+            <div class="text-right">
+              <span class="badge badge-red pulse-red">7 ngày</span>
+              <p class="text-xs mt-1" style="color:var(--muted)">₫12.5M/tháng</p>
+            </div>
+          </div>
+          <div class="p-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold">TT Ngoại ngữ IELTS Pro</p>
+              <p class="text-xs mt-0.5" style="color:var(--muted)">Gói Pro · 620 HV</p>
+            </div>
+            <div class="text-right">
+              <span class="badge badge-yellow">14 ngày</span>
+              <p class="text-xs mt-1" style="color:var(--muted)">₫3.2M/tháng</p>
+            </div>
+          </div>
+          <div class="p-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold">CĐ FPT Polytechnic</p>
+              <p class="text-xs mt-0.5" style="color:var(--muted)">Gói Pro · 2,100 SV</p>
+            </div>
+            <div class="text-right">
+              <span class="badge badge-yellow">21 ngày</span>
+              <p class="text-xs mt-1" style="color:var(--muted)">₫5.8M/tháng</p>
+            </div>
+          </div>
+          <div class="p-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold">THPT Chuyên Lê Hồng Phong</p>
+              <p class="text-xs mt-0.5" style="color:var(--muted)">Gói Starter · 890 HS</p>
+            </div>
+            <div class="text-right">
+              <span class="badge badge-yellow">28 ngày</span>
+              <p class="text-xs mt-1" style="color:var(--muted)">₫1.5M/tháng</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System health -->
+      <div class="card">
+        <div class="flex items-center justify-between p-4 border-b" style="border-color:var(--border)">
+          <p class="font-syne font-bold text-sm">System Health</p>
+          <span class="badge badge-green">● All systems operational</span>
+        </div>
+        <div class="p-4 space-y-4">
+          <div>
+            <div class="flex justify-between text-xs mb-1.5"><span style="color:var(--muted)">API Response Time</span><span class="font-mono">142ms avg</span></div>
+            <div class="progress"><div class="progress-fill" style="width:15%;background:var(--accent3)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5"><span style="color:var(--muted)">CPU Load</span><span class="font-mono">34%</span></div>
+            <div class="progress"><div class="progress-fill" style="width:34%;background:var(--accent)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5"><span style="color:var(--muted)">DB Connections</span><span class="font-mono">287 / 1000</span></div>
+            <div class="progress"><div class="progress-fill" style="width:29%;background:var(--accent)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5"><span style="color:var(--muted)">Cloudinary Storage</span><span class="font-mono">1.84TB / 3TB</span></div>
+            <div class="progress"><div class="progress-fill" style="width:61%;background:var(--accent4)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5"><span style="color:var(--muted)">Uptime (30 ngày)</span><span class="font-mono text-green-400">99.97%</span></div>
+            <div class="progress"><div class="progress-fill" style="width:99.97%;background:var(--accent3)"></div></div>
+          </div>
+        </div>
+        <div class="px-4 pb-4">
+          <div class="card-sm p-3 flex items-center gap-2">
+            <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:var(--accent2)"></div>
+            <p class="text-xs" style="color:var(--muted)"><span style="color:var(--accent2)">3 lỗi mới</span> trong 24h qua · <a href="#" onclick="showPage('logs')" style="color:var(--accent)">Xem ngay →</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: TENANTS ═══════════════ -->
+  <div id="page-tenants" class="page">
+    <!-- Filters -->
+    <div class="flex items-center gap-3 mb-4">
+      <input type="text" placeholder="Tìm tên trường, mã, email..." class="inp" style="max-width:280px" />
+      <select class="inp" style="max-width:160px">
+        <option>Tất cả gói</option>
+        <option>Enterprise</option>
+        <option>Pro</option>
+        <option>Starter</option>
+      </select>
+      <select class="inp" style="max-width:160px">
+        <option>Tất cả trạng thái</option>
+        <option>Đang hoạt động</option>
+        <option>Bị khóa</option>
+        <option>Hết hạn</option>
+      </select>
+      <div class="ml-auto text-xs font-mono" style="color:var(--muted)">38 tenants</div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>TRƯỜNG / TRUNG TÂM</th>
+            <th>GÓI CƯỚC</th>
+            <th>SỐ USERS</th>
+            <th>HẾT HẠN</th>
+            <th>STORAGE</th>
+            <th>TRẠNG THÁI</th>
+            <th>KILL SWITCH</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tenant-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: SUBSCRIPTIONS ═══════════════ -->
+  <div id="page-subscriptions" class="page">
+    <div class="grid grid-cols-3 gap-4 mb-5">
+      <div class="card p-4">
+        <p class="text-xs font-mono mb-2" style="color:var(--muted)">TỔNG DOANH THU (YTD)</p>
+        <p class="stat-num text-2xl" style="color:var(--accent)">₫892.3M</p>
+        <p class="text-xs mt-1" style="color:var(--muted)">▲ +28% so với năm ngoái</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-mono mb-2" style="color:var(--muted)">HOÁ ĐƠN CHỜ THANH TOÁN</p>
+        <p class="stat-num text-2xl" style="color:var(--accent4)">5</p>
+        <p class="text-xs mt-1" style="color:var(--muted)">Tổng ₫38.5M chưa thu</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs font-mono mb-2" style="color:var(--muted)">CHURN RATE (THÁNG)</p>
+        <p class="stat-num text-2xl" style="color:var(--accent3)">2.1%</p>
+        <p class="text-xs mt-1" style="color:var(--muted)">1 trường huỷ trong tháng</p>
+      </div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b" style="border-color:var(--border)">
+        <p class="font-syne font-bold text-sm">Lịch sử Hoá đơn SaaS</p>
+        <div class="flex gap-2">
+          <div class="tab active">Tất cả</div>
+          <div class="tab">Đã thanh toán</div>
+          <div class="tab">Chờ thanh toán</div>
+          <div class="tab">Thất bại</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#INV</th>
+            <th>TRƯỜNG</th>
+            <th>GÓI</th>
+            <th>CHU KỲ</th>
+            <th>SỐ TIỀN</th>
+            <th>PHƯƠNG THỨC</th>
+            <th>NGÀY</th>
+            <th>TRẠNG THÁI</th>
+          </tr>
+        </thead>
+        <tbody id="invoice-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: PLANS ═══════════════ -->
+  <div id="page-plans" class="page">
+    <div class="grid grid-cols-3 gap-5">
+      <!-- Starter -->
+      <div class="card p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8" style="background:rgba(250,201,109,.06)"></div>
+        <p class="font-mono text-xs mb-1" style="color:var(--accent4)">STARTER</p>
+        <p class="font-syne font-bold text-2xl mb-1">₫1.5M<span class="text-sm font-sans font-normal" style="color:var(--muted)">/tháng</span></p>
+        <p class="text-xs mb-4" style="color:var(--muted)">₫15M/năm (tiết kiệm 17%)</p>
+        <div class="space-y-2 text-xs mb-5">
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Tối đa <strong>500 sinh viên</strong></div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> 1 cơ sở</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> 10GB lưu trữ</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Quản lý lớp + Lịch học</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Điểm danh + Đăng ký</div>
+          <div class="flex items-center gap-2"><span style="color:var(--muted)">✕</span> <span style="color:var(--muted)">Học phí & Lương GV</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--muted)">✕</span> <span style="color:var(--muted)">Báo cáo nâng cao</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--muted)">✕</span> <span style="color:var(--muted)">API & SSO</span></div>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="badge badge-yellow">12 trường đang dùng</span>
+          <button class="btn btn-ghost btn-sm">Sửa</button>
+        </div>
+      </div>
+
+      <!-- Pro -->
+      <div class="card p-5 relative overflow-hidden" style="border-color:var(--accent);box-shadow:0 0 30px rgba(124,109,250,.12)">
+        <div class="absolute -top-px left-0 right-0 h-0.5 rounded-t-xl" style="background:var(--accent)"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-10 translate-x-10" style="background:rgba(124,109,250,.06)"></div>
+        <div class="flex items-center justify-between mb-1">
+          <p class="font-mono text-xs" style="color:var(--accent)">PRO</p>
+          <span class="badge badge-purple">PHỔ BIẾN NHẤT</span>
+        </div>
+        <p class="font-syne font-bold text-2xl mb-1">₫5.8M<span class="text-sm font-sans font-normal" style="color:var(--muted)">/tháng</span></p>
+        <p class="text-xs mb-4" style="color:var(--muted)">₫58M/năm (tiết kiệm 17%)</p>
+        <div class="space-y-2 text-xs mb-5">
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Tối đa <strong>5,000 sinh viên</strong></div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> 5 cơ sở</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> 100GB lưu trữ</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Tất cả tính năng Starter</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Học phí & Lương GV</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Báo cáo nâng cao</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> QR Code điểm danh</div>
+          <div class="flex items-center gap-2"><span style="color:var(--muted)">✕</span> <span style="color:var(--muted)">API & SSO / Azure AD</span></div>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="badge badge-purple">18 trường đang dùng</span>
+          <button class="btn btn-ghost btn-sm">Sửa</button>
+        </div>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="card p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-10 translate-x-10" style="background:rgba(109,250,194,.05)"></div>
+        <p class="font-mono text-xs mb-1" style="color:var(--accent3)">ENTERPRISE</p>
+        <p class="font-syne font-bold text-2xl mb-1">Liên hệ<span class="text-sm font-sans font-normal ml-1" style="color:var(--muted)">/ custom</span></p>
+        <p class="text-xs mb-4" style="color:var(--muted)">Hợp đồng theo năm · SLA riêng</p>
+        <div class="space-y-2 text-xs mb-5">
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> <strong>Không giới hạn</strong> sinh viên</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Không giới hạn cơ sở</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Storage theo yêu cầu</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Tất cả tính năng Pro</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> API tích hợp ERP</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> SSO / Azure AD / Google</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Backup riêng · SLA 99.9%</div>
+          <div class="flex items-center gap-2"><span style="color:var(--accent3)">✓</span> Audit Log đầy đủ</div>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="badge badge-green">8 trường đang dùng</span>
+          <button class="btn btn-ghost btn-sm">Sửa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature matrix -->
+    <div class="card mt-5 overflow-hidden">
+      <div class="p-4 border-b" style="border-color:var(--border)">
+        <p class="font-syne font-bold text-sm">Ma trận tính năng</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40%">TÍNH NĂNG</th>
+            <th class="text-center">STARTER</th>
+            <th class="text-center">PRO</th>
+            <th class="text-center">ENTERPRISE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="text-xs font-semibold py-2.5" style="color:var(--muted)">HỌC VỤ CƠ BẢN</td><td></td><td></td><td></td></tr>
+          <tr><td class="text-sm">Quản lý lớp học & Lịch học</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">Điểm danh & Đăng ký học phần</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">Thông báo trong app</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-xs font-semibold py-2.5" style="color:var(--muted)">TÀI CHÍNH & NHÂN SỰ</td><td></td><td></td><td></td></tr>
+          <tr><td class="text-sm">Quản lý học phí</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">Bảng lương giảng viên theo bậc</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-xs font-semibold py-2.5" style="color:var(--muted)">NÂNG CAO</td><td></td><td></td><td></td></tr>
+          <tr><td class="text-sm">Báo cáo & Dashboard Analytics</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">QR Code điểm danh</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">SSO / Azure AD / Google Workspace</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">Open API tích hợp ERP</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">Audit Log đầy đủ + Export</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td></tr>
+          <tr><td class="text-sm">SLA & Backup riêng</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center" style="color:var(--muted)">✕</td><td class="text-center text-green-400">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: ERROR LOGS ═══════════════ -->
+  <div id="page-logs" class="page">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex gap-2">
+        <div class="tab active">Tất cả (47)</div>
+        <div class="tab">Chưa xử lý (3)</div>
+        <div class="tab">Đã fix</div>
+      </div>
+      <select class="inp ml-auto" style="max-width:180px">
+        <option>24h qua</option>
+        <option>7 ngày</option>
+        <option>30 ngày</option>
+      </select>
+    </div>
+    <div class="card overflow-hidden">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th>ENDPOINT</th>
+            <th>LỖI</th>
+            <th>TRƯỜNG</th>
+            <th>THỜI GIAN</th>
+            <th>TRẠNG THÁI</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="log-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGE: AUDIT LOG ═══════════════ -->
+  <div id="page-audit" class="page">
+    <div class="flex items-center gap-3 mb-4">
+      <input type="text" placeholder="Tìm user, bảng, action..." class="inp" style="max-width:260px" />
+      <select class="inp" style="max-width:150px">
+        <option>Tất cả action</option>
+        <option>INSERT</option>
+        <option>UPDATE</option>
+        <option>DELETE</option>
+        <option>LOGIN</option>
+      </select>
+      <select class="inp" style="max-width:160px">
+        <option>Tất cả trường</option>
+        <option>ĐH Bách Khoa HCM</option>
+        <option>IELTS Pro</option>
+      </select>
+    </div>
+    <div class="card overflow-hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>THỜI GIAN</th>
+            <th>NGƯỜI DÙNG</th>
+            <th>TRƯỜNG</th>
+            <th>ACTION</th>
+            <th>BẢNG</th>
+            <th>RECORD ID</th>
+            <th>IP</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="audit-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════ MODAL: ADD TENANT ═══════════ -->
+<div class="modal-overlay" id="modal-add-tenant">
+  <div class="modal">
+    <div class="flex items-center justify-between p-5 border-b" style="border-color:var(--border)">
+      <div>
+        <p class="font-syne font-bold text-base">Thêm Tenant mới</p>
+        <p class="text-xs mt-0.5" style="color:var(--muted)">Tạo trường + tài khoản School Admin đầu tiên</p>
+      </div>
+      <button onclick="closeModal('modal-add-tenant')" class="w-7 h-7 rounded-lg flex items-center justify-center text-lg" style="background:var(--surface2);color:var(--muted)">×</button>
+    </div>
+    <div class="p-5 space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">TÊN TRƯỜNG / TRUNG TÂM *</label>
+          <input class="inp" placeholder="VD: ĐH Bách Khoa HCM" />
+        </div>
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">MÃ TRƯỜNG *</label>
+          <input class="inp" placeholder="VD: HCMUT" />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">LOẠI HÌNH</label>
+          <select class="inp">
+            <option>university</option>
+            <option>college</option>
+            <option>high_school</option>
+            <option>language_center</option>
+            <option>tutoring_center</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">GÓI CƯỚC *</label>
+          <select class="inp">
+            <option>Starter — ₫1.5M/tháng</option>
+            <option>Pro — ₫5.8M/tháng</option>
+            <option>Enterprise — Liên hệ</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">CHU KỲ THANH TOÁN</label>
+          <select class="inp">
+            <option>monthly</option>
+            <option>yearly</option>
+            <option>lifetime</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">SỐ ĐIỆN THOẠI</label>
+          <input class="inp" placeholder="028-xxxx-xxxx" />
+        </div>
+      </div>
+      <div class="card-sm p-3">
+        <p class="text-xs font-semibold mb-2" style="color:var(--accent3)">⚡ Tài khoản School Admin (tự động tạo)</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">HỌ TÊN ADMIN</label>
+            <input class="inp" placeholder="VD: Nguyễn Văn A" />
+          </div>
+          <div>
+            <label class="text-xs font-mono mb-1.5 block" style="color:var(--muted)">EMAIL ADMIN *</label>
+            <input class="inp" type="email" placeholder="admin@truong.edu.vn" />
+          </div>
+        </div>
+        <p class="text-xs mt-2" style="color:var(--muted)">Mật khẩu tạm thời sẽ được gửi qua email · Admin phải đổi mật khẩu lần đầu đăng nhập</p>
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-3 p-5 border-t" style="border-color:var(--border)">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-tenant')">Huỷ</button>
+      <button class="btn btn-primary" onclick="addTenantSuccess()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        Tạo Tenant & Gửi email
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: TENANT DETAIL ═══════════ -->
+<div class="modal-overlay" id="modal-tenant-detail">
+  <div class="modal" style="width:560px">
+    <div class="flex items-center justify-between p-5 border-b" style="border-color:var(--border)">
+      <p class="font-syne font-bold text-base" id="modal-tenant-title">Chi tiết Tenant</p>
+      <button onclick="closeModal('modal-tenant-detail')" class="w-7 h-7 rounded-lg flex items-center justify-center text-lg" style="background:var(--surface2);color:var(--muted)">×</button>
+    </div>
+    <div class="p-5" id="modal-tenant-content"></div>
+    <div class="flex items-center justify-between p-5 border-t" style="border-color:var(--border)">
+      <button class="btn btn-danger btn-sm" id="modal-kill-btn">⚡ Kích hoạt Kill Switch</button>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-tenant-detail')">Đóng</button>
+        <button class="btn btn-primary btn-sm">Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-[200] transition-all duration-300 translate-y-16 opacity-0">
+  <div class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl" style="background:var(--surface);border:1px solid var(--border)">
+    <span id="toast-icon" class="text-lg">✅</span>
+    <p class="text-sm font-semibold" id="toast-msg"></p>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const TENANTS = [
+  { id:1, name:'ĐH Bách Khoa TP.HCM', code:'HCMUT', type:'university', plan:'Enterprise', students:18420, teachers:1240, storage:'312GB', expires:'2025-09-01', active:true, email:'it@hcmut.edu.vn' },
+  { id:2, name:'ĐH Kinh tế Quốc dân', code:'NEU', type:'university', plan:'Enterprise', students:21000, teachers:1380, storage:'480GB', expires:'2025-05-04', active:true, email:'admin@neu.edu.vn' },
+  { id:3, name:'CĐ FPT Polytechnic', code:'FPOLY', type:'college', plan:'Pro', students:4100, teachers:290, storage:'87GB', expires:'2025-06-18', active:true, email:'admin@fpt.edu.vn' },
+  { id:4, name:'TT Ngoại ngữ IELTS Pro', code:'IELTS_PRO', type:'language_center', plan:'Pro', students:620, teachers:42, storage:'15GB', expires:'2025-05-14', active:true, email:'hi@ieltspro.vn' },
+  { id:5, name:'THPT Chuyên Lê Hồng Phong', code:'LHP', type:'high_school', plan:'Starter', students:890, teachers:78, storage:'8.2GB', expires:'2025-06-28', active:true, email:'admin@lhp.edu.vn' },
+  { id:6, name:'TT Gia sư Học Mãi', code:'HOCMAI', type:'tutoring_center', plan:'Starter', students:430, teachers:55, storage:'4.1GB', expires:'2025-04-10', active:false, email:'contact@hocmai.vn' },
+  { id:7, name:'ĐH Sư phạm TP.HCM', code:'HCMUE', type:'university', plan:'Enterprise', students:9800, teachers:620, storage:'198GB', expires:'2025-12-01', active:true, email:'admin@hcmue.edu.vn' },
+  { id:8, name:'Viện Đại học Mở HN', code:'VDHMHN', type:'university', plan:'Pro', students:3200, teachers:185, storage:'62GB', expires:'2025-08-15', active:true, email:'admin@vdmhn.edu.vn' },
+];
+
+const INVOICES = [
+  { id:'INV-0124', school:'ĐH Bách Khoa HCM', plan:'Enterprise', cycle:'yearly', amount:'₫150,000,000', method:'bank_transfer', date:'2025-01-15', status:'paid' },
+  { id:'INV-0125', school:'ĐH Kinh tế Quốc dân', plan:'Enterprise', cycle:'monthly', amount:'₫12,500,000', method:'momo', date:'2025-05-01', status:'pending' },
+  { id:'INV-0126', school:'CĐ FPT Polytechnic', plan:'Pro', cycle:'monthly', amount:'₫5,800,000', method:'vnpay', date:'2025-05-01', status:'paid' },
+  { id:'INV-0127', school:'TT IELTS Pro', plan:'Pro', cycle:'monthly', amount:'₫5,800,000', method:'momo', date:'2025-04-15', status:'pending' },
+  { id:'INV-0128', school:'THPT Lê Hồng Phong', plan:'Starter', cycle:'yearly', amount:'₫15,000,000', method:'bank_transfer', date:'2025-05-02', status:'paid' },
+  { id:'INV-0129', school:'TT Gia sư Học Mãi', plan:'Starter', cycle:'monthly', amount:'₫1,500,000', method:'cash', date:'2025-04-10', status:'failed' },
+  { id:'INV-0130', school:'ĐH Sư phạm HCM', plan:'Enterprise', cycle:'yearly', amount:'₫120,000,000', method:'bank_transfer', date:'2025-05-03', status:'paid' },
+];
+
+const LOGS = [
+  { id:4729, endpoint:'POST /api/v1/enrollments', error:'Duplicate entry for student_id+class_id', school:'ĐH Bách Khoa HCM', time:'2025-05-10 14:32:18', resolved:false },
+  { id:4728, endpoint:'GET /api/v1/schedules/weekly', error:'NullPointerException at ScheduleService.java:142', school:'ĐH Kinh tế QD', time:'2025-05-10 11:08:44', resolved:false },
+  { id:4727, endpoint:'POST /api/v1/salary/generate', error:'salary_grade_id not found for degree=PGS.TS', school:'ĐH Sư phạm HCM', time:'2025-05-10 09:21:03', resolved:false },
+  { id:4726, endpoint:'PUT /api/v1/classes/471/status', error:'Foreign key constraint fails on teacher_id', school:'CĐ FPT Poly', time:'2025-05-09 17:55:12', resolved:true },
+  { id:4725, endpoint:'GET /api/v1/reports/attendance', error:'Query timeout after 30s', school:'ĐH Bách Khoa HCM', time:'2025-05-09 14:01:09', resolved:true },
+  { id:4724, endpoint:'POST /api/v1/auth/login', error:'Too many login attempts from 118.70.x.x', school:'IELTS Pro', time:'2025-05-08 22:14:37', resolved:true },
+];
+
+const AUDITS = [
+  { time:'2025-05-10 15:44:22', user:'admin.hcmut@edu.vn', school:'ĐH Bách Khoa HCM', action:'UPDATE', table:'classes', record:471, ip:'203.113.x.x' },
+  { time:'2025-05-10 14:30:11', user:'gv.nguyen@neu.edu.vn', school:'ĐH Kinh tế QD', action:'INSERT', table:'attendance_records', record:98234, ip:'14.225.x.x' },
+  { time:'2025-05-10 13:22:09', user:'admin@lhp.edu.vn', school:'THPT Lê Hồng Phong', action:'DELETE', table:'schedule_exceptions', record:312, ip:'27.72.x.x' },
+  { time:'2025-05-10 11:05:38', user:'admin@hcmut.edu.vn', school:'ĐH Bách Khoa HCM', action:'LOGIN', table:'users', record:1, ip:'203.113.x.x' },
+  { time:'2025-05-10 09:48:14', user:'admin.fpoly@fpt.edu.vn', school:'CĐ FPT Poly', action:'UPDATE', table:'salary_grade', record:5, ip:'117.4.x.x' },
+  { time:'2025-05-09 22:31:07', user:'gv.tran@ieltspro.vn', school:'TT IELTS Pro', action:'INSERT', table:'class_materials', record:1041, ip:'118.70.x.x' },
+];
+
+// ─── RENDER TABLES ───────────────────────────────────────
+function renderTenants() {
+  const body = document.getElementById('tenant-table-body');
+  const planColor = { Enterprise:'badge-green', Pro:'badge-purple', Starter:'badge-yellow' };
+  body.innerHTML = TENANTS.map(t => `
+    <tr>
+      <td>
+        <div class="font-semibold text-sm">${t.name}</div>
+        <div class="text-xs font-mono mt-0.5" style="color:var(--muted)">${t.code} · ${t.type}</div>
+      </td>
+      <td><span class="badge ${planColor[t.plan]}">${t.plan}</span></td>
+      <td>
+        <div class="text-sm">${t.students.toLocaleString()} SV</div>
+        <div class="text-xs" style="color:var(--muted)">${t.teachers.toLocaleString()} GV</div>
+      </td>
+      <td>
+        <div class="text-sm font-mono">${t.expires}</div>
+        ${daysLeft(t.expires) < 30 ? `<div class="text-xs mt-0.5" style="color:var(--accent2)">${daysLeft(t.expires)} ngày còn lại</div>` : `<div class="text-xs mt-0.5" style="color:var(--muted)">${daysLeft(t.expires)} ngày còn lại</div>`}
+      </td>
+      <td>
+        <div class="text-sm">${t.storage}</div>
+        <div class="progress mt-1" style="width:80px">
+          <div class="progress-fill" style="width:${Math.random()*60+20}%;background:var(--accent)"></div>
+        </div>
+      </td>
+      <td>
+        ${t.active
+          ? '<span class="badge badge-green">● Hoạt động</span>'
+          : '<span class="badge badge-red">● Bị khóa</span>'}
+      </td>
+      <td>
+        <label class="toggle" data-tip="${t.active?'Đang BẬT — Click để khóa':'Đang TẮT — Click để mở'}">
+          <input type="checkbox" ${t.active?'checked':''} onchange="toggleTenant(${t.id},this)" />
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="viewTenant(${t.id})">Chi tiết</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderInvoices() {
+  const body = document.getElementById('invoice-table-body');
+  const statusBadge = { paid:'badge-green', pending:'badge-yellow', failed:'badge-red' };
+  const statusLabel = { paid:'Đã thanh toán', pending:'Chờ TT', failed:'Thất bại' };
+  const methodIcon = { bank_transfer:'🏦', momo:'📱', vnpay:'💳', cash:'💵', visa:'💳' };
+  body.innerHTML = INVOICES.map(i => `
+    <tr>
+      <td class="font-mono text-xs">${i.id}</td>
+      <td class="text-sm font-semibold">${i.school}</td>
+      <td><span class="badge ${i.plan==='Enterprise'?'badge-green':i.plan==='Pro'?'badge-purple':'badge-yellow'}">${i.plan}</span></td>
+      <td class="text-xs font-mono">${i.cycle}</td>
+      <td class="font-mono text-sm font-semibold">${i.amount}</td>
+      <td class="text-xs">${methodIcon[i.method]} ${i.method.replace('_',' ')}</td>
+      <td class="text-xs font-mono">${i.date}</td>
+      <td><span class="badge ${statusBadge[i.status]}">${statusLabel[i.status]}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderLogs() {
+  const body = document.getElementById('log-table-body');
+  body.innerHTML = LOGS.map(l => `
+    <tr>
+      <td class="font-mono text-xs" style="color:var(--muted)">${l.id}</td>
+      <td class="font-mono text-xs" style="color:var(--accent)">${l.endpoint}</td>
+      <td class="text-xs max-w-xs truncate" style="max-width:200px;color:var(--accent2)">${l.error}</td>
+      <td class="text-xs">${l.school}</td>
+      <td class="font-mono text-xs" style="color:var(--muted)">${l.time}</td>
+      <td>${l.resolved
+        ? '<span class="badge badge-green">✓ Đã fix</span>'
+        : '<span class="badge badge-red pulse-red">● Chưa xử lý</span>'}</td>
+      <td>${l.resolved ? '' : '<button class="btn btn-ghost btn-sm" onclick="markResolved(this)">Mark fixed</button>'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderAudit() {
+  const body = document.getElementById('audit-table-body');
+  const actionColor = { INSERT:'badge-green', UPDATE:'badge-blue', DELETE:'badge-red', LOGIN:'badge-purple' };
+  body.innerHTML = AUDITS.map(a => `
+    <tr>
+      <td class="font-mono text-xs" style="color:var(--muted)">${a.time}</td>
+      <td class="text-xs">${a.user}</td>
+      <td class="text-xs">${a.school}</td>
+      <td><span class="badge ${actionColor[a.action]}">${a.action}</span></td>
+      <td class="font-mono text-xs">${a.table}</td>
+      <td class="font-mono text-xs" style="color:var(--muted)">#${a.record}</td>
+      <td class="font-mono text-xs" style="color:var(--muted)">${a.ip}</td>
+      <td><button class="btn btn-ghost btn-sm">Xem diff</button></td>
+    </tr>
+  `).join('');
+}
+
+// ─── CHARTS ──────────────────────────────────────────────
+function initCharts() {
+  const gridColor = 'rgba(30,33,48,.8)';
+  const font = { family: 'DM Mono', size: 10 };
+
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Th12/24','Th1/25','Th2/25','Th3/25','Th4/25','Th5/25'],
+      datasets: [
+        { label:'MRR (triệu ₫)', data:[98,105,111,118,123,127.5], backgroundColor:'rgba(124,109,250,.7)', borderRadius:5, borderSkipped:false },
+        { label:'Khách mới', data:[2,3,1,4,2,4], backgroundColor:'rgba(109,250,194,.7)', borderRadius:5, borderSkipped:false, yAxisID:'y1' },
+      ]
+    },
+    options: {
+      responsive:true, interaction:{ mode:'index' },
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{color:gridColor}, ticks:{color:'#5a5f7a', font} },
+        y:{ grid:{color:gridColor}, ticks:{color:'#5a5f7a', font, callback:v=>v+'M'} },
+        y1:{ position:'right', grid:{display:false}, ticks:{color:'#5a5f7a', font} }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('planChart'), {
+    type: 'doughnut',
+    data: {
+      labels:['Enterprise','Pro','Starter'],
+      datasets:[{ data:[8,18,12], backgroundColor:['#7c6dfa','#6dfac2','#fac96d'], borderWidth:0, hoverOffset:4 }]
+    },
+    options: { responsive:true, cutout:'72%', plugins:{ legend:{display:false} } }
+  });
+}
+
+// ─── HELPERS ─────────────────────────────────────────────
+function daysLeft(dateStr) {
+  return Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick') === `showPage('${id}')`) n.classList.add('active');
+  });
+  const titles = { dashboard:'Dashboard', tenants:'Quản lý Khách hàng (Tenant)', subscriptions:'Gói cước & Billing', plans:'Quản lý Gói cước', logs:'Error Logs', audit:'Audit Log' };
+  const subs = { dashboard:'Tổng quan hệ thống EduSpace · Cập nhật realtime', tenants:'Danh sách tất cả trường / trung tâm đang thuê EduSpace', subscriptions:'Hoá đơn và lịch sử thanh toán phần mềm', plans:'Cấu hình các gói cước SaaS', logs:'Nhật ký lỗi toàn hệ thống', audit:'Theo dõi thay đổi bất thường' };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  document.getElementById('page-sub').textContent = subs[id] || '';
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleTenant(id, el) {
+  const t = TENANTS.find(x => x.id === id);
+  t.active = el.checked;
+  const action = el.checked ? 'MỞ KHOÁ' : 'KHOÁ';
+  showToast(el.checked ? '✅' : '🔒', `${action} tenant: ${t.name}`);
+  setTimeout(() => renderTenants(), 300);
+}
+
+function viewTenant(id) {
+  const t = TENANTS.find(x => x.id === id);
+  document.getElementById('modal-tenant-title').textContent = t.name;
+  document.getElementById('modal-tenant-content').innerHTML = `
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">MÃ TRƯỜNG</p><p class="font-mono font-bold">${t.code}</p></div>
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">GÓI CƯỚC</p><p class="font-semibold">${t.plan}</p></div>
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">SINH VIÊN</p><p class="font-semibold">${t.students.toLocaleString()}</p></div>
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">GIẢNG VIÊN</p><p class="font-semibold">${t.teachers.toLocaleString()}</p></div>
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">STORAGE</p><p class="font-semibold">${t.storage}</p></div>
+      <div class="card-sm p-3"><p class="text-xs font-mono mb-1" style="color:var(--muted)">HẾT HẠN</p><p class="font-semibold ${daysLeft(t.expires)<30?'text-yellow-400':''}">${t.expires}</p></div>
+    </div>
+    <div class="card-sm p-3 mb-3">
+      <p class="text-xs font-mono mb-1" style="color:var(--muted)">EMAIL ADMIN TRƯỜNG</p>
+      <p class="text-sm">${t.email}</p>
+    </div>
+    <div class="card-sm p-3">
+      <p class="text-xs font-mono mb-2" style="color:var(--muted)">TRẠNG THÁI KILL SWITCH</p>
+      <div class="flex items-center gap-3">
+        <label class="toggle">
+          <input type="checkbox" ${t.active?'checked':''} onchange="toggleTenant(${t.id},this)" />
+          <span class="slider"></span>
+        </label>
+        <span class="text-sm" style="color:${t.active?'var(--accent3)':'var(--accent2)'}">
+          ${t.active ? '● Trường đang hoạt động bình thường' : '● Trường đang bị khoá — User không thể đăng nhập'}
+        </span>
+      </div>
+    </div>
+  `;
+  const killBtn = document.getElementById('modal-kill-btn');
+  killBtn.textContent = t.active ? '⚡ Kích hoạt Kill Switch (Khoá ngay)' : '🔓 Mở khoá Tenant';
+  killBtn.onclick = () => {
+    t.active = !t.active;
+    renderTenants();
+    closeModal('modal-tenant-detail');
+    showToast(t.active ? '✅' : '🔒', `${t.active?'Mở khoá':'Khoá'} thành công: ${t.name}`);
+  };
+  openModal('modal-tenant-detail');
+}
+
+function markResolved(btn) {
+  btn.closest('tr').querySelector('.badge').outerHTML = '<span class="badge badge-green">✓ Đã fix</span>';
+  btn.remove();
+  showToast('✅', 'Đã đánh dấu lỗi là Resolved');
+}
+
+function addTenantSuccess() {
+  closeModal('modal-add-tenant');
+  showToast('🎉', 'Tạo Tenant thành công! Email đã gửi cho School Admin');
+}
+
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.remove('translate-y-16','opacity-0');
+  setTimeout(() => t.classList.add('translate-y-16','opacity-0'), 3200);
+}
+
+// Clock
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('vi-VN');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── INIT ────────────────────────────────────────────────
+renderTenants();
+renderInvoices();
+renderLogs();
+renderAudit();
+initCharts();
+</script>
+</body>
+</html>

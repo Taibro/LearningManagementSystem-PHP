@@ -2,7 +2,9 @@ name: LMS Backend → Oracle
 on:
   push:
     branches: [main]
-    paths: ['backend/**', 'deploy/**']
+    paths:
+      - 'lms-be/**'
+      - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
 
 concurrency:
@@ -38,15 +40,15 @@ jobs:
           rsync -az --delete \
             --exclude='.env' --exclude='vendor/' --exclude='node_modules/' --exclude='.git/' \
             -e "ssh -i ~/.ssh/id_deploy" \
-            backend/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
+            lms-be/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
 
-          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" backend/docker-compose.yml backend/docker/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
+          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" lms-be/docker-compose.yml lms-be/docker/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
 
       - name: Install ansible-core
         run: pip install --quiet ansible-core
 
       - name: Run playbook
-        working-directory: deploy
+        working-directory: lms-be/deploy
         env:
           LMS_DB_PASSWORD: ${{ secrets.LMS_DB_PASSWORD }}
           LMS_APP_KEY: ${{ secrets.LMS_APP_KEY }}

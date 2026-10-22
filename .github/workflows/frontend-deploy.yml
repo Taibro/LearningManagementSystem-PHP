@@ -2,7 +2,9 @@ name: LMS Frontend → Netlify
 on:
   push:
     branches: [main]
-    paths: ['frontend/**']
+    paths:
+      - 'lms-fe/**'
+      - '.github/workflows/frontend-deploy.yml'
   workflow_dispatch:
 concurrency:
   group: lms-frontend-deploy
@@ -15,7 +17,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: frontend
+        working-directory: lms-fe
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -25,7 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: lms-fe/package-lock.json
       - run: npm ci
       - run: npm run build
         env:

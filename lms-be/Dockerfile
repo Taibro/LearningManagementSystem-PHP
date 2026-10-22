@@ -13,10 +13,10 @@ FROM base AS vendor
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_CACHE_DIR=/tmp/composer-cache
 WORKDIR /app
-COPY backend/composer.json backend/composer.lock ./
+COPY composer.json composer.lock ./
 RUN --mount=type=cache,target=/tmp/composer-cache \
     composer install --no-dev --prefer-dist --no-scripts --no-autoloader --no-interaction
-COPY backend/ ./
+COPY . ./
 RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction
 
 # ---- runtime ----

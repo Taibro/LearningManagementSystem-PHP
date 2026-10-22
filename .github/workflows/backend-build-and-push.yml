@@ -2,7 +2,9 @@ name: Build & Push Backend Image
 on:
   push:
     branches: [main]
-    paths: ['backend/**']
+    paths:
+      - 'lms-be/**'
+      - '.github/workflows/backend-build-and-push.yml'
 
 jobs:
   build-and-push:
@@ -32,9 +34,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: backend/Dockerfile
+          context: ./lms-be
+          file: ./lms-be/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
-          cache-to: type=gs,mode=max
+          cache-to: type=gha,mode=max

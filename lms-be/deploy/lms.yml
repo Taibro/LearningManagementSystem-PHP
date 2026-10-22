@@ -1,0 +1,87 @@
+---
+- name: Deploy LMS backend
+  hosts: all
+  become: true
+  vars:
+    dir: /opt/lms/backend
+    db_password: "{{ lookup('env', 'LMS_DB_PASSWORD') }}"
+    app_key: "{{ lookup('env', 'LMS_APP_KEY') }}"
+    kc_client_secret: "{{ lookup('env', 'LMS_KC_CLIENT_SECRET') }}"
+    image_tag: "{{ lookup('env', 'IMAGE_TAG') | default('latest', true) }}"
+    ghcr_pat: "{{ lookup('env', 'GHCR_PAT') }}"
+    ghcr_owner: "{{ lookup('env', 'GHCR_OWNER') }}"
+
+  pre_tasks:
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - db_password | length >= 12
+          - app_key is match('^base64:[A-Za-z0-9+/]{43}=$')
+          - api_domain | default('') | length > 0
+        fail_msg: "Missing or invalid LMS_DB_PASSWORD, LMS_APP_KEY, or api_domain"
+
+  tasks:
+    - name: Ensure dirs
+      ansible.builtin.file:
+        path: "{{ dir }}"
+        state: directory
+
+    - name: Template .env (fixed APP_KEY from secret)
+      ansible.builtin.template:
+        src: templates/lms.env.j2
+        dest: "{{ dir }}/.env"
+        mode: "0600"
+
+    - name: Login to GHCR
+      community.docker.docker_login:
+        registry_url: ghcr.io
+        username: "{{ ghcr_owner }}"
+        password: "{{ ghcr_pat }}"
+        reauthorize: true
+
+    - name: Pull new image from GHCR
+      ansible.builtin.command: docker compose pull
+      args: { chdir: "{{ dir }}" }
+      environment:
+        IMAGE_TAG: "{{ image_tag }}"
+        GHCR_OWNER: "{{ ghcr_owner }}"
+
+    - name: Start stack and wait for healthchecks
+      ansible.builtin.command: docker compose up -d --wait --wait-timeout 300
+      args: { chdir: "{{ dir }}" }
+      environment:
+        IMAGE_TAG: "{{ image_tag }}"
+        GHCR_OWNER: "{{ ghcr_owner }}"
+
+    - name: Migrate database
+      ansible.builtin.command: docker exec -u www-data lms_backend php artisan migrate --force
+      register: migrate
+      changed_when: "'Nothing to migrate' not in migrate.stdout"
+
+    - name: Wait API (/up)
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8081/up
+        status_code: 200
+      register: api
+      until: api.status == 200
+      retries: 20
+      delay: 3
+
+    - name: Prune old images
+      ansible.builtin.command: docker image prune -f
+      changed_when: false
+
+    - name: Ensure backup directory
+      ansible.builtin.file:
+        path: /opt/backups
+        state: directory
+        mode: "0700"
+
+    - name: Backup Postgres daily at 02:30
+      ansible.builtin.cron:
+        name: lms-pg-backup
+        minute: "30"
+        hour: "2"
+        job: >-
+          docker exec lms_postgres pg_dump -U lms_user lms | gzip > /opt/backups/lms-$(date +\%F).sql.gz
+          && find /opt/backups -name 'lms-*.sql.gz' -mtime +7 -delete

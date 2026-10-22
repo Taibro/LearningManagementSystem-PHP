@@ -1,0 +1,38 @@
+name: LMS Mobile → APK artifact
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Build APK
+        run: >
+          flutter build apk --release --split-per-abi
+          --dart-define=API_BASE_URL=https://${{ vars.API_DOMAIN }}
+          --dart-define=KEYCLOAK_URL=https://${{ vars.AUTH_DOMAIN }}
+          --dart-define=KEYCLOAK_REALM=lms
+          --dart-define=KEYCLOAK_CLIENT_ID=lms-mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lms-mobile-apk
+          path: mobile/build/app/outputs/flutter-apk/*.apk
+          retention-days: 14

@@ -1,0 +1,61 @@
+name: LMS Backend → Oracle
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', 'deploy/**']
+  workflow_dispatch:
+
+concurrency:
+  group: lms-backend-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SERVER_IP: ${{ vars.SERVER_IP }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare SSH (key + known_hosts)
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          : "${SERVER_IP:?Variable SERVER_IP is not set}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
+
+      - name: Sync backend code (rsync, delete obsolete files on server)
+        run: |
+          rsync -az --delete \
+            --exclude='.env' --exclude='vendor/' --exclude='node_modules/' --exclude='.git/' \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            backend/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
+
+          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" backend/docker-compose.yml backend/docker/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
+
+      - name: Install ansible-core
+        run: pip install --quiet ansible-core
+
+      - name: Run playbook
+        working-directory: deploy
+        env:
+          LMS_DB_PASSWORD: ${{ secrets.LMS_DB_PASSWORD }}
+          LMS_APP_KEY: ${{ secrets.LMS_APP_KEY }}
+          LMS_KC_CLIENT_SECRET: ${{ secrets.LMS_KC_CLIENT_SECRET }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_OWNER: ${{ github.repository_owner }}
+        run: >
+          ansible-playbook -i "${SERVER_IP},"
+          -u ubuntu --private-key ~/.ssh/id_deploy lms.yml
+          -e api_domain=${{ vars.API_DOMAIN }}
+          -e auth_domain=${{ vars.AUTH_DOMAIN }}
+          -e frontend_origin=${{ vars.FRONTEND_ORIGIN }}

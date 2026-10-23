@@ -43,6 +43,11 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest
 
+      - name: Check PHP platform requirements
+        run: |
+          docker run --rm -v ${{ github.workspace }}/lms-be:/app -w /app \
+            composer:2 check-platform-reqs --no-dev
+
       - name: Build and push Docker image (linux/arm64)
         uses: docker/build-push-action@v6
         with:

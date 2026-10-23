@@ -1,10 +1,8 @@
 name: LMS Backend → Oracle
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'lms-be/**'
-      - '.github/workflows/backend-deploy.yml'
+  workflow_run:
+    workflows: ["Build & Push Backend Image"]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -13,17 +11,21 @@ concurrency:
 
 permissions:
   contents: read
-  packages: read
 
 jobs:
   deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       SERVER_IP: ${{ vars.SERVER_IP }}
-      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Prepare SSH (key + known_hosts)
         env:
@@ -35,14 +37,12 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
 
-      - name: Sync backend code (rsync, delete obsolete files on server)
+      - name: Sync compose and nginx configuration
         run: |
-          rsync -az --delete \
-            --exclude='.env' --exclude='vendor/' --exclude='node_modules/' --exclude='.git/' \
-            -e "ssh -i ~/.ssh/id_deploy" \
-            lms-be/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
-
-          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" lms-be/docker-compose.yml lms-be/docker/ "ubuntu@${SERVER_IP}:/opt/lms/backend/"
+          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" \
+            lms-be/docker/ "ubuntu@${SERVER_IP}:/opt/lms/backend/docker/"
+          rsync -az -e "ssh -i ~/.ssh/id_deploy" \
+            lms-be/docker-compose.yml "ubuntu@${SERVER_IP}:/opt/lms/backend/docker-compose.yml"
 
       - name: Install ansible-core
         run: pip install --quiet ansible-core

@@ -18,7 +18,9 @@
           - db_password | length >= 12
           - app_key is match('^base64:[A-Za-z0-9+/]{43}=$')
           - api_domain | default('') | length > 0
-        fail_msg: "Missing or invalid LMS_DB_PASSWORD, LMS_APP_KEY, or api_domain"
+          - auth_domain | default('') | length > 0
+          - frontend_origin | default('') is match('^https://[^/]+$')
+        fail_msg: "Missing or invalid LMS_DB_PASSWORD, LMS_APP_KEY (base64:...), api_domain, auth_domain, or frontend_origin"
 
   tasks:
     - name: Ensure dirs
@@ -33,25 +35,25 @@
         mode: "0600"
 
     - name: Login to GHCR
-      community.docker.docker_login:
-        registry_url: ghcr.io
-        username: "{{ ghcr_owner }}"
-        password: "{{ ghcr_pat }}"
-        reauthorize: true
+      ansible.builtin.shell: |
+        printf '%s' "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_OWNER" --password-stdin
+      environment:
+        GHCR_PAT: "{{ ghcr_pat }}"
+        GHCR_OWNER: "{{ ghcr_owner }}"
+      no_log: true
+      changed_when: false
 
     - name: Pull new image from GHCR
       ansible.builtin.command: docker compose pull
       args: { chdir: "{{ dir }}" }
       environment:
         IMAGE_TAG: "{{ image_tag }}"
-        GHCR_OWNER: "{{ ghcr_owner }}"
 
     - name: Start stack and wait for healthchecks
       ansible.builtin.command: docker compose up -d --wait --wait-timeout 300
       args: { chdir: "{{ dir }}" }
       environment:
         IMAGE_TAG: "{{ image_tag }}"
-        GHCR_OWNER: "{{ ghcr_owner }}"
 
     - name: Migrate database
       ansible.builtin.command: docker exec -u www-data lms_backend php artisan migrate --force

@@ -44,16 +44,22 @@
       changed_when: false
 
     - name: Pull new image from GHCR
-      ansible.builtin.command: docker compose pull
-      args: { chdir: "{{ dir }}" }
-      environment:
-        IMAGE_TAG: "{{ image_tag }}"
+      ansible.builtin.shell: |
+        export GHCR_OWNER="{{ ghcr_owner }}"
+        export IMAGE_TAG="{{ image_tag }}"
+        docker compose pull
+      args:
+        chdir: "{{ dir }}"
+        executable: /bin/bash
 
     - name: Start stack and wait for healthchecks
-      ansible.builtin.command: docker compose up -d --wait --wait-timeout 300
-      args: { chdir: "{{ dir }}" }
-      environment:
-        IMAGE_TAG: "{{ image_tag }}"
+      ansible.builtin.shell: |
+        export GHCR_OWNER="{{ ghcr_owner }}"
+        export IMAGE_TAG="{{ image_tag }}"
+        docker compose up -d --wait --wait-timeout 300
+      args:
+        chdir: "{{ dir }}"
+        executable: /bin/bash
 
     - name: Migrate database
       ansible.builtin.command: docker exec -u www-data lms_backend php artisan migrate --force

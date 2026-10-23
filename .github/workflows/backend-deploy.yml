@@ -55,6 +55,7 @@ jobs:
           LMS_KC_CLIENT_SECRET: ${{ secrets.LMS_KC_CLIENT_SECRET }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GHCR_OWNER: ${{ github.repository_owner }}
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: >
           ansible-playbook -i "${SERVER_IP},"
           -u ubuntu --private-key ~/.ssh/id_deploy lms.yml

@@ -43,7 +43,7 @@ jobs:
         with:
           images: ghcr.io/${{ env.REPO_OWNER }}/lms-backend
           tags: |
-            type=sha,prefix=
+            type=sha,format=long,prefix=
             type=raw,value=latest
 
       - name: Check PHP platform requirements

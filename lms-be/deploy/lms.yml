@@ -45,7 +45,7 @@
 
     - name: Pull new image from GHCR
       ansible.builtin.shell: |
-        export GHCR_OWNER="{{ ghcr_owner }}"
+        export GHCR_OWNER="{{ ghcr_owner | lower }}"
         export IMAGE_TAG="{{ image_tag }}"
         docker compose pull
       args:
@@ -54,7 +54,7 @@
 
     - name: Start stack and wait for healthchecks
       ansible.builtin.shell: |
-        export GHCR_OWNER="{{ ghcr_owner }}"
+        export GHCR_OWNER="{{ ghcr_owner | lower }}"
         export IMAGE_TAG="{{ image_tag }}"
         docker compose up -d --wait --wait-timeout 300
       args:

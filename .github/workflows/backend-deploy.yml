@@ -47,6 +47,9 @@ jobs:
       - name: Install ansible-core
         run: pip install --quiet ansible-core
 
+      - name: Lowercase repository owner
+        run: echo "REPO_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Run playbook
         working-directory: lms-be/deploy
         env:
@@ -54,7 +57,7 @@ jobs:
           LMS_APP_KEY: ${{ secrets.LMS_APP_KEY }}
           LMS_KC_CLIENT_SECRET: ${{ secrets.LMS_KC_CLIENT_SECRET }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
-          GHCR_OWNER: ${{ github.repository_owner }}
+          GHCR_OWNER: ${{ env.REPO_OWNER }}
           IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: >
           ansible-playbook -i "${SERVER_IP},"

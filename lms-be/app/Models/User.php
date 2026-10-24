@@ -17,10 +17,18 @@ use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 /**
  * @property int $id
+ * @property string|null $user_code
  * @property string $name
  * @property string $email
+ * @property string $role
+ * @property string|null $phone
+ * @property string|null $gender
+ * @property string|null $date_of_birth
+ * @property string|null $class_name
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -35,7 +43,18 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'current_team_id'])]
+#[Fillable([
+    'user_code',
+    'name',
+    'email',
+    'role',
+    'phone',
+    'gender',
+    'date_of_birth',
+    'class_name',
+    'password',
+    'current_team_id',
+])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -53,6 +72,22 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'date_of_birth' => 'date',
         ];
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(CourseRegistration::class, 'student_id');
+    }
+
+    public function tuitions(): HasMany
+    {
+        return $this->hasMany(Tuition::class, 'student_id');
+    }
+
+    public function teachingClasses(): HasMany
+    {
+        return $this->hasMany(CourseClass::class, 'lecturer_id');
     }
 }

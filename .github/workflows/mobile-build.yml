@@ -26,6 +26,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Create .env for build
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
       - name: Build APK
         run: >
           flutter build apk --release --split-per-abi

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfile, getWeeklySchedule, getNotifications, getGrades } from '../../studentApi';
 import { BarChart, DollarSign, LineChart, Calendar, ClipboardList, CheckCircle2, GraduationCap, Medal } from 'lucide-react';

@@ -25,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+
+        // When running CLI commands (migrate, seed), automatically switch to pgsql_owner to gain DDL privileges and bypass RLS        if ($this->app->runningInConsole() && in_array(config('database.default'), ['pgsql', 'pgsql_owner'])) {
+            config(['database.default' => 'pgsql_owner']);
+        }
     }
 
     /**

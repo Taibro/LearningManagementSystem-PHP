@@ -90,7 +90,7 @@ export default function Sidebar() {
           <span><Settings className="w-4 h-4 inline-block mr-2" /> KHÁC</span><span className="caret">▾</span>
         </div>
         <div className={`sub-menu ${open.khac ? 'open' : ''}`}>
-          <NavLink to="/change-password" className={navClass}>Đổi mật khẩu</NavLink>
+          {/* <NavLink to="/change-password" className={navClass}>Đổi mật khẩu</NavLink> */}
         </div>
       </div>
       

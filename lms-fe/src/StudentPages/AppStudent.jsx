@@ -1,37 +1,25 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './student.css'; 
+import './styles/student.css'; 
 
 import MainLayout from './components/Layout/MainLayout';
-import Dashboard from './pages/Dashboard/Dashboard';
-import StudentInfo from './pages/StudentInfo/StudentInfo';
-import Notifications from './pages/Notifications/Notifications';
-import Surveys from './pages/Surveys/Surveys';
-import Grades from './pages/Grades/Grades';
-import WeeklySchedule from './pages/WeeklySchedule/WeeklySchedule';
-import ProgressSchedule from './pages/ProgressSchedule/ProgressSchedule';
-import Attendance from './pages/Attendance/Attendance';
-import ConductScore from './pages/ConductScore/ConductScore';
-import Scholarships from './pages/Scholarships/Scholarships';
-import Curriculum from './pages/Curriculum/Curriculum';
-import TuitionFee from './pages/TuitionFee/TuitionFee';
-import OnlinePayment from './pages/OnlinePayment/OnlinePayment';
-import PaymentProcessing from './pages/OnlinePayment/PaymentProcessing';
-import GeneralReceipts from './pages/GeneralReceipts/GeneralReceipts';
-import OnlineReceipts from './pages/OnlinePayment/Receipts';
-import DefaultPage from './pages/DefaultPage/DefaultPage';
-import CourseRegistration from './pages/CourseRegistration/CourseRegistration';
-import StudentDeclaration from './pages/Declaration/StudentDeclaration';
-import StudentLogin from './pages/Login/StudentLogin';
+import ProtectedRoute from './components/ProtectedRoute';
 
-// Component Bảo vệ: Chưa có token thì bắt quay lại trang login
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+// ── BARREL IMPORTS THEO TỪNG MODULE NGHIỆP VỤ ──────────────────────────────
+import { StudentLogin } from './pages/Auth';
+import { Dashboard } from './pages/Dashboard';
+import { WeeklySchedule, ProgressSchedule, Attendance } from './pages/Schedule';
+import { Curriculum, CourseRegistration } from './pages/Academics';
+import { 
+  TuitionFee, 
+  OnlinePayment, 
+  PaymentProcessing, 
+  Receipts as OnlineReceipts, 
+  GeneralReceipts 
+} from './pages/Finance';
+import { Grades, ConductScore, Scholarships } from './pages/Results';
+import { StudentInfo, StudentDeclaration } from './pages/Profile';
+import { Notifications, Surveys, DefaultPage } from './pages/Utilities';
 
 export default function AppStudent({ schoolName }) {
   const basename = schoolName ? `/${schoolName}/student` : '/student';

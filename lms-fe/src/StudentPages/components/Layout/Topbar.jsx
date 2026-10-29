@@ -42,9 +42,15 @@ export default function Topbar() {
   }, []);
 
   const handleLogout = () => {
-    // localStorage.removeItem('token');
+    // Xóa toàn bộ token và thông tin phiên đăng nhập
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+    localStorage.removeItem('schoolId');
+    localStorage.clear();
     navigate('/login');
   };
+
   return (
     <div className="topbar">
       <div className="logo-wrap">
@@ -95,9 +101,6 @@ export default function Topbar() {
             }}>
               <Link to="/student-info" style={{display: 'block', padding: '12px 16px', color: '#475569', textDecoration: 'none', borderBottom: '1px solid #f1f5f9', fontSize: '13px'}} onClick={() => setShowDropdown(false)}>
                 Thông tin cá nhân
-              </Link>
-              <Link to="/student-info" style={{display: 'block', padding: '12px 16px', color: '#475569', textDecoration: 'none', borderBottom: '1px solid #f1f5f9', fontSize: '13px'}} onClick={() => setShowDropdown(false)}>
-                Đổi mật khẩu
               </Link>
               <div 
                 onClick={handleLogout} 

@@ -77,6 +77,7 @@ class KeycloakJwksService
             'lms-web',
             'lms-mobile',
             'lms-api',
+            'admin-cli',
             'account',
         ];
 

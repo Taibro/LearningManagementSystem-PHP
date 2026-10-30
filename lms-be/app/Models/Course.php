@@ -1,34 +1,95 @@
 <?php
 
+/**
+ * Created by Reliese Model.
+ */
+
 namespace App\Models;
 
-use App\Enums\CourseStatus;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class Course
+ * 
+ * @property int $id
+ * @property uuid $courses_id
+ * @property int $school_id
+ * @property int|null $department_id
+ * @property string $code
+ * @property string $name
+ * @property int $credits
+ * @property int $total_periods
+ * @property int $theory_periods
+ * @property int $practice_periods
+ * @property float $price_per_credit
+ * @property string|null $description
+ * @property bool $is_active
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * 
+ * @property School $school
+ * @property Department|null $department
+ * @property User|null $user
+ * @property Collection|Class[] $classes
+ *
+ * @package App\Models
+ */
 class Course extends Model
 {
-    use HasFactory, SoftDeletes;
+	protected $table = 'courses';
 
-    protected $fillable = [
-        'title',
-        'slug',
-        'description',
-        'instructor_id',
-        'status',
-        'price',
-        'duration_hours',
-    ];
+	protected $casts = [
+		'courses_id' => 'uuid',
+		'school_id' => 'int',
+		'department_id' => 'int',
+		'credits' => 'int',
+		'total_periods' => 'int',
+		'theory_periods' => 'int',
+		'practice_periods' => 'int',
+		'price_per_credit' => 'float',
+		'is_active' => 'bool',
+		'created_by' => 'int',
+		'updated_by' => 'int'
+	];
 
-    protected $casts = [
-        'price' => 'decimal:2',
-        'status' => CourseStatus::class,
-    ];
+	protected $fillable = [
+		'courses_id',
+		'school_id',
+		'department_id',
+		'code',
+		'name',
+		'credits',
+		'total_periods',
+		'theory_periods',
+		'practice_periods',
+		'price_per_credit',
+		'description',
+		'is_active',
+		'created_by',
+		'updated_by'
+	];
 
-    public function instructor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'instructor_id');
-    }
+	public function school()
+	{
+		return $this->belongsTo(School::class);
+	}
+
+	public function department()
+	{
+		return $this->belongsTo(Department::class);
+	}
+
+	public function user()
+	{
+		return $this->belongsTo(User::class, 'updated_by');
+	}
+
+	public function classes()
+	{
+		return $this->hasMany(Class::class);
+	}
 }

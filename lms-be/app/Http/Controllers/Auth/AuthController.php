@@ -29,6 +29,15 @@ class AuthController extends Controller
                 ->get(['id', 'code', 'name']);
 
             if ($schools->isEmpty()) {
+                $this->keycloakAuthService->findOrSeedDefaultSchool('HUIT');
+
+                $schools = School::on('pgsql_owner')
+                    ->where('is_active', true)
+                    ->orderBy('id')
+                    ->get(['id', 'code', 'name']);
+            }
+
+            if ($schools->isEmpty()) {
                 return response()->json([
                     [
                         'id' => 1,

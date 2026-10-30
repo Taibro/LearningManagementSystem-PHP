@@ -113,6 +113,34 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'pgsql_server' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_SERVER_HOST', env('DB_HOST', '140.245.54.161')),
+            'port' => env('DB_SERVER_PORT', env('DB_PORT', '5432')),
+            'database' => env('DB_SERVER_DATABASE', env('DB_DATABASE', 'lms')),
+            'username' => env('DB_SERVER_APP_USERNAME', env('DB_APP_USERNAME', 'lms_app_role')),
+            'password' => env('DB_SERVER_APP_PASSWORD', env('DB_APP_PASSWORD', 'lms_app_secret_password')),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
+        'pgsql_server_owner' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_SERVER_HOST', env('DB_HOST', '140.245.54.161')),
+            'port' => env('DB_SERVER_PORT', env('DB_PORT', '5432')),
+            'database' => env('DB_SERVER_DATABASE', env('DB_DATABASE', 'lms')),
+            'username' => env('DB_SERVER_USERNAME', env('DB_USERNAME', 'lms_user')),
+            'password' => env('DB_SERVER_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

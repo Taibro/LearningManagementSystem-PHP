@@ -2,9 +2,18 @@
 
 namespace App\Providers;
 
+use App\Services\Auth\KeycloakAuthService;
+use App\Services\Auth\KeycloakJwksService;
+use App\Services\Auth\KeycloakJwtGuard;
+use App\Services\Database\PostgresContextService;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,10 +35,27 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureRateLimiting();
 
-        // When running in CLI (migrate, seed), automatically switch to pgsql_owner for DDL privileges and RLS bypass
-        if ($this->app->runningInConsole() && in_array(config('database.default'), ['pgsql', 'pgsql_owner'])) {
-            config(['database.default' => 'pgsql_owner']);
+        // When running in CLI (migrate, seed), automatically switch to owner connection for DDL privileges and RLS bypass
+        if ($this->app->runningInConsole()) {
+            $default = config('database.default');
+            if (in_array($default, ['pgsql', 'pgsql_owner'], true)) {
+                config(['database.default' => 'pgsql_owner']);
+            } elseif (in_array($default, ['pgsql_server', 'pgsql_server_owner'], true)) {
+                config(['database.default' => 'pgsql_server_owner']);
+            }
         }
+
+        // Register stateless Keycloak JWT Guard for API requests
+        Auth::extend('keycloak', function ($app, $name, array $config) {
+            return new KeycloakJwtGuard(
+                $app->make(KeycloakJwksService::class),
+                $app->make(KeycloakAuthService::class),
+                $app['request']
+            );
+        });
+
+        Queue::before(fn () => PostgresContextService::clearContext());
+        Queue::after(fn () => PostgresContextService::clearContext());
     }
 
     /**
@@ -37,8 +63,8 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
     }
 

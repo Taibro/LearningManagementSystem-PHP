@@ -38,7 +38,7 @@ class Notification extends Model
 	protected $table = 'notifications';
 
 	protected $casts = [
-		'notifications_id' => 'uuid',
+		'notifications_id' => 'string',
 		'school_id' => 'int',
 		'recipient_user_id' => 'int',
 		'reference_id' => 'int',

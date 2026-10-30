@@ -35,12 +35,12 @@ class AuditLog extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'audit_logs_id' => 'uuid',
+		'audit_logs_id' => 'string',
 		'school_id' => 'int',
 		'user_id' => 'int',
 		'entity_id' => 'int',
-		'old_values' => 'binary',
-		'new_values' => 'binary'
+		'old_values' => 'array',
+		'new_values' => 'array'
 	];
 
 	protected $fillable = [

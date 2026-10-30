@@ -37,7 +37,7 @@ class SchoolBranch extends Model
 	protected $table = 'school_branches';
 
 	protected $casts = [
-		'school_branches_id' => 'uuid',
+		'school_branches_id' => 'string',
 		'school_id' => 'int',
 		'is_active' => 'bool',
 		'created_by' => 'int',

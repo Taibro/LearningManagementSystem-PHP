@@ -36,7 +36,7 @@ class AcademicYear extends Model
 	protected $table = 'academic_years';
 
 	protected $casts = [
-		'academic_years_id' => 'uuid',
+		'academic_years_id' => 'string',
 		'school_id' => 'int',
 		'start_date' => 'datetime',
 		'end_date' => 'datetime',

@@ -170,7 +170,7 @@ return [
         |
         */
 
-        'base_files' => false,
+        'base_files' => true,
 
         /*
         |--------------------------------------------------------------------------
@@ -265,6 +265,20 @@ return [
 
         'casts' => [
             '*_json' => 'json',
+            'school_id' => 'int',
+            'users_id' => 'string',
+            'keycloak_id' => 'string',
+            'students_id' => 'string',
+            'teachers_id' => 'string',
+            'role_id' => 'string',
+            'user_roles_id' => 'string',
+            'courses_id' => 'string',
+            'classes_id' => 'string',
+            'semesters_id' => 'string',
+            'departments_id' => 'string',
+            'rooms_id' => 'string',
+            'schedules_id' => 'string',
+            'enrollments_id' => 'string',
         ],
 
         /*
@@ -342,7 +356,7 @@ return [
         */
 
         'model_names' => [
-
+            'classes' => 'CourseClass',
         ],
 
         /*
@@ -372,7 +386,7 @@ return [
         |                       generates Post::user() and User::posts()
         */
 
-        'relation_name_strategy' => 'related',
+        'relation_name_strategy' => 'foreign_key',
         // 'relation_name_strategy' => 'foreign_key',
 
         /*

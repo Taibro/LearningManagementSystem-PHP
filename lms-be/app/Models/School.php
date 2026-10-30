@@ -67,7 +67,7 @@ class School extends Model
 	protected $table = 'schools';
 
 	protected $casts = [
-		'school_id' => 'uuid',
+		'school_id' => 'string',
 		'is_active' => 'bool',
 		'created_by' => 'int',
 		'updated_by' => 'int'
@@ -145,7 +145,7 @@ class School extends Model
 
 	public function classes()
 	{
-		return $this->hasMany(Class::class);
+		return $this->hasMany(CourseClass::class);
 	}
 
 	public function schedules()

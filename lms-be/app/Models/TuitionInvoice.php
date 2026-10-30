@@ -41,7 +41,7 @@ class TuitionInvoice extends Model
 	protected $table = 'tuition_invoices';
 
 	protected $casts = [
-		'tuition_invoices_id' => 'uuid',
+		'tuition_invoices_id' => 'string',
 		'school_id' => 'int',
 		'student_id' => 'int',
 		'semester_id' => 'int',

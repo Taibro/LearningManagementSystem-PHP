@@ -37,7 +37,7 @@ class SystemErrorLog extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'system_error_logs_id' => 'uuid',
+		'system_error_logs_id' => 'string',
 		'school_id' => 'int',
 		'user_id' => 'int',
 		'status_code' => 'int'

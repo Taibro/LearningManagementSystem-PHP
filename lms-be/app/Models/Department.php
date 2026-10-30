@@ -39,7 +39,7 @@ class Department extends Model
 	protected $table = 'departments';
 
 	protected $casts = [
-		'departments_id' => 'uuid',
+		'departments_id' => 'string',
 		'school_id' => 'int',
 		'is_active' => 'bool',
 		'created_by' => 'int',

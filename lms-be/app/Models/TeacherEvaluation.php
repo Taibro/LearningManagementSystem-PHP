@@ -38,7 +38,7 @@ class TeacherEvaluation extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'teacher_evaluations_id' => 'uuid',
+		'teacher_evaluations_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
 		'student_id' => 'int',
@@ -71,7 +71,7 @@ class TeacherEvaluation extends Model
 
 	public function class()
 	{
-		return $this->belongsTo(Class::class);
+		return $this->belongsTo(CourseClass::class, 'class_id');
 	}
 
 	public function student()

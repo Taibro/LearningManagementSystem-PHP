@@ -43,7 +43,7 @@ class Course extends Model
 	protected $table = 'courses';
 
 	protected $casts = [
-		'courses_id' => 'uuid',
+		'courses_id' => 'string',
 		'school_id' => 'int',
 		'department_id' => 'int',
 		'credits' => 'int',
@@ -90,6 +90,6 @@ class Course extends Model
 
 	public function classes()
 	{
-		return $this->hasMany(Class::class);
+		return $this->hasMany(CourseClass::class);
 	}
 }

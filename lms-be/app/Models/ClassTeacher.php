@@ -37,7 +37,7 @@ class ClassTeacher extends Model
 	protected $table = 'class_teacher';
 
 	protected $casts = [
-		'class_teacher_id' => 'uuid',
+		'class_teacher_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
 		'teacher_id' => 'int',
@@ -65,7 +65,7 @@ class ClassTeacher extends Model
 
 	public function class()
 	{
-		return $this->belongsTo(Class::class);
+		return $this->belongsTo(CourseClass::class, 'class_id');
 	}
 
 	public function teacher()

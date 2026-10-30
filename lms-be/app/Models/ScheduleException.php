@@ -45,13 +45,13 @@ class ScheduleException extends Model
 	protected $table = 'schedule_exceptions';
 
 	protected $casts = [
-		'schedule_exceptions_id' => 'uuid',
+		'schedule_exceptions_id' => 'string',
 		'school_id' => 'int',
 		'schedule_id' => 'int',
 		'exception_date' => 'datetime',
 		'new_date' => 'datetime',
-		'new_start_time' => 'time without time zone',
-		'new_end_time' => 'time without time zone',
+		'new_start_time' => 'string',
+		'new_end_time' => 'string',
 		'new_room_id' => 'int',
 		'substitute_teacher_id' => 'int',
 		'approved_by' => 'int',

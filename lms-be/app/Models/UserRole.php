@@ -39,7 +39,7 @@ class UserRole extends Model
 	protected $table = 'user_roles';
 
 	protected $casts = [
-		'user_roles_id' => 'uuid',
+		'user_roles_id' => 'string',
 		'school_id' => 'int',
 		'user_id' => 'int',
 		'role_id' => 'int',
@@ -73,7 +73,7 @@ class UserRole extends Model
 
 	public function user()
 	{
-		return $this->belongsTo(User::class, 'updated_by');
+		return $this->belongsTo(User::class, 'user_id');
 	}
 
 	public function role()

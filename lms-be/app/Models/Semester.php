@@ -43,7 +43,7 @@ class Semester extends Model
 	protected $table = 'semesters';
 
 	protected $casts = [
-		'semesters_id' => 'uuid',
+		'semesters_id' => 'string',
 		'school_id' => 'int',
 		'academic_year_id' => 'int',
 		'start_date' => 'datetime',
@@ -83,7 +83,7 @@ class Semester extends Model
 
 	public function classes()
 	{
-		return $this->hasMany(Class::class);
+		return $this->hasMany(CourseClass::class);
 	}
 
 	public function tuition_invoices()

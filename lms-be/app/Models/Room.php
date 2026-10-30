@@ -42,7 +42,7 @@ class Room extends Model
 	protected $table = 'rooms';
 
 	protected $casts = [
-		'rooms_id' => 'uuid',
+		'rooms_id' => 'string',
 		'school_id' => 'int',
 		'branch_id' => 'int',
 		'floor' => 'int',

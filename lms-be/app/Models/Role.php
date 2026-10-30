@@ -32,7 +32,7 @@ class Role extends Model
 	protected $table = 'role';
 
 	protected $casts = [
-		'role_id' => 'uuid',
+		'role_id' => 'string',
 		'is_system_role' => 'bool',
 		'created_by' => 'int',
 		'updated_by' => 'int'
@@ -49,7 +49,7 @@ class Role extends Model
 
 	public function users()
 	{
-		return $this->belongsToMany(User::class, 'user_roles', 'role_id', 'updated_by')
+		return $this->belongsToMany(User::class, 'user_roles', 'role_id', 'user_id')
 					->withPivot('id', 'user_roles_id', 'school_id', 'user_id', 'department_id', 'granted_by', 'granted_at', 'expires_at', 'is_active', 'created_by')
 					->withTimestamps();
 	}

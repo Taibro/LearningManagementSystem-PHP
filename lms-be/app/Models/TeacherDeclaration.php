@@ -41,7 +41,7 @@ class TeacherDeclaration extends Model
 	protected $table = 'teacher_declarations';
 
 	protected $casts = [
-		'teacher_declarations_id' => 'uuid',
+		'teacher_declarations_id' => 'string',
 		'school_id' => 'int',
 		'teacher_id' => 'int',
 		'semester_id' => 'int',

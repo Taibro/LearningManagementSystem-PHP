@@ -30,7 +30,7 @@ class SalaryConfig extends Model
 	protected $table = 'salary_config';
 
 	protected $casts = [
-		'salary_config_id' => 'uuid',
+		'salary_config_id' => 'string',
 		'price_per_period' => 'float'
 	];
 

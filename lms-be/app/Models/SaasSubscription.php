@@ -36,7 +36,7 @@ class SaasSubscription extends Model
 	protected $table = 'saas_subscriptions';
 
 	protected $casts = [
-		'saas_subscriptions_id' => 'uuid',
+		'saas_subscriptions_id' => 'string',
 		'school_id' => 'int',
 		'plan_id' => 'int',
 		'start_date' => 'datetime',

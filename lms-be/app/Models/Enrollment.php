@@ -47,7 +47,7 @@ class Enrollment extends Model
 	protected $table = 'enrollments';
 
 	protected $casts = [
-		'enrollments_id' => 'uuid',
+		'enrollments_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
 		'student_id' => 'int',
@@ -94,7 +94,7 @@ class Enrollment extends Model
 
 	public function class()
 	{
-		return $this->belongsTo(Class::class);
+		return $this->belongsTo(CourseClass::class, 'class_id');
 	}
 
 	public function student()

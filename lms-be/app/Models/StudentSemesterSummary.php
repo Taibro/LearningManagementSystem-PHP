@@ -39,7 +39,7 @@ class StudentSemesterSummary extends Model
 	protected $table = 'student_semester_summaries';
 
 	protected $casts = [
-		'student_semester_summaries_id' => 'uuid',
+		'student_semester_summaries_id' => 'string',
 		'school_id' => 'int',
 		'student_id' => 'int',
 		'semester_id' => 'int',

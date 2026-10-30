@@ -47,15 +47,15 @@ class Schedule extends Model
 	protected $table = 'schedules';
 
 	protected $casts = [
-		'schedules_id' => 'uuid',
+		'schedules_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
 		'room_id' => 'int',
 		'day_of_week' => 'int',
 		'start_period' => 'int',
 		'end_period' => 'int',
-		'start_time' => 'time without time zone',
-		'end_time' => 'time without time zone',
+		'start_time' => 'string',
+		'end_time' => 'string',
 		'effective_from' => 'datetime',
 		'effective_to' => 'datetime',
 		'is_active' => 'bool',
@@ -89,7 +89,7 @@ class Schedule extends Model
 
 	public function class()
 	{
-		return $this->belongsTo(Class::class);
+		return $this->belongsTo(CourseClass::class, 'class_id');
 	}
 
 	public function room()

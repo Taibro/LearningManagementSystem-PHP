@@ -56,7 +56,7 @@ class TeacherSalarySheet extends Model
 	protected $table = 'teacher_salary_sheet';
 
 	protected $casts = [
-		'teacher_salary_sheet_id' => 'uuid',
+		'teacher_salary_sheet_id' => 'string',
 		'school_id' => 'int',
 		'teacher_id' => 'int',
 		'semester_id' => 'int',

@@ -37,13 +37,13 @@ class SaasPlan extends Model
 	protected $table = 'saas_plans';
 
 	protected $casts = [
-		'saas_plans_id' => 'uuid',
+		'saas_plans_id' => 'string',
 		'monthly_price' => 'float',
 		'yearly_price' => 'float',
 		'max_students' => 'int',
 		'max_teachers' => 'int',
 		'max_storage_gb' => 'int',
-		'features' => 'binary',
+		'features' => 'array',
 		'is_active' => 'bool'
 	];
 

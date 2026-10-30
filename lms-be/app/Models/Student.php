@@ -51,7 +51,7 @@ class Student extends Model
 	protected $table = 'students';
 
 	protected $casts = [
-		'students_id' => 'uuid',
+		'students_id' => 'string',
 		'school_id' => 'int',
 		'user_id' => 'int',
 		'department_id' => 'int',
@@ -77,6 +77,12 @@ class Student extends Model
 		'degreelevel',
 		'trainingtype',
 		'administrativeclass',
+		'PlaceOfBirth',
+		'Population',
+		'Major',
+		'DegreeLevel',
+		'TrainingType',
+		'AdministrativeClass',
 		'enrollment_status',
 		'created_by',
 		'updated_by'
@@ -89,7 +95,7 @@ class Student extends Model
 
 	public function user()
 	{
-		return $this->belongsTo(User::class, 'updated_by');
+		return $this->belongsTo(User::class, 'user_id');
 	}
 
 	public function department()

@@ -35,7 +35,7 @@ class SalaryGrade extends Model
 	protected $table = 'salary_grade';
 
 	protected $casts = [
-		'salary_grade_id' => 'uuid',
+		'salary_grade_id' => 'string',
 		'step_number' => 'int',
 		'coefficient' => 'float',
 		'base_salary' => 'float',

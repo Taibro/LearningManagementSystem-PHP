@@ -36,7 +36,7 @@ class ClassMaterial extends Model
 	protected $table = 'class_materials';
 
 	protected $casts = [
-		'class_materials_id' => 'uuid',
+		'class_materials_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
 		'file_size' => 'int',
@@ -62,7 +62,7 @@ class ClassMaterial extends Model
 
 	public function class()
 	{
-		return $this->belongsTo(Class::class);
+		return $this->belongsTo(CourseClass::class, 'class_id');
 	}
 
 	public function user()

@@ -38,7 +38,7 @@ class AttendanceRecord extends Model
 	protected $table = 'attendance_records';
 
 	protected $casts = [
-		'attendance_records_id' => 'uuid',
+		'attendance_records_id' => 'string',
 		'school_id' => 'int',
 		'schedule_id' => 'int',
 		'student_id' => 'int',

@@ -43,7 +43,7 @@ class Teacher extends Model
 	protected $table = 'teachers';
 
 	protected $casts = [
-		'teachers_id' => 'uuid',
+		'teachers_id' => 'string',
 		'school_id' => 'int',
 		'user_id' => 'int',
 		'department_id' => 'int',
@@ -73,7 +73,7 @@ class Teacher extends Model
 
 	public function user()
 	{
-		return $this->belongsTo(User::class, 'updated_by');
+		return $this->belongsTo(User::class, 'user_id');
 	}
 
 	public function department()
@@ -83,7 +83,7 @@ class Teacher extends Model
 
 	public function classes()
 	{
-		return $this->belongsToMany(Class::class)
+		return $this->belongsToMany(CourseClass::class, 'class_teacher', 'teacher_id', 'class_id')
 					->withPivot('id', 'class_teacher_id', 'school_id', 'role', 'assigned_periods', 'note', 'created_by', 'updated_by')
 					->withTimestamps();
 	}

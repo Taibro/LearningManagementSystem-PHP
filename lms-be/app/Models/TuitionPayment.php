@@ -35,7 +35,7 @@ class TuitionPayment extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'tuition_payments_id' => 'uuid',
+		'tuition_payments_id' => 'string',
 		'school_id' => 'int',
 		'invoice_id' => 'int',
 		'amount_paid' => 'float',

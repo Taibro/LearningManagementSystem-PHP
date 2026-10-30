@@ -37,7 +37,7 @@ class SaasInvoice extends Model
 	protected $table = 'saas_invoices';
 
 	protected $casts = [
-		'saas_invoices_id' => 'uuid',
+		'saas_invoices_id' => 'string',
 		'school_id' => 'int',
 		'subscription_id' => 'int',
 		'amount' => 'float',

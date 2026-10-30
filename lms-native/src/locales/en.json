@@ -1,0 +1,63 @@
+{
+  "common": {
+    "loading": "Loading data...",
+    "retry": "Retry",
+    "close": "Close",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "back": "Back",
+    "all": "All",
+    "empty": "No data available",
+    "success": "Success",
+    "error": "An error occurred"
+  },
+  "auth": {
+    "schoolName": "HO CHI MINH CITY UNIVERSITY OF INDUSTRY AND TRADE",
+    "portalTitle": "Student Portal",
+    "portalSub": "Login to view schedule, exam grades and tuition fees",
+    "campus": "Campus",
+    "studentCode": "Student ID",
+    "password": "Password",
+    "rememberMe": "Remember account",
+    "forgotPassword": "Forgot password?",
+    "loginButton": "Sign In",
+    "logout": "Log Out"
+  },
+  "home": {
+    "greeting": "Hello",
+    "nextClass": "Upcoming Class",
+    "quickActions": "Quick Actions",
+    "news": "Announcements & News",
+    "chatbot": "AI Assistant"
+  },
+  "schedule": {
+    "title": "Class & Exam Schedule",
+    "theory": "Theory",
+    "practice": "Practice / Lab",
+    "online": "Online",
+    "noClass": "No classes scheduled"
+  },
+  "academic": {
+    "resultsTitle": "Academic Results",
+    "curriculumTitle": "Curriculum",
+    "achievementsTitle": "Achievements & Awards",
+    "gpa4": "GPA (Scale 4)",
+    "gpa10": "Average (Scale 10)",
+    "accumulatedCredits": "Earned Credits",
+    "classification": "Academic Standing"
+  },
+  "finance": {
+    "receiptTitle": "Tuition Receipts",
+    "transactionsTitle": "Transaction History",
+    "totalPaid": "Total Paid Amount",
+    "invoice": "E-Invoice"
+  },
+  "profile": {
+    "title": "Student Profile",
+    "conductTitle": "Conduct Score",
+    "changePassword": "Change Password",
+    "survey": "Surveys & Events"
+  }
+}
+

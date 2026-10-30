@@ -1,0 +1,63 @@
+{
+  "common": {
+    "loading": "Đang tải dữ liệu...",
+    "retry": "Thử lại",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy",
+    "save": "Lưu thay đổi",
+    "back": "Quay lại",
+    "all": "Tất cả",
+    "empty": "Không có dữ liệu",
+    "success": "Thành công",
+    "error": "Đã xảy ra lỗi"
+  },
+  "auth": {
+    "schoolName": "TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM",
+    "portalTitle": "Cổng thông tin sinh viên",
+    "portalSub": "Đăng nhập để xem lịch học, điểm thi và học phí",
+    "campus": "Cơ sở đào tạo",
+    "studentCode": "Mã số sinh viên (MSSV)",
+    "password": "Mật khẩu",
+    "rememberMe": "Ghi nhớ tài khoản",
+    "forgotPassword": "Quên mật khẩu?",
+    "loginButton": "Đăng nhập hệ thống",
+    "logout": "Đăng xuất"
+  },
+  "home": {
+    "greeting": "Xin chào",
+    "nextClass": "Lớp học tiếp theo",
+    "quickActions": "Chức năng nhanh",
+    "news": "Thông báo & Tin tức",
+    "chatbot": "Trợ lý ảo AI"
+  },
+  "schedule": {
+    "title": "Lịch học & Lịch thi",
+    "theory": "Lý thuyết",
+    "practice": "Thực hành",
+    "online": "Trực tuyến",
+    "noClass": "Không có lịch học"
+  },
+  "academic": {
+    "resultsTitle": "Kết quả học tập",
+    "curriculumTitle": "Chương trình đào tạo",
+    "achievementsTitle": "Thành tích & Khen thưởng",
+    "gpa4": "GPA (Hệ 4)",
+    "gpa10": "Điểm TB (Hệ 10)",
+    "accumulatedCredits": "Tín chỉ tích lũy",
+    "classification": "Xếp loại học lực"
+  },
+  "finance": {
+    "receiptTitle": "Phiếu thu học phí",
+    "transactionsTitle": "Lịch sử giao dịch",
+    "totalPaid": "Tổng số tiền đã nộp",
+    "invoice": "Hóa đơn điện tử"
+  },
+  "profile": {
+    "title": "Thông tin sinh viên",
+    "conductTitle": "Điểm rèn luyện",
+    "changePassword": "Đổi mật khẩu",
+    "survey": "Khảo sát sự kiện"
+  }
+}
+

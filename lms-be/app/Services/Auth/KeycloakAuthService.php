@@ -772,7 +772,7 @@ class KeycloakAuthService
                 );
             }
 
-            return $user->fresh(['student', 'teacher', 'school']);
+            return $user->fresh(['student', 'teacher']);
         });
     }
 

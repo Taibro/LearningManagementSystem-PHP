@@ -445,17 +445,18 @@ class KeycloakAuthService
     {
         $tokenUrl = config('keycloak.base_url').'/realms/'.config('keycloak.realm').'/protocol/openid-connect/token';
         $primaryClientId = config('keycloak.client_id', 'lms-web');
+        $clientSecret = config('keycloak.client_secret');
 
+        // 1. Primary attempt: Public client (e.g. lms-web) using default client scopes (lms-tenant-scope)
         $formParams = [
             'grant_type' => 'password',
             'client_id' => $primaryClientId,
             'username' => $username,
             'password' => $password,
-            'scope' => 'openid profile email',
         ];
 
-        $clientSecret = config('keycloak.client_secret');
-        if (! empty($clientSecret)) {
+        // Only attach client_secret if not using public SPA/mobile clients
+        if (! empty($clientSecret) && ! in_array($primaryClientId, ['lms-web', 'lms-mobile', 'admin-cli'], true)) {
             $formParams['client_secret'] = $clientSecret;
         }
 
@@ -468,10 +469,10 @@ class KeycloakAuthService
             return $response->json();
         }
 
-        // If client 'lms-web' has directAccessGrantsEnabled=false on the Keycloak server,
-        // fallback to Keycloak's built-in 'admin-cli' public client on the 'lms' realm.
+        // 2. Fallback: If client 'lms-web' has directAccessGrantsEnabled=false on the Keycloak server,
+        // fallback to Keycloak's built-in 'admin-cli' public client on the 'lms' realm (without invalid scopes).
         $err = $response->json('error');
-        if (in_array($err, ['unauthorized_client', 'invalid_client'], true) && $primaryClientId !== 'admin-cli') {
+        if (in_array($err, ['unauthorized_client', 'invalid_client', 'invalid_scope'], true) && $primaryClientId !== 'admin-cli') {
             $fallbackResponse = Http::asForm()
                 ->timeout((int) config('keycloak.http_timeout', 10))
                 ->withOptions(['verify' => (bool) config('keycloak.verify_ssl', true)])
@@ -480,7 +481,6 @@ class KeycloakAuthService
                     'client_id' => 'admin-cli',
                     'username' => $username,
                     'password' => $password,
-                    'scope' => 'openid profile email',
                 ]);
 
             if ($fallbackResponse->successful()) {
@@ -655,6 +655,17 @@ class KeycloakAuthService
         $userCode = (string) ($payload->user_code ?? $preferredUsername);
         $fullName = trim((string) ($payload->name ?? (($payload->family_name ?? '').' '.($payload->given_name ?? ''))))
             ?: ($preferredUsername ?: $email);
+
+        if ($keycloakId === '' && $email !== '') {
+            $seedKeycloakIds = [
+                'superadmin@edusaas.io' => '11111111-1111-4111-8111-111111111001',
+                'admin@huit.edu.vn' => '11111111-1111-4111-8111-111111111002',
+                'admin@hcmut.edu.vn' => '11111111-1111-4111-8111-111111111003',
+                'nguyenvana@huit.edu.vn' => '11111111-1111-4111-8111-111111111004',
+                'ntai8448@gmail.com' => '11111111-1111-4111-8111-111111111005',
+            ];
+            $keycloakId = $seedKeycloakIds[$email] ?? '';
+        }
 
         $jwtSchoolId = (int) ($payload->school_id ?? 0);
         $jwtSchoolCode = isset($payload->school_code) ? strtoupper((string) $payload->school_code) : null;

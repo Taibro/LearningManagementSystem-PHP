@@ -5,7 +5,7 @@ namespace App\DTOs;
 use App\Enums\CourseStatus;
 use Illuminate\Support\Str;
 
-final class CourseData
+final class CourseData 
 {
     public function __construct(
         public readonly string $title,

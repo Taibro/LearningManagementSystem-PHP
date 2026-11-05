@@ -1,13 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './SaaSAdminLogin.css';
-import { CheckCircle2, XCircle, GraduationCap, School, Key, AlertTriangle, Info, Mail, Lock, EyeOff, Eye, Shield } from 'lucide-react';
-import { API_BASE_URL } from '../../../config/apiConfig';
-
+import { CheckCircle2, XCircle, School, Key, AlertTriangle, Info, Mail, Lock, EyeOff, Eye, Shield } from 'lucide-react';
+import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
 
 export default function SaaSAdminLogin() {
-  // Không dùng useNavigate nữa, vì ta cần nhảy hẳn sang App khác
-
-  // Tự động nhận diện: Nếu link là /saas/login -> Bật sẵn giao diện SaaS Dark Mode
   const [activeScreen, setActiveScreen] = useState(
     window.location.pathname.includes('/saas') ? 'saas' : 'school'
   );
@@ -16,6 +12,7 @@ export default function SaaSAdminLogin() {
 
   const [tempToken, setTempToken] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [schoolOptions, setSchoolOptions] = useState([]);
 
   // Form State Cổng Trường Học
   const [sSchool, setSSchool] = useState('');
@@ -27,8 +24,8 @@ export default function SaaSAdminLogin() {
   const [sShake, setSShake] = useState(false);
 
   // Form State Cổng Toàn Cục SaaS
-  const [saEmail, setSaEmail] = useState('');
-  const [saPass, setSaPass] = useState('');
+  const [saEmail, setSaEmail] = useState('superadmin@edusaas.io');
+  const [saPass, setSaPass] = useState('SuperAdmin@2024');
   const [saShowPass, setSaShowPass] = useState(false);
   const [use2fa, setUse2fa] = useState(true);
   const [saLoading, setSaLoading] = useState(false);
@@ -36,6 +33,10 @@ export default function SaaSAdminLogin() {
   const [saShake, setSaShake] = useState(false);
 
   const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    fetchActiveSchools().then(data => setSchoolOptions(data));
+  }, []);
 
   const showToast = (msg, type = 'blue') => {
     const id = Date.now();
@@ -56,15 +57,16 @@ export default function SaaSAdminLogin() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           userType: 'SCHOOL_ADMIN',
           loginCode: sEmail,
-          password: sPass
+          password: sPass,
+          school: sSchool
         })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       setSLoading(false);
 
       if (!response.ok) {
@@ -75,10 +77,14 @@ export default function SaaSAdminLogin() {
       }
 
       localStorage.setItem('school_token', data.token);
+      localStorage.setItem('adminToken', data.token);
       localStorage.setItem('school_user', JSON.stringify(data));
+      localStorage.setItem('schoolShortName', data.schoolCode || sSchool);
 
-      setSchoolView('otp');
-      showToast('Mã OTP đã được gửi đến email của bạn', 'green');
+      showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
+      setTimeout(() => {
+        window.location.href = `/${data.schoolCode || sSchool}/admin/dashboard`;
+      }, 800);
     } catch (err) {
       setSLoading(false);
       setSError('Không thể kết nối đến Backend Server. Vui lòng thử lại sau.');
@@ -87,11 +93,10 @@ export default function SaaSAdminLogin() {
     }
   };
 
-  // NHẢY VỀ SCHOOL ADMIN
   const verifySchoolOtp = () => {
     showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
     setTimeout(() => {
-      window.location.href = '/dashboard'; // Ép trình duyệt nhảy về luồng Admin School
+      window.location.href = `/${sSchool || 'HUIT'}/admin/dashboard`;
     }, 800);
   };
 
@@ -107,7 +112,7 @@ export default function SaaSAdminLogin() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           userType: 'SAAS_ADMIN',
           loginCode: saEmail,
@@ -115,7 +120,7 @@ export default function SaaSAdminLogin() {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       setSaLoading(false);
 
       if (!response.ok) {
@@ -164,7 +169,6 @@ export default function SaaSAdminLogin() {
     }
   };
 
-  // NHẢY VỀ SAAS DASHBOARD
   const verifySaasOtp = async (codeOverride) => {
     const inputs = document.querySelectorAll('.saas-screen .otp-input');
     const code = typeof codeOverride === 'string' ? codeOverride : Array.from(inputs).map(inp => inp.value).join('');
@@ -180,7 +184,6 @@ export default function SaaSAdminLogin() {
         if (response.ok) {
           const isValid = await response.json();
           if (isValid) {
-            // Setup thành công, gọi luôn login verify
             const loginResp = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
               method: 'POST',
               headers: {
@@ -279,8 +282,9 @@ export default function SaaSAdminLogin() {
                   <span className="inp-icon"><School className="w-4 h-4 inline-block mr-2" /></span>
                   <select className="inp school-inp" style={{ appearance: 'none', cursor: 'pointer' }} value={sSchool} onChange={e => setSSchool(e.target.value)}>
                     <option value="">-- Chọn trường / trung tâm --</option>
-                    <option value="hcmut"><GraduationCap className="w-4 h-4 inline-block mr-2" /> Trường ĐH Bách Khoa TP.HCM (HCMUT)</option>
-                    <option value="huit"><GraduationCap className="w-4 h-4 inline-block mr-2" /> Trường ĐH Công Thương (HUIT)</option>
+                    {schoolOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                   <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }}>▾</span>
                 </div>
@@ -289,8 +293,8 @@ export default function SaaSAdminLogin() {
               <div style={{ marginBottom: '16px' }}>
                 <label className="form-label" style={{ color: '#64748b', marginBottom: '6px' }}>Email đăng nhập</label>
                 <div className="inp-wrap">
-                  <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" />️</span>
-                  <input type="email" className="inp school-inp" placeholder="admin@school.edu.vn" value={sEmail} onChange={e => setSEmail(e.target.value)} />
+                  <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" /></span>
+                  <input type="email" className="inp school-inp" placeholder="admin@huit.edu.vn" value={sEmail} onChange={e => setSEmail(e.target.value)} />
                 </div>
               </div>
 
@@ -313,7 +317,7 @@ export default function SaaSAdminLogin() {
               )}
 
               <button className="btn-login school-btn mb-4" style={{ marginTop: '16px' }} disabled={sLoading} onClick={handleSchoolLogin}>
-                {sLoading ? <span className="spinner"></span> : <><span>Tiếp tục xác thực OTP</span><span>→</span></>}
+                {sLoading ? <span className="spinner"></span> : <><span>Đăng nhập hệ thống</span><span>→</span></>}
               </button>
 
               <div style={{ textAlign: 'center', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
@@ -380,7 +384,7 @@ export default function SaaSAdminLogin() {
                   <label className="form-label" style={{ color: '#64748b', marginBottom: '4px' }}>Super Admin Email</label>
                   <div className="inp-wrap">
                     <span className="inp-icon"><Key className="w-4 h-4 inline-block mr-2" /></span>
-                    <input type="email" className="inp saas-inp" placeholder="superadmin@edusaas.io" value={saEmail} onChange={e => setSaEmail(e.target.value)} />
+                    <input type="text" className="inp saas-inp" placeholder="superadmin@edusaas.io" value={saEmail} onChange={e => setSaEmail(e.target.value)} />
                   </div>
                 </div>
 
@@ -394,7 +398,7 @@ export default function SaaSAdminLogin() {
                 </div>
 
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '16px' }}><Shield className="w-4 h-4 inline-block mr-2" />️</span>
+                  <span style={{ fontSize: '16px' }}><Shield className="w-4 h-4 inline-block mr-2" /></span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Bắt buộc mã hóa 2FA</div>
                     <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>Xác thực qua Authenticator App</div>
@@ -412,7 +416,7 @@ export default function SaaSAdminLogin() {
                 )}
 
                 <button className="btn-login saas-btn" disabled={saLoading} onClick={handleSaasLogin}>
-                  {saLoading ? <span className="spinner"></span> : <span>Tiếp tục xác thực Token</span>}
+                  {saLoading ? <span className="spinner"></span> : <span>Đăng nhập qua Keycloak SSO</span>}
                 </button>
               </div>
             )}

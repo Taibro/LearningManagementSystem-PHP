@@ -31,7 +31,9 @@ export default function SearchableSelect({
     opt.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find(
+    opt => String(opt.value).toLowerCase() === String(value || '').toLowerCase()
+  );
 
   return (
     <div ref={wrapperRef} className={className} style={{ position: 'relative', width: '100%', ...style }}>

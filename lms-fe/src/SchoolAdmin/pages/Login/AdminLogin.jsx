@@ -3,28 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../../../components/SearchableSelect';
 import './AdminLogin.css';
 import { BarChart, Check, CheckCircle2, XCircle, GraduationCap, School, AlertTriangle, Info, PartyPopper, Rocket, Globe, Mail, Lock, EyeOff, Eye, Circle, Upload, Hand, Shield, Zap } from 'lucide-react';
-import { API_BASE_URL } from '../../../config/apiConfig';
-
+import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
 
 export default function AdminLogin({ initialSchool }) {
   const navigate = useNavigate();
 
   // Screen States
   const [activeScreen, setActiveScreen] = useState('school'); // 'school' | 'saas'
-  const [schoolView, setSchoolView] = useState('main'); // 'main' | 'forgot' | 'otp' | 'setup'
+  const [schoolView, setSchoolView] = useState('main'); // 'main' | 'register' | 'forgot' | 'otp' | 'setup'
   const [saasView, setSaasView] = useState('main'); // 'main' | 'otp'
-  
+
   const [tempToken, setTempToken] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Input States
-  const [sEmail, setSEmail] = useState('admin@hcmut.edu.vn');
+  const [sEmail, setSEmail] = useState('admin@huit.edu.vn');
   const [sPass, setSPass] = useState('Admin@123');
   const [school, setSchool] = useState(initialSchool || '');
   const [sShowPass, setSShowPass] = useState(false);
   const [sLoading, setSLoading] = useState(false);
   const [sError, setSError] = useState('');
   const [shake, setShake] = useState(false);
+
+  // Register School Admin State
+  const [regName, setRegName] = useState('');
+  const [regCode, setRegCode] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPass, setRegPass] = useState('');
 
   const [saEmail, setSaEmail] = useState('superadmin@edusaas.io');
   const [saPass, setSaPass] = useState('SuperAdmin@2024');
@@ -38,11 +43,16 @@ export default function AdminLogin({ initialSchool }) {
   const [schoolOptions, setSchoolOptions] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/schools/active`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
-      .then(res => res.json())
-      .then(data => setSchoolOptions(data))
-      .catch(err => console.error("Failed to fetch schools", err));
-  }, []);
+    fetchActiveSchools().then(data => {
+      setSchoolOptions(data);
+      if (initialSchool) {
+        const matched = data.find(
+          s => String(s.value).toLowerCase() === String(initialSchool).toLowerCase()
+        );
+        if (matched) setSchool(matched.value);
+      }
+    });
+  }, [initialSchool]);
 
   const addToast = (msg, type = 'blue') => {
     const id = Date.now();
@@ -60,23 +70,34 @@ export default function AdminLogin({ initialSchool }) {
     setSLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-        body: JSON.stringify({ loginCode: sEmail, password: sPass, userType: 'SCHOOL_ADMIN', school: school })
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          loginCode: sEmail,
+          password: sPass,
+          userType: 'SCHOOL_ADMIN',
+          school: school
+        })
       });
+      const data = await res.json().catch(() => ({}));
       setSLoading(false);
 
-      if (res.ok) {
-        const data = await res.json();
-        // Lấy tên thật từ Backend bỏ vô túi áo
-        localStorage.setItem('adminToken', data.token); // QUAN TRỌNG: LƯU TOKEN
+      if (res.ok && data.token) {
+        localStorage.setItem('adminToken', data.token);
+        if (data.refreshToken) localStorage.setItem('adminRefreshToken', data.refreshToken);
         localStorage.setItem('adminName', data.fullName || 'Admin');
         localStorage.setItem('adminEmail', data.email || '');
+        if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
 
-        const selectedSchool = schoolOptions.find(s => s.value === school);
+        const selectedSchool = schoolOptions.find(
+          s => String(s.value).toLowerCase() === String(school).toLowerCase()
+        );
         if (selectedSchool) localStorage.setItem('schoolName', selectedSchool.label);
-        localStorage.setItem('schoolShortName', school);
+        localStorage.setItem('schoolShortName', data.schoolCode || school);
+
         if (data.requireSetup) {
           setTempToken(data.token);
           fetchQrCode(sEmail);
@@ -85,13 +106,13 @@ export default function AdminLogin({ initialSchool }) {
         } else if (data.require2fa) {
           setTempToken(data.token);
           setSchoolView('otp');
-          addToast(`Mã OTP đã gửi đến thiết bị xác thực`, 'blue');
+          addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
         } else {
-          addToast(`Đăng nhập thành công, đang chuyển hướng...`, 'green');
+          addToast('Đăng nhập thành công, đang chuyển hướng...', 'green');
           setTimeout(() => navigate('/dashboard'), 1000);
         }
       } else {
-        setSError('Email hoặc mật khẩu không đúng!');
+        setSError(data.message || 'Email hoặc mật khẩu không đúng!');
         setShake(true);
         setTimeout(() => setShake(false), 400);
       }
@@ -103,32 +124,96 @@ export default function AdminLogin({ initialSchool }) {
     }
   };
 
-  const handleSaasLogin = () => {
+  const handleSchoolRegister = async () => {
+    setSError('');
+    if (!school) return setSError('Vui lòng chọn trường học.');
+    if (!regName.trim() || !regCode.trim() || !regEmail.trim() || !regPass) {
+      return setSError('Vui lòng điền đầy đủ thông tin đăng ký.');
+    }
+
+    setSLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          userType: 'SCHOOL_ADMIN',
+          school,
+          fullName: regName.trim(),
+          userCode: regCode.trim(),
+          email: regEmail.trim(),
+          password: regPass
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      setSLoading(false);
+
+      if (res.ok) {
+        if (data.token) {
+          localStorage.setItem('adminToken', data.token);
+          localStorage.setItem('adminName', data.fullName || regName);
+          localStorage.setItem('adminEmail', data.email || regEmail);
+          if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
+          localStorage.setItem('schoolShortName', data.schoolCode || school);
+          addToast('Đăng ký tài khoản Quản trị trường thành công!', 'green');
+          setTimeout(() => navigate('/dashboard'), 1000);
+        } else {
+          addToast('Đăng ký thành công! Vui lòng đăng nhập.', 'green');
+          setSEmail(regEmail.trim());
+          setSPass(regPass);
+          setSchoolView('main');
+        }
+      } else {
+        setSError(data.message || 'Đăng ký tài khoản thất bại.');
+      }
+    } catch (err) {
+      setSLoading(false);
+      setSError('Lỗi kết nối đến máy chủ!');
+    }
+  };
+
+  const handleSaasLogin = async () => {
     setSaError('');
     if (!saEmail) return setSaError('Vui lòng nhập email Super Admin.');
     if (!saPass) return setSaError('Vui lòng nhập mật khẩu.');
 
     setSaLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          userType: 'SAAS_ADMIN',
+          loginCode: saEmail,
+          password: saPass
+        })
+      });
+      const data = await res.json().catch(() => ({}));
       setSaLoading(false);
-      if (saEmail === 'superadmin@edusaas.io' && saPass === 'SuperAdmin@2024') {
-        if (use2fa) {
+
+      if (res.ok && data.token) {
+        localStorage.setItem('saas_token', data.token);
+        localStorage.setItem('saas_user', JSON.stringify(data));
+        localStorage.setItem('adminToken', data.token);
+        if (use2fa && data.require2fa) {
           setSaasView('otp');
           addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
         } else {
           addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Đăng nhập Super Admin thành công!</>, 'green');
-          setTimeout(() => navigate('/admin/dashboard'), 1000);
+          setTimeout(() => { window.location.href = '/saas/dashboard'; }, 900);
         }
       } else {
-        setSaError('Sai thông tin. Thử: superadmin@edusaas.io / SuperAdmin@2024');
+        setSaError(data.message || 'Sai thông tin Super Admin.');
       }
-    }, 1600);
+    } catch (err) {
+      setSaLoading(false);
+      setSaError('Không thể kết nối đến máy chủ xác thực.');
+    }
   };
 
   const fetchQrCode = async (email) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/2fa/setup`, {
-        
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
         body: JSON.stringify({ email })
@@ -145,7 +230,7 @@ export default function AdminLogin({ initialSchool }) {
   const handleVerifySchoolOtp = async (codeOverride) => {
     const inputs = document.querySelectorAll('.school-bg .otp-input');
     const code = typeof codeOverride === 'string' ? codeOverride : Array.from(inputs).map(inp => inp.value).join('');
-    
+
     if (code.length !== 6) {
       return addToast('Vui lòng nhập đủ 6 số OTP', 'red');
     }
@@ -153,18 +238,15 @@ export default function AdminLogin({ initialSchool }) {
     try {
       if (schoolView === 'setup') {
         const response = await fetch(`${API_BASE_URL}/auth/2fa/verify-setup`, {
-        
-        method: 'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
           body: JSON.stringify({ email: sEmail, code })
         });
         if (response.ok) {
           const isValid = await response.json();
           if (isValid) {
-            // Setup thành công, gọi luôn login verify
             const loginResp = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-        
-        method: 'POST',
+              method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${tempToken}`
@@ -187,9 +269,8 @@ export default function AdminLogin({ initialSchool }) {
         }
       } else {
         const res = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-        
-        method: 'POST',
-          headers: { 
+          method: 'POST',
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${tempToken}`
           },
@@ -198,7 +279,7 @@ export default function AdminLogin({ initialSchool }) {
 
         if (res.ok) {
           const data = await res.json();
-          localStorage.setItem('adminToken', data.token); // Lưu token thật
+          localStorage.setItem('adminToken', data.token);
           if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
           addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Đăng nhập thành công! Chào mừng Admin!</>, 'green');
           setTimeout(() => navigate('/dashboard'), 1000);
@@ -213,10 +294,9 @@ export default function AdminLogin({ initialSchool }) {
     }
   };
 
-
   const handleVerifySaasOtp = () => {
     addToast(<><Rocket className="w-4 h-4 inline-block mr-2" /> Super Admin đã xác thực thành công!</>, 'green');
-    setTimeout(() => navigate('/dashboard'), 1000); // Đổi hướng đến trang Admin Dashboard
+    setTimeout(() => { window.location.href = '/saas/dashboard'; }, 1000);
   };
 
   const handleOtpInput = (e, nextIdx, verifyFunc) => {
@@ -283,10 +363,10 @@ export default function AdminLogin({ initialSchool }) {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label className="fl text-[#64748b] mb-1.5">Email đăng nhập</label>
+                <label className="fl text-[#64748b] mb-1.5">Email hoặc Mã quản trị</label>
                 <div className="inp-wrap">
-                  <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" />️</span>
-                  <input type="email" placeholder="admin@school.edu.vn" className="inp school-inp" value={sEmail} onChange={e => setSEmail(e.target.value)} />
+                  <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" /></span>
+                  <input type="text" placeholder="admin@huit.edu.vn" className="inp school-inp" value={sEmail} onChange={e => setSEmail(e.target.value)} />
                 </div>
               </div>
 
@@ -297,7 +377,7 @@ export default function AdminLogin({ initialSchool }) {
                 </div>
                 <div className="inp-wrap">
                   <span className="inp-icon"><Lock className="w-4 h-4 inline-block mr-2" /></span>
-                  <input type={sShowPass ? "text" : "password"} placeholder="Nhập mật khẩu..." className="inp school-inp" value={sPass} onChange={e => setSPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSchoolLogin()} />
+                  <input type={sShowPass ? 'text' : 'password'} placeholder="Nhập mật khẩu..." className="inp school-inp" value={sPass} onChange={e => setSPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSchoolLogin()} />
                   <span className="inp-eye" onClick={() => setSShowPass(!sShowPass)}>{sShowPass ? <EyeOff className="w-4 h-4 inline-block mr-2" /> : <Eye className="w-4 h-4 inline-block mr-2" />}</span>
                 </div>
               </div>
@@ -317,23 +397,58 @@ export default function AdminLogin({ initialSchool }) {
                 {sLoading ? <span className="spinner"></span> : <><span>Đăng nhập</span><span>→</span></>}
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
-                <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>hoặc đăng nhập bằng</span>
-                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
+              <div style={{ textAlign: 'center', paddingTop: 16, marginTop: 16, borderTop: '1px solid #f1f5f9' }}>
+                <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 6 }}>
+                  Chưa có tài khoản Quản trị trường?{' '}
+                  <span onClick={() => { setSError(''); setSchoolView('register'); }} style={{ color: '#1976d2', fontWeight: 700, cursor: 'pointer' }}>
+                    Đăng ký ngay →
+                  </span>
+                </p>
+                <p style={{ fontSize: 12.5, color: '#94a3b8' }}>
+                  Bạn là Super Admin? <span onClick={() => setActiveScreen('saas')} style={{ color: '#6366f1', fontWeight: 700, cursor: 'pointer' }}>Truy cập SaaS Console →</span>
+                </p>
               </div>
+            </div>
+          )}
 
-              <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-                <button onClick={() => addToast('Đang kết nối Google...', 'blue')} style={{ flex: 1, padding: 10, border: '1.5px solid #e2e8f0', borderRadius: 10, background: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 16 }}><Circle className="w-4 h-4 inline-block mr-2" /></span> Google
-                </button>
-                <button onClick={() => addToast('Đang kết nối Microsoft...', 'blue')} style={{ flex: 1, padding: 10, border: '1.5px solid #e2e8f0', borderRadius: 10, background: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 16 }}>🟦</span> Microsoft
-                </button>
+          {schoolView === 'register' && (
+            <div className="school-body">
+              <div style={{ position: 'relative', zIndex: 10, marginBottom: 12 }}>
+                <label className="fl text-[#64748b] mb-1">Trường / Trung tâm</label>
+                <SearchableSelect
+                  options={schoolOptions}
+                  value={school}
+                  onChange={setSchool}
+                  icon={<School className="w-4 h-4 inline-block mr-2" />}
+                  triggerStyle={{ background: '#fff', border: '1px solid #e2e8f0', height: '42px', borderRadius: '10px' }}
+                />
               </div>
-
-              <div style={{ textAlign: 'center', paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-                <p style={{ fontSize: 12.5, color: '#94a3b8' }}>Bạn là Super Admin? <span onClick={() => setActiveScreen('saas')} style={{ color: '#6366f1', fontWeight: 700, cursor: 'pointer' }}>Truy cập SaaS Console →</span></p>
+              <div style={{ marginBottom: 12 }}>
+                <label className="fl text-[#64748b] mb-1">Họ và tên Quản trị viên</label>
+                <input type="text" placeholder="Quản trị HUIT" className="inp school-inp" style={{ paddingLeft: 14 }} value={regName} onChange={e => setRegName(e.target.value)} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label className="fl text-[#64748b] mb-1">Mã cán bộ / Username</label>
+                <input type="text" placeholder="ad_huit_02" className="inp school-inp" style={{ paddingLeft: 14 }} value={regCode} onChange={e => setRegCode(e.target.value)} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label className="fl text-[#64748b] mb-1">Email công vụ</label>
+                <input type="email" placeholder="admin2@huit.edu.vn" className="inp school-inp" style={{ paddingLeft: 14 }} value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label className="fl text-[#64748b] mb-1">Mật khẩu (tối thiểu 6 ký tự)</label>
+                <input type="password" placeholder="••••••••" className="inp school-inp" style={{ paddingLeft: 14 }} value={regPass} onChange={e => setRegPass(e.target.value)} />
+              </div>
+              {sError && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, padding: '10px 12px', marginBottom: 12, fontSize: 13, color: '#b91c1c' }}>
+                  {sError}
+                </div>
+              )}
+              <button className="btn-login school-btn" disabled={sLoading} onClick={handleSchoolRegister}>
+                {sLoading ? <span className="spinner"></span> : <><span>Đăng ký Quản trị viên</span><span>→</span></>}
+              </button>
+              <div style={{ textAlign: 'center', marginTop: 14 }}>
+                <span onClick={() => { setSError(''); setSchoolView('main'); }} style={{ fontSize: 13, color: '#1976d2', fontWeight: 600, cursor: 'pointer' }}>← Quay lại đăng nhập</span>
               </div>
             </div>
           )}
@@ -346,7 +461,7 @@ export default function AdminLogin({ initialSchool }) {
                 <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Nhập email đăng ký tài khoản. Chúng tôi sẽ gửi liên kết đặt lại cho bạn.</p>
               </div>
               <div className="inp-wrap" style={{ marginBottom: 16 }}>
-                <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" />️</span>
+                <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" /></span>
                 <input type="email" placeholder="Email tài khoản của bạn" className="inp school-inp" />
               </div>
               <button className="btn-login school-btn" onClick={() => { addToast('Đã gửi link khôi phục', 'green'); setSchoolView('main'); }}><Upload className="w-4 h-4 inline-block mr-2" /> Gửi link khôi phục</button>
@@ -361,7 +476,7 @@ export default function AdminLogin({ initialSchool }) {
               <div style={{ textAlign: 'center', marginBottom: 22 }}>
                 <div className="anim-float" style={{ fontSize: 40, marginBottom: 12 }}><Lock className="w-4 h-4 inline-block mr-2" /></div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>Xác thực 2 bước</h3>
-                <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Nhập mã OTP đã gửi đến<br /><strong style={{ color: '#0f172a' }}>a***n@hcmut.edu.vn</strong></p>
+                <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Nhập mã OTP đã gửi đến<br /><strong style={{ color: '#0f172a' }}>{sEmail}</strong></p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 20 }}>
                 {[0, 1, 2, 3, 4, 5].map(idx => (
@@ -435,7 +550,7 @@ export default function AdminLogin({ initialSchool }) {
             <div className="anim-fadeup" style={{ animationDelay: '.2s' }}>
               <div className="feat-item"><div className="feat-icon" style={{ background: 'rgba(99,102,241,.2)' }}><School className="w-4 h-4 inline-block mr-2" /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,.9)' }}>Multi-tenant Management</div><div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginTop: 2 }}>Quản lý nhiều trường/trung tâm với data hoàn toàn tách biệt</div></div></div>
               <div className="feat-item"><div className="feat-icon" style={{ background: 'rgba(139,92,246,.2)' }}><BarChart className="w-4 h-4 inline-block mr-2" /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,.9)' }}>Analytics Toàn hệ thống</div><div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginTop: 2 }}>Theo dõi MRR, tenant growth, uptime và hoạt động real-time</div></div></div>
-              <div className="feat-item"><div className="feat-icon" style={{ background: 'rgba(16,185,129,.2)' }}><Lock className="w-4 h-4 inline-block mr-2" /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,.9)' }}>Bảo mật cấp Enterprise</div><div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginTop: 2 }}>2FA, audit logs, role-based access control (RBAC)</div></div></div>
+              <div className="feat-item"><div className="feat-icon" style={{ background: 'rgba(16,185,129,.2)' }}><Lock className="w-4 h-4 inline-block mr-2" /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,.9)' }}>Bảo mật cấp Enterprise</div><div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginTop: 2 }}>Keycloak JWT RS256, PostgreSQL RLS, RBAC</div></div></div>
             </div>
           </div>
         </div>
@@ -462,10 +577,10 @@ export default function AdminLogin({ initialSchool }) {
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <label className="fl text-[#64748b] mb-1.5">Super Admin Email</label>
+                  <label className="fl text-[#64748b] mb-1.5">Super Admin Email / Username</label>
                   <div className="inp-wrap">
-                    <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" />️</span>
-                    <input type="email" placeholder="superadmin@edusaas.io" className="inp saas-inp" value={saEmail} onChange={e => setSaEmail(e.target.value)} />
+                    <span className="inp-icon"><Mail className="w-4 h-4 inline-block mr-2" /></span>
+                    <input type="text" placeholder="superadmin@edusaas.io" className="inp saas-inp" value={saEmail} onChange={e => setSaEmail(e.target.value)} />
                   </div>
                 </div>
 
@@ -475,23 +590,9 @@ export default function AdminLogin({ initialSchool }) {
                   </div>
                   <div className="inp-wrap">
                     <span className="inp-icon"><Lock className="w-4 h-4 inline-block mr-2" /></span>
-                    <input type={saShowPass ? "text" : "password"} placeholder="Nhập mật khẩu..." className="inp saas-inp" value={saPass} onChange={e => setSaPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaasLogin()} />
+                    <input type={saShowPass ? 'text' : 'password'} placeholder="Nhập mật khẩu..." className="inp saas-inp" value={saPass} onChange={e => setSaPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaasLogin()} />
                     <span className="inp-eye" onClick={() => setSaShowPass(!saShowPass)}>{saShowPass ? <EyeOff className="w-4 h-4 inline-block mr-2" /> : <Eye className="w-4 h-4 inline-block mr-2" />}</span>
                   </div>
-                </div>
-
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 16 }}><Shield className="w-4 h-4 inline-block mr-2" /></span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Xác thực 2 bước (2FA)</div>
-                    <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 1 }}>Yêu cầu OTP sau khi đăng nhập</div>
-                  </div>
-                  <label style={{ position: 'relative', width: 44, height: 24, flexShrink: 0, cursor: 'pointer' }}>
-                    <input type="checkbox" style={{ opacity: 0, width: 0, height: 0 }} checked={use2fa} onChange={() => setUse2fa(!use2fa)} />
-                    <span style={{ position: 'absolute', inset: 0, background: use2fa ? '#6366f1' : '#cbd5e1', borderRadius: 12, transition: 'background .15s' }}>
-                      <span style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 3, left: use2fa ? 23 : 3, transition: 'all .15s', boxShadow: '0 2px 4px rgba(0,0,0,.15)' }}></span>
-                    </span>
-                  </label>
                 </div>
 
                 {saError && (
@@ -511,7 +612,7 @@ export default function AdminLogin({ initialSchool }) {
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                   <div className="anim-float" style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, boxShadow: '0 8px 24px rgba(99,102,241,.3)' }}><Lock className="w-4 h-4 inline-block mr-2" /></div>
                   <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>Xác thực Super Admin</h3>
-                  <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Mã OTP đã gửi đến thiết bị 2FA<br /><strong style={{ color: '#4f46e5' }}>superadmin@edusaas.io</strong></p>
+                  <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Mã OTP đã gửi đến thiết bị 2FA<br /><strong style={{ color: '#4f46e5' }}>{saEmail}</strong></p>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 20 }}>
                   {[0, 1, 2, 3, 4, 5].map(idx => (

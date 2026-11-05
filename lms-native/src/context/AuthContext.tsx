@@ -3,6 +3,7 @@ import { StudentProfile } from '../types/student.types';
 import { storageService } from '../services/storage';
 import { apiClient } from '../api/client';
 import { studentApi } from '../api/studentApi';
+import { pkceAuthService } from '../services/auth/pkceAuthService';
 
 export interface AuthContextType {
   user: StudentProfile | null;
@@ -12,6 +13,7 @@ export interface AuthContextType {
   savedStudentCode: string;
   rememberMe: boolean;
   login: (studentCode: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  loginWithPkce: () => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<StudentProfile>) => void;
 }
@@ -134,6 +136,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     []
   );
 
+  const loginWithPkce = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await pkceAuthService.loginWithPkce();
+      if (!result || !result.token) {
+        return false;
+      }
+
+      setToken(result.token);
+      setUser(result.profile);
+      setIsAuthenticated(true);
+      apiClient.setToken(result.token);
+
+      await Promise.all([
+        storageService.setToken(result.token),
+        storageService.setUser(result.profile),
+        storageService.saveStudentCode(result.profile.studentCode, true),
+      ]);
+
+      setSavedStudentCode(result.profile.studentCode);
+      setRememberMe(true);
+      return true;
+    } catch (err) {
+      console.warn('[AuthProvider] PKCE Login failed:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -144,6 +176,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         savedStudentCode,
         rememberMe,
         login,
+        loginWithPkce,
         logout,
         updateProfile,
       }}

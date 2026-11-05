@@ -22,12 +22,13 @@ interface Props {
 }
 
 export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
-  const { login, savedStudentCode, rememberMe: initialRememberMe } = useAuth();
+  const { login, loginWithPkce, savedStudentCode, rememberMe: initialRememberMe } = useAuth();
 
   const [studentCode, setStudentCode] = useState(savedStudentCode || '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(initialRememberMe);
   const [loading, setLoading] = useState(false);
+  const [pkceLoading, setPkceLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
   const [pwdError, setPwdError] = useState('');
 
@@ -67,6 +68,23 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
       Alert.alert('Lỗi đăng nhập', errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePkceLogin = async () => {
+    setPkceLoading(true);
+    try {
+      const success = await loginWithPkce();
+      if (success) {
+        onLoginSuccess?.();
+      }
+    } catch (err: any) {
+      if (err?.message?.includes('hủy') || err?.message?.includes('cancel')) {
+        return;
+      }
+      Alert.alert('Lỗi xác thực SSO', err?.message || 'Không thể đăng nhập qua Keycloak SSO.');
+    } finally {
+      setPkceLoading(false);
     }
   };
 
@@ -160,6 +178,26 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             variant="primary"
             style={styles.loginBtn}
           />
+
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>HOẶC</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Keycloak SSO Button with PKCE */}
+          <TouchableOpacity
+            style={styles.pkceBtn}
+            onPress={handlePkceLogin}
+            disabled={loading || pkceLoading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="shield-checkmark" size={20} color="#0284C7" style={{ marginRight: 8 }} />
+            <Text style={styles.pkceBtnText}>
+              {pkceLoading ? 'Đang kết nối Keycloak...' : 'Đăng nhập SSO Keycloak (PKCE)'}
+            </Text>
+          </TouchableOpacity>
         </AppCard>
 
         {/* Footer Support Info */}
@@ -270,6 +308,39 @@ const styles = StyleSheet.create({
   },
   loginBtn: {
     marginTop: 4,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textMuted,
+    letterSpacing: 1,
+  },
+  pkceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+  },
+  pkceBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0369A1',
   },
   footer: {
     alignItems: 'center',

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 final class CourseData
 {
     public function __construct(
-        public readonly string $title,
+        public readonly string $title, 
         public readonly string $description,
         public readonly int $instructorId,
         public readonly float $price,

@@ -1,0 +1,89 @@
+name: CI - Mobile (LMS React Native)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'lms-native/**'
+      - '.github/workflows/ci-mobile.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lms-native/**'
+
+concurrency:
+  group: ci-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============ LINT + TEST ============
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lms-native
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: lms-native/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Run Jest tests
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: lms-native/coverage/
+          retention-days: 7
+
+  # ============ BUILD APK (chỉ chạy trên push main) ============
+  build-apk:
+    needs: lint-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lms-native
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: lms-native/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build APK (production)
+        run: eas build --platform android --profile production --non-interactive --local
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lms-native-apk
+          path: lms-native/*.apk
+          retention-days: 14
+

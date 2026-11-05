@@ -19,7 +19,7 @@ export default function NotificationDropdown({ tokenKey }) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-500 hover:text-blue-600 transition-colors bg-gray-100 rounded-full hover:bg-blue-50"
       >
@@ -42,8 +42,8 @@ export default function NotificationDropdown({ tokenKey }) {
               <div className="p-4 text-center text-sm text-gray-500">Chưa có thông báo nào.</div>
             ) : (
               notifications.map((n) => (
-                <div 
-                  key={n.id} 
+                <div
+                  key={n.id}
                   onClick={() => {
                     if (!n.isRead) markAsRead(n.id);
                   }}

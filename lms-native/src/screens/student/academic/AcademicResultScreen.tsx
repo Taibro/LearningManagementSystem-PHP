@@ -105,7 +105,9 @@ export const AcademicResultScreen: React.FC<Props> = ({ onBack }) => {
 
           <View style={styles.subStatsRow}>
             <Text style={styles.subStatText}>• Năm đào tạo: Năm thứ {overview.yearLevel}</Text>
-            <Text style={styles.subStatText}>• Tín chỉ nợ: {overview.creditsDebt}</Text>
+            {overview.creditsDebt > 0 && (
+              <Text style={[styles.subStatText, { color: Colors.danger }]}>• Tín chỉ nợ: {overview.creditsDebt}</Text>
+            )}
             <Text style={styles.subStatText}>• Cần tích lũy: {overview.creditsRequired} TC</Text>
           </View>
         </View>

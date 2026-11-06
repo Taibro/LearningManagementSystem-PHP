@@ -77,17 +77,19 @@ export const CurriculumScreen: React.FC<Props> = ({ onBack }) => {
 
                       <View style={styles.subRight}>
                         <Text style={styles.creditsNum}>{sub.credits} TC</Text>
-                        <View style={[styles.statusTag, sub.isCompleted ? styles.statusDone : styles.statusPending]}>
-                          <Ionicons
-                            name={sub.isCompleted ? 'checkmark-circle' : 'time-outline'}
-                            size={12}
-                            color={sub.isCompleted ? Colors.success : Colors.textMuted}
-                            style={{ marginRight: 3 }}
-                          />
-                          <Text style={[styles.statusTagText, sub.isCompleted ? { color: Colors.success } : { color: Colors.textMuted }]}>
-                            {sub.isCompleted ? 'Đã đạt' : 'Chưa học'}
-                          </Text>
-                        </View>
+                        {sub.isCompleted ? (
+                          <View style={[styles.statusTag, styles.statusDone]}>
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={12}
+                              color={Colors.success}
+                              style={{ marginRight: 3 }}
+                            />
+                            <Text style={[styles.statusTagText, { color: Colors.success }]}>
+                              Đã đạt
+                            </Text>
+                          </View>
+                        ) : null}
                       </View>
                     </View>
                   ))}

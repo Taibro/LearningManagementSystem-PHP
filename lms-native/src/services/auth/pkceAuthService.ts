@@ -173,38 +173,43 @@ class PkceAuthService {
    */
   async fetchUserProfile(accessToken: string): Promise<StudentProfile> {
     const meUrl = `${ENV.API_BASE_URL}/auth/me`;
-    const response = await fetch(meUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json',
-      },
-    });
+    try {
+      const response = await fetch(meUrl, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/json',
+        },
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        studentCode: data.studentCode || '2001230773',
-        fullName: data.fullName || 'Nguyễn Thành Tài',
-        email: data.email || 'ntai8448@gmail.com',
-        phone: data.phone || '0987654321',
-        gender: 'MALE',
-        birthDate: '15/08/2003',
-        idCard: '079203001234',
-        birthPlace: 'TP. Hồ Chí Minh',
-        className: '14DHTH01',
-        majorName: 'Công nghệ thông tin',
-        facultyName: 'Khoa Công nghệ thông tin',
-        enrollmentYear: '2023 - 2027',
-        trainingDuration: 4.0,
-        yearLevel: 3,
-      };
+      if (response.ok) {
+        const data = await response.json();
+        const schoolCode = data.schoolCode || 'HUIT';
+        return {
+          studentCode: data.studentCode || data.userCode || '2001230773',
+          fullName: data.fullName || 'Sinh viên LMS',
+          email: data.email || 'student@lms.local',
+          phone: data.phone || '0987654321',
+          gender: 'MALE',
+          birthDate: '15/08/2003',
+          idCard: '079203001234',
+          birthPlace: 'TP. Hồ Chí Minh',
+          className: schoolCode === 'HCMUT' ? 'CC01' : '14DHTH01',
+          majorName: schoolCode === 'HCMUT' ? 'Khoa học Máy tính' : 'Công nghệ thông tin',
+          facultyName: schoolCode === 'HCMUT' ? 'Khoa Khoa học và Kỹ thuật Máy tính' : 'Khoa Công nghệ thông tin',
+          enrollmentYear: '2023 - 2027',
+          trainingDuration: 4.0,
+          yearLevel: 3,
+        };
+      }
+    } catch {
+      // Fallback below
     }
 
-    // Fallback profile nếu /auth/me chưa nạp đầy đủ thông tin chi tiết
+    // Fallback profile nếu /auth/me tạm thời không phản hồi
     return {
       studentCode: '2001230773',
-      fullName: 'Nguyễn Thành Tài',
-      email: 'ntai8448@gmail.com',
+      fullName: 'Sinh viên LMS',
+      email: 'student@lms.local',
       phone: '0987654321',
       gender: 'MALE',
       birthDate: '15/08/2003',

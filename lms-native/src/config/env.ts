@@ -4,7 +4,7 @@ export const ENV = {
   KEYCLOAK_REALM: 'lms',
   KEYCLOAK_CLIENT_ID: 'lms-mobile',
   REDIRECT_URI: 'vn.vnic.lms://oauth/callback',
-  USE_MOCK_DATA: process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true',
+  USE_MOCK_DATA: false,
   SCHOOL_NAME: 'ĐẠI HỌC CÔNG THƯƠNG TP.HCM',
   SCHOOL_CODE: 'HUIT',
 };

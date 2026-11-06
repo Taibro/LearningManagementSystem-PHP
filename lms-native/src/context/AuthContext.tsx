@@ -12,7 +12,7 @@ export interface AuthContextType {
   isLoading: boolean;
   savedStudentCode: string;
   rememberMe: boolean;
-  login: (studentCode: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  login: (studentCode: string, password: string, rememberMe?: boolean, school?: string) => Promise<boolean>;
   loginWithPkce: () => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<StudentProfile>) => void;
@@ -101,10 +101,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [logout]);
 
   const login = useCallback(
-    async (studentCode: string, password: string, remember: boolean = true): Promise<boolean> => {
+    async (
+      studentCode: string,
+      password: string,
+      remember: boolean = true,
+      school: string = 'HUIT'
+    ): Promise<boolean> => {
       setIsLoading(true);
       try {
-        const authData = await studentApi.login(studentCode, password);
+        const authData = await studentApi.login(studentCode, password, school);
         if (!authData || !authData.token) {
           return false;
         }

@@ -100,7 +100,18 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     try {
-      const success = await login(studentCode.trim(), password, rememberMe, selectedSchool.code);
+      const trimmedCode = studentCode.trim();
+      let targetSchool = selectedSchool;
+      if (trimmedCode.startsWith('200122') || trimmedCode.toLowerCase().includes('hcmut')) {
+        targetSchool = SCHOOL_OPTIONS.find((s) => s.code === 'HCMUT') || selectedSchool;
+      } else if (trimmedCode.startsWith('200121') || trimmedCode.startsWith('200123') || trimmedCode.toLowerCase().includes('huit')) {
+        targetSchool = SCHOOL_OPTIONS.find((s) => s.code === 'HUIT') || selectedSchool;
+      }
+      if (targetSchool.code !== selectedSchool.code) {
+        setSelectedSchool(targetSchool);
+      }
+
+      const success = await login(trimmedCode, password, rememberMe, targetSchool.code);
       if (success) {
         onLoginSuccess?.();
       } else {
@@ -185,6 +196,14 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             onChangeText={(txt) => {
               setStudentCode(txt);
               if (codeError) setCodeError('');
+              const trimmed = txt.trim();
+              if (trimmed.startsWith('200122') || trimmed.toLowerCase().includes('hcmut')) {
+                const bk = SCHOOL_OPTIONS.find((s) => s.code === 'HCMUT');
+                if (bk && selectedSchool.code !== 'HCMUT') setSelectedSchool(bk);
+              } else if (trimmed.startsWith('200121') || trimmed.startsWith('200123') || trimmed.toLowerCase().includes('huit')) {
+                const huit = SCHOOL_OPTIONS.find((s) => s.code === 'HUIT');
+                if (huit && selectedSchool.code !== 'HUIT') setSelectedSchool(huit);
+              }
             }}
             autoCapitalize="none"
             leftIcon={<Ionicons name="person-outline" size={18} color={Colors.textMuted} />}

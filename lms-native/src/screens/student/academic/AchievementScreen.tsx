@@ -6,6 +6,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
 import { studentApi } from '../../../api/studentApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { AchievementItem } from '../../../types/student.types';
 
 interface Props {
@@ -13,8 +14,11 @@ interface Props {
 }
 
 export const AchievementScreen: React.FC<Props> = ({ onBack }) => {
+  const { user } = useAuth();
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const schoolName = user?.schoolName || (user?.schoolCode === 'HCMUT' ? 'ĐH Bách Khoa TP.HCM' : 'ĐH Công Thương TP.HCM');
 
   useEffect(() => {
     studentApi
@@ -32,7 +36,7 @@ export const AchievementScreen: React.FC<Props> = ({ onBack }) => {
         <View style={styles.banner}>
           <Ionicons name="medal-outline" size={36} color="#FFFFFF" />
           <Text style={styles.bannerTitle}>Bảng vàng danh dự</Text>
-          <Text style={styles.bannerSub}>Chúc mừng những thành tích học tập và rèn luyện xuất sắc của bạn tại HUIT!</Text>
+          <Text style={styles.bannerSub}>Chúc mừng những thành tích học tập và rèn luyện xuất sắc của bạn tại {schoolName}!</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Danh sách khen thưởng & Học bổng ({achievements.length})</Text>

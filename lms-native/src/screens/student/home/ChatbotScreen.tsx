@@ -14,11 +14,13 @@ interface Props {
 export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
   const { user } = useAuth();
   const studentName = user?.fullName || 'bạn';
+  const isHcmut = user?.schoolCode === 'HCMUT' || user?.studentCode?.startsWith('200122');
+  const schoolShortName = isHcmut ? 'ĐH Bách Khoa (HCMUT)' : 'HUIT';
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: `Xin chào ${studentName}! Mình là Trợ lý AI HUIT. Bạn cần giải đáp thắc mắc gì về lịch học, quy chế điểm rèn luyện hay học phí hôm nay?`,
+      text: `Xin chào ${studentName}! Mình là Trợ lý AI ${schoolShortName}. Bạn cần giải đáp thắc mắc gì về lịch học, quy chế điểm rèn luyện hay học phí hôm nay?`,
       sender: 'bot',
       timestamp: '08:00',
     },
@@ -51,15 +53,19 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputText('');
 
-    // Mock bot reply
+    // Dynamic bot reply
     setTimeout(() => {
-      let botReply = 'Cảm ơn bạn đã hỏi! Thông tin chi tiết đã được cập nhật trong mục Thông báo của trường hoặc bạn có thể liên hệ trực tiếp phòng Đào tạo HUIT để được giải quyết nhanh nhất.';
+      let botReply = `Cảm ơn bạn đã hỏi! Thông tin chi tiết đã được cập nhật trong mục Thông báo của ${schoolShortName} hoặc bạn có thể liên hệ trực tiếp phòng Đào tạo để được giải quyết nhanh nhất.`;
       if (text.includes('lịch thi')) {
         botReply = 'Lịch thi dự kiến của HK2 sẽ bắt đầu từ tuần thứ 16 (khoảng giữa tháng 6/2026). Bạn có thể kiểm tra danh sách ca thi cụ thể trong mục Lịch học nhé!';
       } else if (text.includes('rèn luyện')) {
-        botReply = 'Điểm rèn luyện của bạn HK1 đạt 85 điểm (Loại Tốt). Điểm được tổng hợp từ 5 tiêu chí: Ý thức học tập, chấp hành nội quy, hoạt động Đoàn - Hội, v.v.';
+        botReply = isHcmut
+          ? 'Điểm rèn luyện của bạn đạt 92 điểm (Loại Xuất sắc). Điểm được tổng hợp từ 5 tiêu chí theo khung quy định ĐHQG-HCM.'
+          : 'Điểm rèn luyện của bạn đạt 88 điểm (Loại Tốt). Điểm được tổng hợp từ 5 tiêu chí: Ý thức học tập, chấp hành nội quy, hoạt động Đoàn - Hội, v.v.';
       } else if (text.includes('học phí')) {
-        botReply = 'Học phí có thể nộp trực tiếp qua Cổng thanh toán OCB/VNPAY liên kết trên ứng dụng tại mục "Học phí & Phiếu thu".';
+        botReply = isHcmut
+          ? 'Học phí Bách Khoa có thể nộp trực tiếp qua Cổng thanh toán VNPAY/QR Code hoặc tài khoản ngân hàng của ĐH Bách Khoa tại mục "Học phí & Phiếu thu".'
+          : 'Học phí có thể nộp trực tiếp qua Cổng thanh toán OCB/VNPAY liên kết trên ứng dụng tại mục "Học phí & Phiếu thu".';
       }
 
       const replyMsg: ChatMessage = {
@@ -78,7 +84,7 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <AppHeader title="Trợ lý AI HUIT" onBack={onBack} />
+      <AppHeader title={`Trợ lý AI ${schoolShortName}`} onBack={onBack} />
 
       {/* Messages ScrollView */}
       <ScrollView
@@ -123,7 +129,7 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Hỏi AI bất kỳ điều gì về HUIT..."
+          placeholder={`Hỏi AI bất kỳ điều gì về ${schoolShortName}...`}
           placeholderTextColor={Colors.textMuted}
           value={inputText}
           onChangeText={setInputText}

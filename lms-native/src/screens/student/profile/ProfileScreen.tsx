@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../../../components/common/AppHeader';
 import { SkeletonLoader } from '../../../components/ui/SkeletonLoader';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
 import { studentApi } from '../../../api/studentApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { StudentProfile } from '../../../types/student.types';
 
 interface Props {
@@ -14,11 +15,15 @@ interface Props {
 }
 
 export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<StudentProfile | null>(user);
 
   useEffect(() => {
-    studentApi.getProfile().then(setProfile).catch(() => {});
-  }, []);
+    if (user) {
+      setProfile(user);
+    }
+    studentApi.getProfile().then((p) => setProfile(user || p)).catch(() => {});
+  }, [user]);
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(' ');
@@ -29,6 +34,14 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
   };
 
   const handleLogoutConfirm = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?') : true;
+      if (confirmed) {
+        onLogout();
+      }
+      return;
+    }
+
     Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?', [
       { text: 'Hủy', style: 'cancel' },
       { text: 'Đăng xuất', style: 'destructive', onPress: onLogout },
@@ -147,7 +160,17 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
 
           <View style={styles.menuDivider} />
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert('Hỗ trợ', 'Hotline hỗ trợ sinh viên HUIT: (028) 3816 1673 - Email: ctsv@huit.edu.vn')} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => {
+              const isHcmut = profile?.schoolCode === 'HCMUT' || profile?.studentCode?.startsWith('200122');
+              const supportInfo = isHcmut
+                ? 'Hotline hỗ trợ sinh viên ĐH Bách Khoa: (028) 3864 7256 - Email: support@hcmut.edu.vn'
+                : 'Hotline hỗ trợ sinh viên HUIT: (028) 3816 1673 - Email: ctsv@huit.edu.vn';
+              Alert.alert('Trợ giúp & Hỗ trợ', supportInfo);
+            }} 
+            activeOpacity={0.7}
+          >
             <View style={[styles.menuIcon, { backgroundColor: '#F1F5F9' }]}>
               <Ionicons name="help-circle-outline" size={20} color={Colors.textSecondary} />
             </View>
@@ -162,7 +185,9 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
           <Text style={styles.logoutText}>Đăng xuất khỏi tài khoản</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>LMS HUIT Mobile v1.0.0 (Expo SDK 58)</Text>
+        <Text style={styles.versionText}>
+          LMS {profile?.schoolCode === 'HCMUT' || profile?.studentCode?.startsWith('200122') ? 'HCMUT' : 'HUIT'} Mobile v1.0.0 (Expo SDK 58)
+        </Text>
       </ScrollView>
     </View>
   );

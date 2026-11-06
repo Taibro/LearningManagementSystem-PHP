@@ -6,6 +6,7 @@ import { SkeletonLoader } from '../../../components/ui/SkeletonLoader';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
 import { studentApi } from '../../../api/studentApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { StudentProfile } from '../../../types/student.types';
 
 interface Props {
@@ -13,11 +14,15 @@ interface Props {
 }
 
 export const StudentInfoScreen: React.FC<Props> = ({ onBack }) => {
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<StudentProfile | null>(user);
 
   useEffect(() => {
-    studentApi.getProfile().then(setProfile).catch(() => {});
-  }, []);
+    if (user) {
+      setProfile(user);
+    }
+    studentApi.getProfile().then((p) => setProfile(user || p)).catch(() => {});
+  }, [user]);
 
   if (!profile) {
     return (

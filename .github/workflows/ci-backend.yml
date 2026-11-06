@@ -76,5 +76,5 @@ jobs:
         run: ./vendor/bin/pest --parallel
       
       - name: Run PHPStan
-        run: ./vendor/bin/phpstan analyse --memory-limit=512M
+        run: ./vendor/bin/phpstan analyse --memory-limit=512M --level=5
         if: always()

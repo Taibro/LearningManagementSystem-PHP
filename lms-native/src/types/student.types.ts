@@ -13,6 +13,8 @@ export interface StudentProfile {
   enrollmentYear: string;
   trainingDuration: number;
   yearLevel: number;
+  schoolCode?: string;
+  schoolName?: string;
 }
 
 export interface StudentOverview {

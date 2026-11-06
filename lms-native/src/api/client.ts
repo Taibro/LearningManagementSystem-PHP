@@ -81,9 +81,25 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       if (response.status === 401) {
+        let errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        try {
+          const errorData = await response.json();
+          if (errorData?.message) {
+            errorMessage = errorData.message;
+          } else if (errorData?.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // Response body was not JSON
+        }
+
+        if (endpoint.includes('/auth/login')) {
+          throw new Error(errorMessage);
+        }
+
         console.warn(`[ApiClient] 401 Unauthorized on ${endpoint}. Triggering logout interceptor.`);
         this.handleUnauthorized();
-        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        throw new Error(errorMessage);
       }
 
       if (!response.ok) {

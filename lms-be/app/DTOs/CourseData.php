@@ -36,7 +36,7 @@ final class CourseData
             'description' => $this->description,
             'instructor_id' => $this->instructorId,
             'price' => $this->price,
-            'duration_hours' => $this->durationHours,
+            'duration_hours' => $this->durationHours, 
             'status' => $this->status->value,
         ];
     }

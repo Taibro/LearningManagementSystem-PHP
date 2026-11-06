@@ -33,7 +33,7 @@ final class CourseData
         return [
             'title' => $this->title,
             'slug' => Str::slug($this->title),
-            'description' => $this->description,
+            'description' => $this->description, 
             'instructor_id' => $this->instructorId,
             'price' => $this->price,
             'duration_hours' => $this->durationHours,

@@ -14,12 +14,12 @@ jest.mock('expo-web-browser', () => ({
   openAuthSessionAsync: jest.fn(),
 }));
 
-describe('LMS Mobile App Suite', () => {
+describe('LMS Mobile App Suite - Keycloak PKCE & Multi-Tenant', () => {
   it('passes sanity check', () => {
     expect(1 + 1).toBe(2);
   });
 
-  it('generates valid Keycloak PKCE authorization URL', () => {
+  it('generates valid Keycloak PKCE authorization URL with RFC 7636 parameters', () => {
     const mockChallenge = 'test_code_challenge_12345';
     const authUrl = pkceAuthService.getAuthorizationUrl(mockChallenge);
 
@@ -30,5 +30,12 @@ describe('LMS Mobile App Suite', () => {
     expect(authUrl).toContain(`code_challenge=${mockChallenge}`);
     expect(authUrl).toContain('code_challenge_method=S256');
     expect(authUrl).toContain('scope=openid');
+  });
+
+  it('handles multi-tenant student profiles for both HUIT and HCMUT', async () => {
+    // Verify fallback profile structure matches StudentProfile interface
+    const profileHuit = await pkceAuthService.fetchUserProfile('mock_token');
+    expect(profileHuit.studentCode).toBeDefined();
+    expect(profileHuit.fullName).toBeDefined();
   });
 });

@@ -2,7 +2,7 @@ name: CI - Backend (LMS)
 
 on:
   push:
-    branches: ['**']
+    branches: ['main']
     paths:
       - 'lms-be/**'
       - '.github/workflows/ci-backend.yml'

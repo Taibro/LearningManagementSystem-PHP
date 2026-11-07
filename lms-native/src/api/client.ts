@@ -25,9 +25,7 @@ class ApiClient {
     return this.token;
   }
 
-  /**
-   * Đăng ký callback khi nhận lỗi 401 Unauthorized
-   */
+  
   onUnauthorized(callback: UnauthorizedCallback): () => void {
     this.unauthorizedListeners.push(callback);
     return () => {
@@ -50,7 +48,6 @@ class ApiClient {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-    // Khôi phục token từ storage nếu RAM chưa có
     if (!this.token) {
       const savedToken = await storageService.getToken();
       if (savedToken) {
@@ -90,7 +87,6 @@ class ApiClient {
             errorMessage = errorData.error;
           }
         } catch {
-          // Response body was not JSON
         }
 
         if (endpoint.includes('/auth/login')) {
@@ -112,7 +108,6 @@ class ApiClient {
             errorMessage = errorData.error;
           }
         } catch {
-          // Response body was not JSON
         }
         throw new Error(errorMessage);
       }

@@ -67,7 +67,7 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
       <AppHeader title="Hồ sơ cá nhân" />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Profile Header Card */}
+        
         <View style={[styles.headerCard, Shadows.md]}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{getInitials(profile.fullName)}</Text>
@@ -83,7 +83,7 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
           </View>
         </View>
 
-        {/* Group 1: Học tập */}
+        
         <Text style={styles.groupTitle}>HỌC TẬP & ĐÀO TẠO</Text>
         <View style={[styles.menuCard, Shadows.sm]}>
           <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate('student_info')} activeOpacity={0.7}>
@@ -125,7 +125,7 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Group 2: Tài chính */}
+        
         <Text style={styles.groupTitle}>TÀI CHÍNH & HỌC PHÍ</Text>
         <View style={[styles.menuCard, Shadows.sm]}>
           <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate('receipt')} activeOpacity={0.7}>
@@ -147,7 +147,7 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Group 3: Cài đặt */}
+        
         <Text style={styles.groupTitle}>BẢO MẬT & HỆ THỐNG</Text>
         <View style={[styles.menuCard, Shadows.sm]}>
           <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate('change_password')} activeOpacity={0.7}>
@@ -179,7 +179,7 @@ export const ProfileScreen: React.FC<Props> = ({ onNavigate, onLogout }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Logout Button */}
+        
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogoutConfirm} activeOpacity={0.8}>
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} style={{ marginRight: 8 }} />
           <Text style={styles.logoutText}>Đăng xuất khỏi tài khoản</Text>

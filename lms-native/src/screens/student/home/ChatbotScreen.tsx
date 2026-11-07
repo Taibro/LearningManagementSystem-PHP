@@ -53,7 +53,6 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputText('');
 
-    // Dynamic bot reply
     setTimeout(() => {
       let botReply = `Cảm ơn bạn đã hỏi! Thông tin chi tiết đã được cập nhật trong mục Thông báo của ${schoolShortName} hoặc bạn có thể liên hệ trực tiếp phòng Đào tạo để được giải quyết nhanh nhất.`;
       if (text.includes('lịch thi')) {
@@ -86,7 +85,7 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
     >
       <AppHeader title={`Trợ lý AI ${schoolShortName}`} onBack={onBack} />
 
-      {/* Messages ScrollView */}
+      
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={styles.messagesContainer}
@@ -114,7 +113,7 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
         })}
       </ScrollView>
 
-      {/* Quick Prompts */}
+      
       <View style={styles.promptBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.promptScroll}>
           {quickPrompts.map((q) => (
@@ -125,7 +124,7 @@ export const ChatbotScreen: React.FC<Props> = ({ onBack }) => {
         </ScrollView>
       </View>
 
-      {/* Input bar */}
+      
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}

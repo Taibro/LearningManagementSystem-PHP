@@ -33,7 +33,6 @@ describe('LMS Mobile App Suite - Keycloak PKCE & Multi-Tenant', () => {
   });
 
   it('handles multi-tenant student profiles for both HUIT and HCMUT', async () => {
-    // Verify fallback profile structure matches StudentProfile interface
     const profileHuit = await pkceAuthService.fetchUserProfile('mock_token');
     expect(profileHuit.studentCode).toBeDefined();
     expect(profileHuit.fullName).toBeDefined();

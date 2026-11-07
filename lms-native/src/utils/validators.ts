@@ -3,9 +3,7 @@ export interface ValidationResult {
   message?: string;
 }
 
-/**
- * Kiểm tra tính hợp lệ của Mã số sinh viên
- */
+
 export const validateStudentCode = (code: string): ValidationResult => {
   const trimmed = code.trim();
   if (!trimmed) {
@@ -17,9 +15,7 @@ export const validateStudentCode = (code: string): ValidationResult => {
   return { isValid: true };
 };
 
-/**
- * Kiểm tra tính hợp lệ của mật khẩu
- */
+
 export const validatePassword = (password: string): ValidationResult => {
   if (!password) {
     return { isValid: false, message: 'Vui lòng nhập mật khẩu.' };

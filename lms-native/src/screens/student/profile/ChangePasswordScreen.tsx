@@ -81,7 +81,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ onBack }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <AppCard variant="elevated" padding="lg" style={styles.card}>
-          {/* Mật khẩu cũ */}
+          
           <AppTextInput
             label="Mật khẩu hiện tại"
             placeholder="Nhập mật khẩu đang dùng"
@@ -94,7 +94,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ onBack }) => {
             error={oldError}
           />
 
-          {/* Mật khẩu mới */}
+          
           <AppTextInput
             label="Mật khẩu mới"
             placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
@@ -107,7 +107,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ onBack }) => {
             error={newError}
           />
 
-          {/* Xác nhận mật khẩu mới */}
+          
           <AppTextInput
             label="Xác nhận mật khẩu mới"
             placeholder="Nhập lại mật khẩu mới"
@@ -120,7 +120,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ onBack }) => {
             error={confirmError}
           />
 
-          {/* Quy định mật khẩu */}
+          
           <View style={styles.rulesBox}>
             <Text style={styles.rulesTitle}>Quy định bảo mật mật khẩu:</Text>
             <Text style={styles.ruleItem}>• Tối thiểu 6 ký tự trở lên.</Text>
@@ -128,7 +128,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ onBack }) => {
             <Text style={styles.ruleItem}>• Tuyệt đối không chia sẻ mật khẩu cho người khác.</Text>
           </View>
 
-          {/* Nút cập nhật */}
+          
           <AppButton
             title={loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu mới'}
             onPress={handleSubmit}

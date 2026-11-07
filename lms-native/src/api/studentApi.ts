@@ -139,7 +139,6 @@ export const studentApi = {
         };
       }
     } catch {
-      // Fallback to local stored user
     }
     const stored = await storageService.getUser<StudentProfile>();
     if (stored) return stored;

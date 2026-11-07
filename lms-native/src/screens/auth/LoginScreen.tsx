@@ -80,7 +80,6 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
     setCodeError('');
     setPwdError('');
 
-    // Nếu người dùng không nhập thông tin, tự động mở luồng PKCE SSO
     if (!studentCode.trim() && !password) {
       handlePkceLogin();
       return;
@@ -162,7 +161,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Header Logo */}
+        
         <View style={styles.header}>
           <View style={styles.logoBadge}>
             <Text style={styles.logoText}>{selectedSchool.shortName}</Text>
@@ -172,9 +171,9 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
           <Text style={styles.portalSub}>{t('auth.portalSub')}</Text>
         </View>
 
-        {/* Login Form Card */}
+        
         <AppCard style={styles.card} variant="elevated" padding="lg">
-          {/* School selector */}
+          
           <Text style={styles.label}>{t('auth.campus')}</Text>
           <TouchableOpacity
             style={styles.schoolBox}
@@ -188,7 +187,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             <Ionicons name="chevron-down" size={16} color={Colors.primary} />
           </TouchableOpacity>
 
-          {/* Student code input */}
+          
           <AppTextInput
             label={t('auth.studentCode')}
             placeholder={selectedSchool.defaultPlaceholder}
@@ -210,7 +209,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             error={codeError}
           />
 
-          {/* Password input */}
+          
           <AppTextInput
             label={t('auth.password')}
             placeholder="Nhập mật khẩu tài khoản"
@@ -224,7 +223,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             error={pwdError}
           />
 
-          {/* Remember me & Forgot */}
+          
           <View style={styles.optionsRow}>
             <TouchableOpacity
               style={styles.rememberWrap}
@@ -252,7 +251,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Unified Primary Login Button */}
+          
           <AppButton
             title={loading ? 'Đang xác thực...' : pkceLoading ? 'Đang kết nối Keycloak...' : t('auth.loginButton')}
             onPress={handleLogin}
@@ -263,7 +262,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
           />
         </AppCard>
 
-        {/* Footer Support Info */}
+        
         <View style={styles.footer}>
           <Text style={styles.footerNote}>
             Hỗ trợ kỹ thuật: {selectedSchool.supportEmail} • {selectedSchool.supportPhone}
@@ -272,7 +271,7 @@ export const LoginScreen: React.FC<Props> = ({ onLoginSuccess }) => {
         </View>
       </ScrollView>
 
-      {/* School Picker Modal */}
+      
       <Modal
         visible={showSchoolModal}
         transparent

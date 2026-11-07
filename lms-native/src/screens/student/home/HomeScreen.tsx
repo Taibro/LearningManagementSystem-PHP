@@ -114,7 +114,7 @@ export const HomeScreen: React.FC<Props> = ({ onNavigate }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
       >
-        {/* Header */}
+        
         <HomeHeader
           profile={profile}
           onNotificationPress={() => onNavigate('news')}
@@ -122,7 +122,7 @@ export const HomeScreen: React.FC<Props> = ({ onNavigate }) => {
         />
 
         <View style={styles.contentBody}>
-          {/* Quick Academic Overview Card */}
+          
           <View style={[styles.overviewCard, Shadows.sm]}>
             <View style={styles.overviewItem}>
               <Text style={styles.overviewValue}>{overview.gpa4.toFixed(2)}</Text>
@@ -140,16 +140,16 @@ export const HomeScreen: React.FC<Props> = ({ onNavigate }) => {
             </View>
           </View>
 
-          {/* Next Class Today */}
+          
           <CurrentClassCard
             nextClass={nextClass}
             onAttendancePress={() => onNavigate('attendance')}
           />
 
-          {/* Grid Function Section */}
+          
           <FunctionSection onFeaturePress={handleFeaturePress} />
 
-          {/* Recent News Section */}
+          
           <View style={styles.newsSection}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionTitle}>Tin tức & Thông báo mới</Text>
@@ -181,10 +181,10 @@ export const HomeScreen: React.FC<Props> = ({ onNavigate }) => {
         </View>
       </ScrollView>
 
-      {/* Floating AI Chatbot Button */}
+      
       <DraggableChatbotButton onPress={() => onNavigate('chatbot')} />
 
-      {/* Payment Sheet */}
+      
       <PaymentBottomSheet
         visible={showPayment}
         onClose={() => setShowPayment(false)}

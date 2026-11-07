@@ -60,7 +60,7 @@ export const AttendanceScreen: React.FC<Props> = ({ onBack, onGoToStats }) => {
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* QR Check-in Card */}
+        
         <View style={[styles.qrCard, Shadows.md]}>
           <View style={styles.qrIconWrap}>
             <Ionicons name="qr-code" size={36} color="#FFFFFF" />
@@ -84,7 +84,7 @@ export const AttendanceScreen: React.FC<Props> = ({ onBack, onGoToStats }) => {
           </View>
         </View>
 
-        {/* Stats Summary Cards */}
+        
         <Text style={styles.sectionTitle}>Tổng quan chuyên cần học kỳ</Text>
         <View style={styles.statsRow}>
           <View style={[styles.statBox, { backgroundColor: Colors.successLight }]}>
@@ -101,7 +101,7 @@ export const AttendanceScreen: React.FC<Props> = ({ onBack, onGoToStats }) => {
           </View>
         </View>
 
-        {/* Attendance by Course */}
+        
         <Text style={styles.sectionTitle}>Chi tiết theo môn học ({courses.length})</Text>
         {courses.map((item) => (
           <View key={item.code} style={[styles.courseCard, Shadows.sm]}>
@@ -115,7 +115,7 @@ export const AttendanceScreen: React.FC<Props> = ({ onBack, onGoToStats }) => {
               </Text>
             </View>
 
-            {/* Progress bar */}
+            
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${item.percent}%`, backgroundColor: item.percent >= 90 ? Colors.success : Colors.warning }]} />
             </View>
@@ -132,7 +132,7 @@ export const AttendanceScreen: React.FC<Props> = ({ onBack, onGoToStats }) => {
         ))}
       </ScrollView>
 
-      {/* Cross-platform Modal for entering attendance code */}
+      
       <AppModal
         visible={showCodeModal}
         title="Nhập mã điểm danh"

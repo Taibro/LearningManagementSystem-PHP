@@ -39,7 +39,7 @@ export interface ScheduleItem {
   period: string;        // e.g. "Tiết 7 - 11"
   room: string;          // e.g. "A110 - Phòng máy tính"
   lecturer: string;      // e.g. "Đặng Đức Trung"
-  date: string;          // YYYY-MM-DD
+  date: string;
   type?: 'online' | 'practice' | 'theory';
 }
 

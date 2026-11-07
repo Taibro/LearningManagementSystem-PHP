@@ -28,7 +28,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [savedStudentCode, setSavedStudentCode] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
-  // Khôi phục session an toàn khi mở app
   const logout = useCallback(async () => {
     setToken(null);
     setUser(null);
@@ -64,14 +63,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRememberMe(true);
           }
 
-          // Chỉ khi có token hợp lệ được lưu trong AsyncStorage mới cho phép đăng nhập
           if (savedToken && savedUser) {
             setToken(savedToken);
             apiClient.setToken(savedToken);
             setUser(savedUser);
             setIsAuthenticated(true);
           } else {
-            // Chưa đăng nhập -> Buộc hiển thị màn hình Login
             setToken(null);
             setUser(null);
             setIsAuthenticated(false);
@@ -89,7 +86,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     restoreSession();
 
-    // Đăng ký interceptor bắt lỗi 401 Unauthorized
     const unsubscribe = apiClient.onUnauthorized(() => {
       logout();
     });

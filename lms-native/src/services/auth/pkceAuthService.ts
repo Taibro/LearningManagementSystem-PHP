@@ -21,17 +21,13 @@ export interface AuthResult {
 }
 
 class PkceAuthService {
-  /**
-   * Tạo chuỗi ngẫu nhiên Code Verifier chuẩn RFC 7636
-   */
+  
   async generateCodeVerifier(): Promise<string> {
     const randomBytes = await Crypto.getRandomBytesAsync(32);
     return this.toBase64Url(randomBytes);
   }
 
-  /**
-   * Tính toán Code Challenge từ Code Verifier bằng thuật toán SHA-256
-   */
+  
   async generateCodeChallenge(verifier: string): Promise<string> {
     const digest = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
@@ -76,9 +72,7 @@ class PkceAuthService {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  /**
-   * Xây dựng URL xác thực OAuth2 Authorization Endpoint
-   */
+  
   getAuthorizationUrl(codeChallenge: string): string {
     const params = new URLSearchParams({
       client_id: ENV.KEYCLOAK_CLIENT_ID,
@@ -91,9 +85,7 @@ class PkceAuthService {
     return `${ENV.KEYCLOAK_BASE_URL}/realms/${ENV.KEYCLOAK_REALM}/protocol/openid-connect/auth?${params.toString()}`;
   }
 
-  /**
-   * Bắt đầu phiên đăng nhập PKCE qua In-App Browser an toàn
-   */
+  
   async loginWithPkce(): Promise<AuthResult> {
     const codeVerifier = await this.generateCodeVerifier();
     const codeChallenge = await this.generateCodeChallenge(codeVerifier);
@@ -105,7 +97,6 @@ class PkceAuthService {
       throw new Error(result.type === 'cancel' ? 'Đã hủy đăng nhập.' : 'Đăng nhập không thành công.');
     }
 
-    // Trích xuất mã Authorization Code từ URL phản hồi
     const redirectUrl = new URL(result.url);
     const code = redirectUrl.searchParams.get('code');
     const error = redirectUrl.searchParams.get('error');
@@ -118,16 +109,13 @@ class PkceAuthService {
       throw new Error('Không nhận được Authorization Code từ máy chủ SSO.');
     }
 
-    // Đổi Code lấy Token
     const tokens = await this.exchangeCodeForTokens(code, codeVerifier);
 
-    // Lưu token vào persistent storage
     await storageService.setToken(tokens.access_token);
     if (tokens.refresh_token) {
       await storageService.setItem('lms_refresh_token', tokens.refresh_token);
     }
 
-    // Lấy thông tin hồ sơ sinh viên
     const profile = await this.fetchUserProfile(tokens.access_token);
 
     return {
@@ -137,9 +125,7 @@ class PkceAuthService {
     };
   }
 
-  /**
-   * Trao đổi Authorization Code lấy Tokens từ Keycloak Token Endpoint
-   */
+  
   async exchangeCodeForTokens(code: string, codeVerifier: string): Promise<PkceTokenResponse> {
     const tokenUrl = `${ENV.KEYCLOAK_BASE_URL}/realms/${ENV.KEYCLOAK_REALM}/protocol/openid-connect/token`;
 
@@ -168,9 +154,7 @@ class PkceAuthService {
     return await response.json();
   }
 
-  /**
-   * Gọi API /auth/me để lấy hồ sơ sinh viên theo JWT Bearer Token
-   */
+  
   async fetchUserProfile(accessToken: string): Promise<StudentProfile> {
     const meUrl = `${ENV.API_BASE_URL}/auth/me`;
     try {
@@ -202,10 +186,8 @@ class PkceAuthService {
         };
       }
     } catch {
-      // Fallback below
     }
 
-    // Fallback profile nếu /auth/me tạm thời không phản hồi
     return {
       studentCode: '2001230773',
       fullName: 'Sinh viên LMS',

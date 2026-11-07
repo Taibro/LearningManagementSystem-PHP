@@ -10,7 +10,7 @@ export interface DayOption {
 
 export const getWeekDays = (baseDate?: Date): DayOption[] => {
   const current = baseDate ? new Date(baseDate) : new Date();
-  const day = current.getDay(); // 0 is Sunday, 1 is Monday
+  const day = current.getDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
   const monday = new Date(current);
   monday.setDate(current.getDate() + diffToMonday);

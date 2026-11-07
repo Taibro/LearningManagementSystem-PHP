@@ -6,6 +6,7 @@ import { SkeletonLoader } from '../../../components/ui/SkeletonLoader';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
 import { studentApi } from '../../../api/studentApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { StudentProfile } from '../../../types/student.types';
 
 interface Props {
@@ -13,11 +14,15 @@ interface Props {
 }
 
 export const StudentInfoScreen: React.FC<Props> = ({ onBack }) => {
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<StudentProfile | null>(user);
 
   useEffect(() => {
-    studentApi.getProfile().then(setProfile).catch(() => {});
-  }, []);
+    if (user) {
+      setProfile(user);
+    }
+    studentApi.getProfile().then((p) => setProfile(user || p)).catch(() => {});
+  }, [user]);
 
   if (!profile) {
     return (
@@ -48,7 +53,7 @@ export const StudentInfoScreen: React.FC<Props> = ({ onBack }) => {
       <AppHeader title="Thông tin sinh viên" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Section 1: Thông tin cá nhân */}
+        
         <Text style={styles.sectionTitle}>THÔNG TIN CÁ NHÂN</Text>
         <View style={[styles.card, Shadows.sm]}>
           {renderRow('Mã số sinh viên (MSSV)', profile.studentCode, 'card-outline')}
@@ -64,7 +69,7 @@ export const StudentInfoScreen: React.FC<Props> = ({ onBack }) => {
           {renderRow('Nơi sinh', profile.birthPlace, 'location-outline')}
         </View>
 
-        {/* Section 2: Thông tin đào tạo */}
+        
         <Text style={styles.sectionTitle}>THÔNG TIN HỌC VỤ & LỚP HỌC</Text>
         <View style={[styles.card, Shadows.sm]}>
           {renderRow('Lớp sinh hoạt', profile.className, 'people-outline')}
@@ -78,7 +83,7 @@ export const StudentInfoScreen: React.FC<Props> = ({ onBack }) => {
           {renderRow('Thời gian đào tạo', `${profile.trainingDuration} năm (Chính quy)`, 'time-outline')}
         </View>
 
-        {/* Section 3: Thông tin liên hệ */}
+        
         <Text style={styles.sectionTitle}>THÔNG TIN LIÊN HỆ</Text>
         <View style={[styles.card, Shadows.sm]}>
           {renderRow('Email trường cấp', profile.email, 'mail-outline')}

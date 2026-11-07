@@ -5,7 +5,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FloatingBottomNav, TabKey } from '../components/common/FloatingBottomNav';
 import { useAuth } from '../hooks/useAuth';
 
-// Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import {
   HomeScreen,

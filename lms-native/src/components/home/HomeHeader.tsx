@@ -24,7 +24,13 @@ export const HomeHeader: React.FC<Props> = ({ profile, onNotificationPress, onPr
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) }]}>
       <View style={styles.left}>
-        <Text style={styles.schoolTitle}>TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM</Text>
+        <Text style={styles.schoolTitle}>
+          {profile.schoolName
+            ? profile.schoolName.toUpperCase()
+            : (profile.schoolCode === 'HCMUT' || profile.studentCode?.startsWith('200122') || profile.email?.includes('hcmut'))
+              ? 'TRƯỜNG ĐẠI HỌC BÁCH KHOA - ĐHQG-HCM'
+              : 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM'}
+        </Text>
         <Text style={styles.greeting}>Chào {profile.fullName} 👋</Text>
         <Text style={styles.subtext}>MSSV: {profile.studentCode} • Lớp: {profile.className}</Text>
       </View>

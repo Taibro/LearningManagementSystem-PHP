@@ -125,7 +125,7 @@ export const ScheduleScreen: React.FC<Props> = ({ onBack }) => {
     <View style={styles.container}>
       <AppHeader title="Lịch học & Lịch thi" onBack={onBack} />
 
-      {/* Week Selector Bar */}
+      
       <View style={styles.weekBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.weekScroll}>
           {days.map((day, idx) => {
@@ -146,7 +146,7 @@ export const ScheduleScreen: React.FC<Props> = ({ onBack }) => {
         </ScrollView>
       </View>
 
-      {/* Virtualized Schedule FlatList */}
+      
       <FlatList
         data={filteredSchedule}
         keyExtractor={(item) => item.id}

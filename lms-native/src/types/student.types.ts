@@ -13,6 +13,8 @@ export interface StudentProfile {
   enrollmentYear: string;
   trainingDuration: number;
   yearLevel: number;
+  schoolCode?: string;
+  schoolName?: string;
 }
 
 export interface StudentOverview {
@@ -37,7 +39,7 @@ export interface ScheduleItem {
   period: string;        // e.g. "Tiết 7 - 11"
   room: string;          // e.g. "A110 - Phòng máy tính"
   lecturer: string;      // e.g. "Đặng Đức Trung"
-  date: string;          // YYYY-MM-DD
+  date: string;
   type?: 'online' | 'practice' | 'theory';
 }
 

@@ -27,7 +27,7 @@ export const CurrentClassCard: React.FC<Props> = ({ nextClass, onAttendancePress
 
   return (
     <View style={[styles.card, Shadows.md]}>
-      {/* Top Banner Tag */}
+      
       <View style={styles.topRow}>
         <View style={styles.statusBadge}>
           <View style={styles.pulseDot} />
@@ -44,11 +44,11 @@ export const CurrentClassCard: React.FC<Props> = ({ nextClass, onAttendancePress
         </View>
       </View>
 
-      {/* Subject Title */}
+      
       <Text style={styles.subjectName}>{nextClass.subjectName}</Text>
       <Text style={styles.classCode}>Mã lớp: {nextClass.classCode}</Text>
 
-      {/* Info details */}
+      
       <View style={styles.divider} />
 
       <View style={styles.infoRow}>
@@ -66,7 +66,7 @@ export const CurrentClassCard: React.FC<Props> = ({ nextClass, onAttendancePress
         <Text style={styles.infoText}>Giảng viên: {nextClass.lecturer}</Text>
       </View>
 
-      {/* Action button */}
+      
       <TouchableOpacity style={styles.checkinBtn} onPress={onAttendancePress} activeOpacity={0.8}>
         <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
         <Text style={styles.checkinText}>Điểm danh ngay</Text>

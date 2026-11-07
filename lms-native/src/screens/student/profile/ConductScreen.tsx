@@ -25,7 +25,7 @@ export const ConductScreen: React.FC<Props> = ({ onBack }) => {
       <AppHeader title="Điểm rèn luyện" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Semester Selector */}
+        
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.semScroll}>
           {conductList.map((c, idx) => {
             const isSelected = selectedIndex === idx;
@@ -44,7 +44,7 @@ export const ConductScreen: React.FC<Props> = ({ onBack }) => {
 
         {currentConduct && (
           <>
-            {/* Score Banner */}
+            
             <View style={[styles.scoreBanner, Shadows.md]}>
               <View style={styles.scoreCircle}>
                 <Text style={styles.scoreNum}>{currentConduct.totalScore}</Text>
@@ -59,7 +59,7 @@ export const ConductScreen: React.FC<Props> = ({ onBack }) => {
               </View>
             </View>
 
-            {/* Criteria Breakdown */}
+            
             <Text style={styles.sectionTitle}>Chi tiết 5 tiêu chí đánh giá</Text>
             {currentConduct.details.map((item, idx) => {
               const percent =
@@ -76,7 +76,7 @@ export const ConductScreen: React.FC<Props> = ({ onBack }) => {
                   </View>
                   <Text style={styles.critTitle}>{item.title}</Text>
 
-                  {/* Progress */}
+                  
                   <View style={styles.progressBarBg}>
                     <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
                   </View>

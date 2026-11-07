@@ -3,6 +3,7 @@ import { StudentProfile } from '../types/student.types';
 import { storageService } from '../services/storage';
 import { apiClient } from '../api/client';
 import { studentApi } from '../api/studentApi';
+import { pkceAuthService } from '../services/auth/pkceAuthService';
 
 export interface AuthContextType {
   user: StudentProfile | null;
@@ -11,7 +12,8 @@ export interface AuthContextType {
   isLoading: boolean;
   savedStudentCode: string;
   rememberMe: boolean;
-  login: (studentCode: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  login: (studentCode: string, password: string, rememberMe?: boolean, school?: string) => Promise<boolean>;
+  loginWithPkce: () => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<StudentProfile>) => void;
 }
@@ -26,7 +28,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [savedStudentCode, setSavedStudentCode] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
-  // Khôi phục session an toàn khi mở app
   const logout = useCallback(async () => {
     setToken(null);
     setUser(null);
@@ -62,14 +63,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRememberMe(true);
           }
 
-          // Chỉ khi có token hợp lệ được lưu trong AsyncStorage mới cho phép đăng nhập
           if (savedToken && savedUser) {
             setToken(savedToken);
             apiClient.setToken(savedToken);
             setUser(savedUser);
             setIsAuthenticated(true);
           } else {
-            // Chưa đăng nhập -> Buộc hiển thị màn hình Login
             setToken(null);
             setUser(null);
             setIsAuthenticated(false);
@@ -87,7 +86,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     restoreSession();
 
-    // Đăng ký interceptor bắt lỗi 401 Unauthorized
     const unsubscribe = apiClient.onUnauthorized(() => {
       logout();
     });
@@ -99,10 +97,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [logout]);
 
   const login = useCallback(
-    async (studentCode: string, password: string, remember: boolean = true): Promise<boolean> => {
+    async (
+      studentCode: string,
+      password: string,
+      remember: boolean = true,
+      school: string = 'HUIT'
+    ): Promise<boolean> => {
       setIsLoading(true);
       try {
-        const authData = await studentApi.login(studentCode, password);
+        const authData = await studentApi.login(studentCode, password, school);
         if (!authData || !authData.token) {
           return false;
         }
@@ -134,6 +137,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     []
   );
 
+  const loginWithPkce = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await pkceAuthService.loginWithPkce();
+      if (!result || !result.token) {
+        return false;
+      }
+
+      setToken(result.token);
+      setUser(result.profile);
+      setIsAuthenticated(true);
+      apiClient.setToken(result.token);
+
+      await Promise.all([
+        storageService.setToken(result.token),
+        storageService.setUser(result.profile),
+        storageService.saveStudentCode(result.profile.studentCode, true),
+      ]);
+
+      setSavedStudentCode(result.profile.studentCode);
+      setRememberMe(true);
+      return true;
+    } catch (err) {
+      console.warn('[AuthProvider] PKCE Login failed:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -144,6 +177,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         savedStudentCode,
         rememberMe,
         login,
+        loginWithPkce,
         logout,
         updateProfile,
       }}

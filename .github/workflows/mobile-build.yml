@@ -1,4 +1,5 @@
 name: LMS Mobile (React Native) → APK artifact
+
 on:
   push:
     branches: [main]
@@ -6,12 +7,18 @@ on:
       - 'lms-native/**'
       - '.github/workflows/mobile-build.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: lms-mobile-build
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: lms-native
@@ -38,15 +45,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create .env for Expo / React Native build
+      - name: Create .env for React Native build
         run: |
-          cat <<EOF > .env
-          EXPO_PUBLIC_API_BASE_URL=https://${{ vars.API_DOMAIN }}
-          EXPO_PUBLIC_KEYCLOAK_URL=https://${{ vars.AUTH_DOMAIN }}
-          EXPO_PUBLIC_KEYCLOAK_REALM=lms
-          EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=lms-mobile
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          EOF
+          {
+            echo "EXPO_PUBLIC_API_BASE_URL=https://${{ vars.API_DOMAIN }}"
+            echo "EXPO_PUBLIC_KEYCLOAK_URL=https://${{ vars.AUTH_DOMAIN }}"
+            echo "EXPO_PUBLIC_KEYCLOAK_REALM=lms"
+            echo "EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=lms-mobile"
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+          } > .env
 
       - name: Prebuild Android native project (if not present)
         env:
@@ -55,6 +62,34 @@ jobs:
           if [ ! -d "android" ]; then
             npx expo prebuild --platform android --no-install
           fi
+
+      - name: Create CI keystore
+        run: |
+          keytool -genkeypair -v -keystore android/app/ci-release.keystore \
+            -alias ci-release -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass cicicici -keypass cicicici \
+            -dname "CN=CI, OU=CI, O=CI, L=CI, S=CI, C=VN"
+
+      - name: Sign release with CI keystore
+        run: |
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("ci-release.keystore")
+                      storePassword "cicicici"
+                      keyAlias "ci-release"
+                      keyPassword "cicicici"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
 
       - name: Build Android Release APK
         run: |

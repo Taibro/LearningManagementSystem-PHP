@@ -1,4 +1,5 @@
-name: LMS Frontend → Netlify
+name: LMS Frontend → Cloudflare Pages
+
 on:
   push:
     branches: [main]
@@ -6,11 +7,14 @@ on:
       - 'lms-fe/**'
       - '.github/workflows/frontend-deploy.yml'
   workflow_dispatch:
+
 concurrency:
   group: lms-frontend-deploy
   cancel-in-progress: true
+
 permissions:
   contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,22 +22,40 @@ jobs:
     defaults:
       run:
         working-directory: lms-fe
-    env:
-      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: lms-fe/package-lock.json
-      - run: npm ci
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build
         env:
           VITE_API_BASE_URL: https://${{ vars.API_DOMAIN }}
           VITE_KEYCLOAK_URL: https://${{ vars.AUTH_DOMAIN }}
           VITE_KEYCLOAK_REALM: lms
           VITE_KEYCLOAK_CLIENT_ID: lms-web
-      - name: Deploy (netlify-cli pinned via devDependencies)
-        run: npx netlify deploy --prod --dir=dist
+
+      - name: Add SPA fallback rule
+        run: echo "/* /index.html 200" > dist/_redirects
+
+      - name: Ensure Pages project exists
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create lms-fe --production-branch=main
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy lms-fe/dist --project-name=lms-fe --branch=main --commit-hash=${{ github.sha }}

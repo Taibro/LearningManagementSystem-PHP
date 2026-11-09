@@ -21,79 +21,31 @@ jobs:
     defaults:
       run:
         working-directory: lms-fe
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: lms-fe/package-lock.json
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run ESLint
         run: npm run lint
-        if: always()
-      
+
       - name: Run tests
         run: npm test
-        if: always()
-      
-      - name: Build for production
+
+      - name: Build production
         run: npm run build
         env:
           VITE_API_BASE_URL: https://lms-dev-api.duckdns.org
           VITE_KEYCLOAK_URL: https://auth-dev-api.duckdns.org
           VITE_KEYCLOAK_REALM: lms
           VITE_KEYCLOAK_CLIENT_ID: lms-web
-      
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          name: frontend-build
-          path: lms-fe/dist/
-          retention-days: 7
 
-  deploy-netlify:
-    needs: test-and-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: lms-fe/package-lock.json
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build for production
-        run: npm run build
-        env:
-          VITE_API_BASE_URL: https://lms-dev-api.duckdns.org
-          VITE_KEYCLOAK_URL: https://auth-dev-api.duckdns.org
-          VITE_KEYCLOAK_REALM: lms
-          VITE_KEYCLOAK_CLIENT_ID: lms-web
-      
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
-        with:
-          publish-dir: './lms-fe/dist'
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          overwrites-pull-request-comment: false
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 5
-
+      - name: Add SPA fallback rule (cho Cloudflare Pages)
+        run: echo "/* /index.html 200" > dist/_redirects

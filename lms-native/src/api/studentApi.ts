@@ -43,10 +43,28 @@ export const studentApi = {
         profile: { ...mockStudentProfile, studentCode },
       };
     }
-    return await apiClient.post<{ token: string; profile: StudentProfile }>(API_ENDPOINTS.AUTH.LOGIN, {
-      studentCode,
+    const response = await apiClient.post<any>(API_ENDPOINTS.AUTH.LOGIN, {
+      loginCode: studentCode,
       password,
     });
+    const token = response.accessToken || response.token;
+    const profile: StudentProfile = {
+      studentCode: response.studentCode || response.userCode || studentCode,
+      fullName: response.fullName || 'Nguyễn Thành Tài',
+      email: response.email || 'ntai8448@gmail.com',
+      phone: response.phone || '0987654321',
+      gender: 'MALE',
+      birthDate: '15/08/2003',
+      idCard: '079203001234',
+      birthPlace: 'TP. Hồ Chí Minh',
+      className: response.className || '14DHTH01',
+      majorName: response.majorName || 'Công nghệ thông tin',
+      facultyName: response.facultyName || 'Khoa Công nghệ thông tin',
+      enrollmentYear: '2023 - 2027',
+      trainingDuration: 4.0,
+      yearLevel: response.yearLevel || 3,
+    };
+    return { token, profile };
   },
 
   changePassword: async (payload: {

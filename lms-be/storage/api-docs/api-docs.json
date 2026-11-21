@@ -9,485 +9,341 @@
         },
         "version": "1.0.0"
     },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Current Environment Server"
+        }
+    ],
     "paths": {
-        "/api/v1/courses": {
+        "/api/{version}/schools/active": {
             "get": {
                 "tags": [
-                    "Courses"
+                    "Authentication"
                 ],
-                "summary": "Get list of courses",
-                "description": "Returns a paginated list of courses with optional search and status filters",
-                "operationId": "getCoursesList",
+                "summary": "Get active schools for tenant login dropdown",
+                "description": "GET /api/{version}/schools/active\nReturn active schools for the login/register dropdowns in lms-fe.",
+                "operationId": "getActiveSchools",
                 "parameters": [
                     {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Course status",
-                        "required": false,
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
                         "schema": {
                             "type": "string",
-                            "enum": [
-                                "draft",
-                                "published",
-                                "archived"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Search keyword",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Items per page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 15
+                            "default": "v1"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Courses list retrieved successfully"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Courses"
-                ],
-                "summary": "Create a new course",
-                "operationId": "createCourse",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "title",
-                                    "description",
-                                    "instructor_id",
-                                    "price",
-                                    "duration_hours"
-                                ],
-                                "properties": {
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Lập trình Laravel"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Khóa học Laravel từ cơ bản đến nâng cao"
-                                    },
-                                    "instructor_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 499000
-                                    },
-                                    "duration_hours": {
-                                        "type": "integer",
-                                        "example": 40
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "example": "draft",
-                                        "enum": [
-                                            "draft",
-                                            "published",
-                                            "archived"
-                                        ]
+                        "description": "List of active schools",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SchoolResponseDto"
                                     }
-                                },
-                                "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
                             }
                         }
                     }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Course created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
-        "/api/v1/courses/{course}": {
-            "get": {
-                "tags": [
-                    "Courses"
-                ],
-                "summary": "Get course details by ID",
-                "operationId": "getCourseById",
-                "parameters": [
-                    {
-                        "name": "course",
-                        "in": "path",
-                        "description": "Course ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Course details retrieved successfully"
-                    },
-                    "404": {
-                        "description": "Course not found"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Courses"
-                ],
-                "summary": "Update an existing course",
-                "operationId": "updateCourse",
-                "parameters": [
-                    {
-                        "name": "course",
-                        "in": "path",
-                        "description": "Course ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Lập trình Laravel nâng cao"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Cập nhật nội dung khóa học"
-                                    },
-                                    "instructor_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 599000
-                                    },
-                                    "duration_hours": {
-                                        "type": "integer",
-                                        "example": 45
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "example": "published",
-                                        "enum": [
-                                            "draft",
-                                            "published",
-                                            "archived"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Course updated successfully"
-                    },
-                    "403": {
-                        "description": "Unauthorized"
-                    },
-                    "404": {
-                        "description": "Course not found"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Courses"
-                ],
-                "summary": "Delete a course",
-                "operationId": "deleteCourse",
-                "parameters": [
-                    {
-                        "name": "course",
-                        "in": "path",
-                        "description": "Course ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Course deleted successfully"
-                    },
-                    "403": {
-                        "description": "Unauthorized"
-                    },
-                    "404": {
-                        "description": "Course not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/login": {
+        "/api/{version}/auth/login": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Log in user",
-                "description": "Authenticate user with email and password",
+                "description": "Authenticate user with login code (student code, teacher code, username, or email) and password via Keycloak Direct Access Grant",
                 "operationId": "authLogin",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password"
-                                    },
-                                    "remember": {
-                                        "type": "boolean",
-                                        "example": false
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/LoginRequestDto"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Login successful"
+                        "description": "Login successful with JWT access token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials or tenant mismatch",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Invalid credentials or validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Keycloak connection error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
                     }
-                },
-                "servers": [
-                    {
-                        "url": "/",
-                        "description": "Current Environment Server"
-                    }
-                ]
+                }
             }
         },
-        "/register": {
+        "/api/{version}/auth/register": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Register a new user",
-                "description": "Create a new user account and personal team",
+                "description": "Register a new student/user in Keycloak and PostgreSQL database",
                 "operationId": "authRegister",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "password",
-                                    "password_confirmation"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Nguyen Van A"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "Password123!"
-                                    },
-                                    "password_confirmation": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "Password123!"
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/RegisterRequestDto"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully"
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponseDto"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
                     }
-                },
-                "servers": [
-                    {
-                        "url": "/",
-                        "description": "Current Environment Server"
-                    }
-                ]
+                }
             }
         },
-        "/logout": {
+        "/api/{version}/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "description": "POST /api/{version}/auth/refresh\nRefresh Keycloak access token using refresh_token.",
+                "operationId": "authRefresh",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshTokenResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{version}/auth/logout": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Log out user",
+                "description": "Revoke Keycloak session",
                 "operationId": "authLogout",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequestDto"
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "204": {
-                        "description": "Logged out successfully"
-                    },
                     "200": {
-                        "description": "Logged out successfully"
+                        "description": "Logged out successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
                     {
                         "bearerAuth": []
                     }
-                ],
-                "servers": [
-                    {
-                        "url": "/",
-                        "description": "Current Environment Server"
-                    }
                 ]
             }
         },
-        "/api/user": {
+        "/api/{version}/auth/me": {
             "get": {
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Get current authenticated user",
-                "operationId": "getAuthenticatedUser",
-                "responses": {
-                    "200": {
-                        "description": "User profile retrieved successfully"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "servers": [
-                    {
-                        "url": "/",
-                        "description": "Current Environment Server"
-                    }
-                ]
-            }
-        },
-        "/api/{current_team}/dashboard": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Get team dashboard data",
-                "description": "Returns team dashboard including pending invitations for the authenticated user",
-                "operationId": "getTeamDashboard",
+                "summary": "Get current authenticated user profile",
+                "description": "GET /api/{version}/auth/me\nReturn current authenticated user profile from Keycloak JWT + PostgreSQL.",
+                "operationId": "getAuthMe",
                 "parameters": [
                     {
-                        "name": "current_team",
+                        "name": "version",
                         "in": "path",
-                        "description": "Current Team ID or slug",
+                        "description": "API version (e.g. v1)",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "default": "v1"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dashboard data retrieved successfully"
+                        "description": "User profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserProfileResponseDto"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "403": {
-                        "description": "Unauthorized team membership"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -496,9 +352,666 @@
                     }
                 ]
             }
+        },
+        "/api/{version}/auth/2fa/setup": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Generate 2FA QR code setup URI",
+                "description": "POST /api/{version}/auth/2fa/setup\nProvide QR code setup URI for 2FA modal compatibility in AdminLogin / SaaSAdminLogin.",
+                "operationId": "authSetup2fa",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Setup2faRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "QR code setup URI generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Setup2faResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{version}/auth/2fa/verify-setup": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify 2FA setup code",
+                "description": "POST /api/{version}/auth/2fa/verify-setup",
+                "operationId": "authVerifySetup2fa",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Verify2faRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Whether the 6-digit verification code is valid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{version}/auth/login/verify-2fa": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify 2FA code on login",
+                "description": "POST /api/{version}/auth/login/verify-2fa",
+                "operationId": "authVerifyLogin2fa",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyLogin2faRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "2FA login verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifyLogin2faResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/{version}/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Check application, database, and cache health",
+                "operationId": "systemHealthCheck",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "System is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheckResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "One or more critical dependencies are unhealthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheckResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
+        "schemas": {
+            "AuthTokenResponseDto": {
+                "title": "Auth Token Response",
+                "description": "Authentication response containing JWT tokens and authenticated user profile",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "accessToken": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "refreshToken": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expiresIn": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "integer"
+                    },
+                    "usersId": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "keycloakId": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "userCode": {
+                        "type": "string"
+                    },
+                    "studentCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "teacherCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "schoolId": {
+                        "type": "integer"
+                    },
+                    "schoolCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "schoolName": {
+                        "type": "string"
+                    },
+                    "require2fa": {
+                        "type": "boolean"
+                    },
+                    "requireSetup": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "LoginRequestDto": {
+                "title": "Login Request",
+                "description": "Credentials payload for Keycloak Direct Access Grant login",
+                "required": [
+                    "loginCode",
+                    "password"
+                ],
+                "properties": {
+                    "loginCode": {
+                        "description": "Student code, teacher code, username, or email",
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "userType": {
+                        "description": "STUDENT | LECTURER | SCHOOL_ADMIN | SAAS_ADMIN",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "school": {
+                        "description": "School code (e.g. HUIT, HCMUT)",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LogoutRequestDto": {
+                "title": "Logout Request",
+                "description": "Payload to revoke Keycloak session",
+                "properties": {
+                    "refreshToken": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RefreshTokenRequestDto": {
+                "title": "Refresh Token Request",
+                "description": "Payload to exchange a refresh token for a new access token",
+                "required": [
+                    "refreshToken"
+                ],
+                "properties": {
+                    "refreshToken": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RefreshTokenResponseDto": {
+                "title": "Refresh Token Response",
+                "description": "Response payload containing refreshed access and refresh tokens",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "accessToken": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    },
+                    "expiresIn": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequestDto": {
+                "title": "Register Request",
+                "description": "Payload to register a new user in Keycloak and PostgreSQL",
+                "required": [
+                    "fullName",
+                    "email",
+                    "password",
+                    "school"
+                ],
+                "properties": {
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "school": {
+                        "description": "School code (e.g. HUIT, HCMUT)",
+                        "type": "string"
+                    },
+                    "userCode": {
+                        "description": "Primary user code / Keycloak username",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "loginCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "studentCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "teacherCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "userType": {
+                        "description": "STUDENT | LECTURER | SCHOOL_ADMIN | DEAN_OF_FACULTY | DEAN_OF_DEPARTMENT",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "major": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "degreeLevel": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trainingType": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "className": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "specialization": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "qualification": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "departmentId": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SchoolResponseDto": {
+                "title": "School Response",
+                "description": "Active school item for tenant dropdown",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Setup2faRequestDto": {
+                "title": "Setup 2FA Request",
+                "description": "Payload to request a TOTP QR code setup URI",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Setup2faResponseDto": {
+                "title": "Setup 2FA Response",
+                "description": "QR code image URI for TOTP setup",
+                "properties": {
+                    "qrCodeImageUri": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UserProfileResponseDto": {
+                "title": "User Profile Response",
+                "description": "Current authenticated user profile payload",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "integer"
+                    },
+                    "usersId": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "keycloakId": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "schoolId": {
+                        "type": "integer"
+                    },
+                    "schoolCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "schoolName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "studentCode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "teacherCode": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Verify2faRequestDto": {
+                "title": "Verify 2FA Setup Request",
+                "description": "Payload to verify a 6-digit TOTP code during 2FA setup",
+                "required": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "description": "6-digit TOTP verification code",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "VerifyLogin2faRequestDto": {
+                "title": "Verify Login 2FA Request",
+                "description": "Payload to complete 2FA verification during login",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "6-digit TOTP code",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "VerifyLogin2faResponseDto": {
+                "title": "Verify Login 2FA Response",
+                "description": "Authenticated user session after 2FA verification",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "schoolId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponseDto": {
+                "title": "Error Response",
+                "description": "Standard validation or authentication error response payload",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "requestId": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "HealthCheckResponseDto": {
+                "title": "Health Check Response",
+                "description": "Service health status report for application dependencies",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "checks": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MessageResponseDto": {
+                "title": "Message Response",
+                "description": "Standard message response payload",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PagedResultDto": {
+                "title": "Paged Result",
+                "description": "Standardized paginated result envelope",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "totalCount": {
+                        "type": "integer"
+                    },
+                    "pageNumber": {
+                        "type": "integer"
+                    },
+                    "pageSize": {
+                        "type": "integer"
+                    },
+                    "totalPages": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
@@ -510,16 +1023,12 @@
     },
     "tags": [
         {
-            "name": "Courses",
-            "description": "API endpoints for managing courses"
-        },
-        {
             "name": "Authentication",
-            "description": "Authentication"
+            "description": "API endpoints for authentication and user sessions"
         },
         {
-            "name": "Dashboard",
-            "description": "Dashboard"
+            "name": "System",
+            "description": "System monitoring and health check endpoints"
         }
     ]
 }

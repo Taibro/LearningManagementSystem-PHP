@@ -15,11 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Baseline users and schools are seeded via database/sql/01_lms_schema.sql
+        // and 2026_10_30_000003_seed_initial_schools_and_keycloak_users.php
     }
 }

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SaasPlan
  * 
  * @property int $id
- * @property uuid $saas_plans_id
+ * @property string $saas_plans_id
  * @property string $code
  * @property string $name
  * @property string|null $description

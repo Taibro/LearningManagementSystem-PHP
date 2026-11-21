@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class TuitionPayment
  * 
  * @property int $id
- * @property uuid $tuition_payments_id
+ * @property string $tuition_payments_id
  * @property int $school_id
  * @property int $invoice_id
  * @property string $transaction_code

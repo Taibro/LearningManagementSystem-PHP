@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class Role
  * 
  * @property int $id
- * @property uuid $role_id
+ * @property string $role_id
  * @property string $name
  * @property string|null $description
  * @property bool $is_system_role

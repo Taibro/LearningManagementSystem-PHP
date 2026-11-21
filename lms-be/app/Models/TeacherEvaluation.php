@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class TeacherEvaluation
  * 
  * @property int $id
- * @property uuid $teacher_evaluations_id
+ * @property string $teacher_evaluations_id
  * @property int $school_id
  * @property int $class_id
  * @property int $student_id
@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon $created_at
  * 
  * @property School $school
- * @property Class $class
+ * @property CourseClass $class
  * @property Student $student
  *
  * @package App\Models

@@ -14,15 +14,15 @@ use Illuminate\Database\Eloquent\Model;
  * Class Schedule
  * 
  * @property int $id
- * @property uuid $schedules_id
+ * @property string $schedules_id
  * @property int $school_id
  * @property int $class_id
  * @property int $room_id
  * @property int $day_of_week
  * @property int $start_period
  * @property int $end_period
- * @property time without time zone $start_time
- * @property time without time zone $end_time
+ * @property string $start_time
+ * @property string $end_time
  * @property Carbon $effective_from
  * @property Carbon $effective_to
  * @property string $session_type
@@ -34,7 +34,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $updated_by
  * 
  * @property School $school
- * @property Class $class
+ * @property CourseClass $class
  * @property Room $room
  * @property User|null $user
  * @property Collection|ScheduleException[] $schedule_exceptions

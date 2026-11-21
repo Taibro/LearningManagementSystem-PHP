@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class ClassTeacher
  * 
  * @property int $id
- * @property uuid $class_teacher_id
+ * @property string $class_teacher_id
  * @property int $school_id
  * @property int $class_id
  * @property int $teacher_id
@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $updated_by
  * 
  * @property School $school
- * @property Class $class
+ * @property CourseClass $class
  * @property Teacher $teacher
  * @property User|null $user
  *

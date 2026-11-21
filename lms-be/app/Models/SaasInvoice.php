@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SaasInvoice
  * 
  * @property int $id
- * @property uuid $saas_invoices_id
+ * @property string $saas_invoices_id
  * @property int $school_id
  * @property int $subscription_id
  * @property string $invoice_number

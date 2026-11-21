@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class StudentSemesterSummary
  * 
  * @property int $id
- * @property uuid $student_semester_summaries_id
+ * @property string $student_semester_summaries_id
  * @property int $school_id
  * @property int $student_id
  * @property int $semester_id

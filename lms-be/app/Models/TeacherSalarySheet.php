@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class TeacherSalarySheet
  * 
  * @property int $id
- * @property uuid $teacher_salary_sheet_id
+ * @property string $teacher_salary_sheet_id
  * @property int $school_id
  * @property int $teacher_id
  * @property int $semester_id

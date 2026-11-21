@@ -36,7 +36,7 @@ use Illuminate\Notifications\Notifiable;
  * @property int|null $created_by
  * @property int|null $updated_by
  *
- * @property School $school
+ * @property School|null $school
  * @property Student|null $student
  * @property Teacher|null $teacher
  * @property Collection|Role[] $roles
@@ -78,16 +78,25 @@ class User extends Authenticatable
         'password_hash',
     ];
 
+    /**
+     * @return HasOne<Student, $this>
+     */
     public function student(): HasOne
     {
         return $this->hasOne(Student::class, 'user_id');
     }
 
+    /**
+     * @return HasOne<Teacher, $this>
+     */
     public function teacher(): HasOne
     {
         return $this->hasOne(Teacher::class, 'user_id');
     }
 
+    /**
+     * @return BelongsTo<School, $this>
+     */
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class, 'school_id');

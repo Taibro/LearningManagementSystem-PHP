@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class Course
  * 
  * @property int $id
- * @property uuid $courses_id
+ * @property string $courses_id
  * @property int $school_id
  * @property int|null $department_id
  * @property string $code
@@ -34,7 +34,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property School $school
  * @property Department|null $department
  * @property User|null $user
- * @property Collection|Class[] $classes
+ * @property Collection<int, CourseClass> $classes
  *
  * @package App\Models
  */

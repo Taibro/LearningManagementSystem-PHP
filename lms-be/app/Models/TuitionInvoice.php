@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class TuitionInvoice
  * 
  * @property int $id
- * @property uuid $tuition_invoices_id
+ * @property string $tuition_invoices_id
  * @property int $school_id
  * @property int $student_id
  * @property int $semester_id

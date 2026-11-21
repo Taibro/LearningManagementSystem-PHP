@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class AttendanceRecord
  * 
  * @property int $id
- * @property uuid $attendance_records_id
+ * @property string $attendance_records_id
  * @property int $school_id
  * @property int $schedule_id
  * @property int $student_id

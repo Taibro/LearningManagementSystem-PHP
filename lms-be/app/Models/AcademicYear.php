@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class AcademicYear
  * 
  * @property int $id
- * @property uuid $academic_years_id
+ * @property string $academic_years_id
  * @property int $school_id
  * @property string $name
  * @property Carbon $start_date

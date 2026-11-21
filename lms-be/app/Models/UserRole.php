@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class UserRole
  * 
  * @property int $id
- * @property uuid $user_roles_id
+ * @property string $user_roles_id
  * @property int $school_id
  * @property int $user_id
  * @property int $role_id

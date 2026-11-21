@@ -9,12 +9,13 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class Student
  * 
  * @property int $id
- * @property uuid $students_id
+ * @property string $students_id
  * @property int $school_id
  * @property int $user_id
  * @property int|null $department_id
@@ -77,12 +78,6 @@ class Student extends Model
 		'degreelevel',
 		'trainingtype',
 		'administrativeclass',
-		'PlaceOfBirth',
-		'Population',
-		'Major',
-		'DegreeLevel',
-		'TrainingType',
-		'AdministrativeClass',
 		'enrollment_status',
 		'created_by',
 		'updated_by'
@@ -93,7 +88,10 @@ class Student extends Model
 		return $this->belongsTo(School::class);
 	}
 
-	public function user()
+	/**
+	 * @return BelongsTo<User, $this>
+	 */
+	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id');
 	}

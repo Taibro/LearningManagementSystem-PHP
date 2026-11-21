@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\Contracts\AuthServiceInterface;
 use App\Services\Database\PostgresContextService;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -17,7 +18,7 @@ class KeycloakJwtGuard implements Guard
 
     public function __construct(
         private readonly KeycloakJwksService $jwksService,
-        private readonly KeycloakAuthService $authService,
+        private readonly AuthServiceInterface $authService,
         private readonly Request $request,
     ) {}
 
@@ -65,6 +66,9 @@ class KeycloakJwtGuard implements Guard
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
     public function validate(array $credentials = []): bool
     {
         return false;

@@ -1,53 +1,44 @@
 <?php
 
-use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Public Authentication & Tenant Discovery Routes (Keycloak Direct Grant)
+| Versioned API Routes (e.g. /api/{version}/health, /api/{version}/auth/login)
 |--------------------------------------------------------------------------
 */
-Route::get('/schools/active', [AuthController::class, 'activeSchools'])->name('schools.active');
+Route::prefix('{version}')->where(['version' => 'v[0-9]+'])->middleware('throttle:api')->group(function () {
+    Route::get('/health', HealthController::class)->name('version.health');
+    Route::get('/schools/active', [AuthController::class, 'activeSchools'])->name('version.schools.active');
 
-Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
-    Route::post('/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
-    Route::post('/2fa/setup', [AuthController::class, 'setup2fa'])->name('auth.2fa.setup');
-    Route::post('/2fa/verify-setup', [AuthController::class, 'verifySetup2fa'])->name('auth.2fa.verify-setup');
-    Route::post('/login/verify-2fa', [AuthController::class, 'verifyLogin2fa'])->name('auth.login.verify-2fa');
-
-    Route::middleware('auth:api')->group(function () {
-        Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
-    });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Protected API Routes (Keycloak JWT Guard + PostgreSQL RLS Context)
-|--------------------------------------------------------------------------
-*/
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
-
-Route::prefix('{current_team}')
-    ->middleware(['auth:api', 'verified', \App\Http\Middleware\EnsureTeamMembership::class])
-    ->group(function () {
-        Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('/login', [AuthController::class, 'login'])->name('version.login');
+        Route::post('/register', [AuthController::class, 'register'])->name('version.register');
     });
 
-Route::middleware(['auth:api'])->group(function () {
-    Route::post('invitations/{invitation}/accept', [\App\Http\Controllers\Teams\TeamInvitationController::class, 'accept'])->name('invitations.accept');
-    Route::delete('invitations/{invitation}', [\App\Http\Controllers\Teams\TeamInvitationController::class, 'decline'])->name('invitations.decline');
-});
+    Route::post('/logout', [AuthController::class, 'logout'])->name('version.logout');
 
-require __DIR__.'/settings.php';
+    Route::prefix('auth')->group(function () {
+        Route::middleware('throttle:auth')->group(function () {
+            Route::post('/login', [AuthController::class, 'login'])->name('version.auth.login');
+            Route::post('/register', [AuthController::class, 'register'])->name('version.auth.register');
+        });
 
-Route::prefix('v1')->middleware(['auth:api', 'throttle:api'])->group(function () {
-    Route::apiResource('courses', CourseController::class);
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('version.auth.refresh');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('version.auth.logout');
+        Route::post('/2fa/setup', [AuthController::class, 'setup2fa'])->name('version.auth.2fa.setup');
+        Route::post('/2fa/verify-setup', [AuthController::class, 'verifySetup2fa'])->name('version.auth.2fa.verify-setup');
+        Route::post('/login/verify-2fa', [AuthController::class, 'verifyLogin2fa'])->name('version.auth.login.verify-2fa');
+
+        Route::middleware('auth:api')->group(function () {
+            Route::get('/me', [AuthController::class, 'me'])->name('version.auth.me');
+        });
+    });
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    })->middleware('auth:api')->name('version.user');
 });

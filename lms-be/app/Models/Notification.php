@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class Notification
  * 
  * @property int $id
- * @property uuid $notifications_id
+ * @property string $notifications_id
  * @property int $school_id
  * @property int $recipient_user_id
  * @property string $title

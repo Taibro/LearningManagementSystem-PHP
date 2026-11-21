@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\Auth\KeycloakAuthService;
 use App\Services\Auth\KeycloakJwksService;
 use App\Services\Auth\KeycloakJwtGuard;
+use App\Services\Contracts\AuthServiceInterface;
 use App\Services\Database\PostgresContextService;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -24,7 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if (class_exists(\Laravel\Fortify\Fortify::class)) {
+            \Laravel\Fortify\Fortify::ignoreRoutes();
+        }
+
+        $this->app->bind(AuthServiceInterface::class, KeycloakAuthService::class);
     }
 
     /**
@@ -49,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
         Auth::extend('keycloak', function ($app, $name, array $config) {
             return new KeycloakJwtGuard(
                 $app->make(KeycloakJwksService::class),
-                $app->make(KeycloakAuthService::class),
+                $app->make(AuthServiceInterface::class),
                 $app['request']
             );
         });
@@ -64,7 +69,11 @@ class AppServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(100)->by((string) ($request->user()?->getAuthIdentifier() ?: $request->ip()));
+        });
+
+        RateLimiter::for('auth', function (Request $request) {
+            return Limit::perMinute(20)->by((string) $request->ip());
         });
     }
 

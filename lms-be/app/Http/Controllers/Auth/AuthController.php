@@ -2,277 +2,458 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\DTOs\Auth\AuthTokenResponseDto;
+use App\DTOs\Auth\LoginRequestDto;
+use App\DTOs\Auth\LogoutRequestDto;
+use App\DTOs\Auth\RefreshTokenRequestDto;
+use App\DTOs\Auth\RefreshTokenResponseDto;
+use App\DTOs\Auth\RegisterRequestDto;
+use App\DTOs\Auth\SchoolResponseDto;
+use App\DTOs\Auth\Setup2faRequestDto;
+use App\DTOs\Auth\Setup2faResponseDto;
+use App\DTOs\Auth\UserProfileResponseDto;
+use App\DTOs\Auth\Verify2faRequestDto;
+use App\DTOs\Auth\VerifyLogin2faRequestDto;
+use App\DTOs\Auth\VerifyLogin2faResponseDto;
+use App\DTOs\Common\ErrorResponseDto;
+use App\DTOs\Common\MessageResponseDto;
 use App\Http\Controllers\Controller;
-use App\Models\School;
-use App\Services\Auth\KeycloakAuthService;
+use App\Models\User;
+use App\Services\Contracts\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 use Throwable;
 
+#[OA\Tag(name: 'Authentication', description: 'API endpoints for authentication and user sessions')]
 class AuthController extends Controller
 {
+    private const AUTH_PREFIX = self::API_PREFIX . '/auth';
+
     public function __construct(
-        private readonly KeycloakAuthService $keycloakAuthService,
+        private readonly AuthServiceInterface $authService,
     ) {}
 
     /**
-     * GET /api/schools/active
+     * GET /api/{version}/schools/active
      * Return active schools for the login/register dropdowns in lms-fe.
      */
+    #[OA\Get(
+        path: self::API_PREFIX . '/schools/active',
+        operationId: 'getActiveSchools',
+        tags: ['Authentication'],
+        summary: 'Get active schools for tenant login dropdown',
+        parameters: [
+            new OA\Parameter(name: 'version', in: 'path', required: true, description: 'API version (e.g. v1)', schema: new OA\Schema(type: 'string', default: 'v1')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of active schools',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(ref: SchoolResponseDto::class)
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server error',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function activeSchools(): JsonResponse
     {
         try {
-            $schools = School::on('pgsql_owner')
-                ->where('is_active', true)
-                ->orderBy('id')
-                ->get(['id', 'code', 'name']);
-
-            if ($schools->isEmpty()) {
-                $this->keycloakAuthService->findOrSeedDefaultSchool('HUIT');
-
-                $schools = School::on('pgsql_owner')
-                    ->where('is_active', true)
-                    ->orderBy('id')
-                    ->get(['id', 'code', 'name']);
-            }
-
-            if ($schools->isEmpty()) {
-                return response()->json([
-                    [
-                        'id' => 1,
-                        'value' => 'HUIT',
-                        'code' => 'HUIT',
-                        'label' => 'Trường ĐH Công Thương TP.HCM (HUIT)',
-                        'name' => 'Trường ĐH Công Thương TP.HCM (HUIT)',
-                    ],
-                    [
-                        'id' => 2,
-                        'value' => 'HCMUT',
-                        'code' => 'HCMUT',
-                        'label' => 'Trường ĐH Bách Khoa TP.HCM (HCMUT)',
-                        'name' => 'Trường ĐH Bách Khoa TP.HCM (HCMUT)',
-                    ],
-                ]);
-            }
+            return response()->json($this->authService->getActiveSchools());
+        } catch (Throwable $e) {
+            report($e);
 
             return response()->json(
-                $schools->map(fn (School $s) => [
-                    'id' => $s->id,
-                    'value' => $s->code,
-                    'code' => $s->code,
-                    'label' => $s->name,
-                    'name' => $s->name,
-                ])->values()
+                new MessageResponseDto('Không thể tải danh sách trường học.'),
+                500
             );
-        } catch (Throwable) {
-            return response()->json([
-                [
-                    'id' => 1,
-                    'value' => 'HUIT',
-                    'code' => 'HUIT',
-                    'label' => 'Trường ĐH Công Thương TP.HCM (HUIT)',
-                    'name' => 'Trường ĐH Công Thương TP.HCM (HUIT)',
-                ],
-                [
-                    'id' => 2,
-                    'value' => 'HCMUT',
-                    'code' => 'HCMUT',
-                    'label' => 'Trường ĐH Bách Khoa TP.HCM (HCMUT)',
-                    'name' => 'Trường ĐH Bách Khoa TP.HCM (HCMUT)',
-                ],
-            ]);
         }
     }
 
     /**
-     * POST /api/auth/login
+     * POST /api/{version}/auth/login
      * Authenticate via Keycloak Direct Access Grant (no redirect to Keycloak UI).
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/login',
+        operationId: 'authLogin',
+        tags: ['Authentication'],
+        summary: 'Log in user',
+        description: 'Authenticate user with login code (student code, teacher code, username, or email) and password via Keycloak Direct Access Grant',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: LoginRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login successful with JWT access token',
+                content: new OA\JsonContent(ref: AuthTokenResponseDto::class)
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Invalid credentials or tenant mismatch',
+                content: new OA\JsonContent(ref: ErrorResponseDto::class)
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error',
+                content: new OA\JsonContent(ref: ErrorResponseDto::class)
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Keycloak connection error',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function login(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'loginCode' => ['required', 'string'],
-            'password' => ['required', 'string'],
-            'userType' => ['nullable', 'string'],
-            'school' => ['nullable', 'string'],
-        ]);
+        $dto = LoginRequestDto::fromRequest($request);
 
         try {
-            $result = $this->keycloakAuthService->login(
-                loginCode: $validated['loginCode'],
-                password: $validated['password'],
-                userType: $validated['userType'] ?? 'STUDENT',
-                schoolCode: $validated['school'] ?? null,
-            );
-
-            return response()->json($result);
+            return response()->json($this->authService->login($dto));
         } catch (ValidationException $e) {
-            $firstError = collect($e->errors())->flatten()->first() ?: 'Thông tin đăng nhập không hợp lệ.';
+            $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Thông tin đăng nhập không hợp lệ.');
 
-            return response()->json([
-                'message' => $firstError,
-                'errors' => $e->errors(),
-            ], 401);
+            return response()->json(
+                new ErrorResponseDto(message: $firstError, errors: $e->errors()),
+                401
+            );
         } catch (Throwable $e) {
             report($e);
 
-            return response()->json([
-                'message' => 'Lỗi kết nối dịch vụ xác thực Keycloak: '.$e->getMessage(),
-            ], 500);
+            return response()->json(
+                new MessageResponseDto('Lỗi kết nối dịch vụ xác thực Keycloak: '.$e->getMessage()),
+                500
+            );
         }
     }
 
     /**
-     * POST /api/auth/register
+     * POST /api/{version}/auth/register
      * Register a new user in Keycloak and PostgreSQL via API.
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/register',
+        operationId: 'authRegister',
+        tags: ['Authentication'],
+        summary: 'Register a new user',
+        description: 'Register a new student/user in Keycloak and PostgreSQL database',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: RegisterRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'User registered successfully',
+                content: new OA\JsonContent(ref: AuthTokenResponseDto::class)
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error',
+                content: new OA\JsonContent(ref: ErrorResponseDto::class)
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server error',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function register(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'fullName' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:6'],
-            'userCode' => ['nullable', 'string', 'max:50'],
-            'loginCode' => ['nullable', 'string', 'max:50'],
-            'studentCode' => ['nullable', 'string', 'max:50'],
-            'teacherCode' => ['nullable', 'string', 'max:50'],
-            'userType' => ['nullable', 'string'],
-            'school' => ['required', 'string'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'major' => ['nullable', 'string', 'max:100'],
-            'className' => ['nullable', 'string', 'max:50'],
-            'specialization' => ['nullable', 'string', 'max:255'],
-            'qualification' => ['nullable', 'string', 'max:255'],
-            'departmentId' => ['nullable', 'integer'],
-        ]);
+        $dto = RegisterRequestDto::fromRequest($request);
 
         try {
-            $result = $this->keycloakAuthService->register($validated);
-
-            return response()->json($result, 201);
+            return response()->json($this->authService->register($dto), 201);
         } catch (ValidationException $e) {
-            $firstError = collect($e->errors())->flatten()->first() ?: 'Dữ liệu đăng ký không hợp lệ.';
+            $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Dữ liệu đăng ký không hợp lệ.');
 
-            return response()->json([
-                'message' => $firstError,
-                'errors' => $e->errors(),
-            ], 422);
+            return response()->json(
+                new ErrorResponseDto(message: $firstError, errors: $e->errors()),
+                422
+            );
         } catch (Throwable $e) {
             report($e);
 
-            return response()->json([
-                'message' => $e->getMessage() ?: 'Không thể đăng ký tài khoản.',
-            ], 500);
+            return response()->json(
+                new MessageResponseDto($e->getMessage() ?: 'Không thể đăng ký tài khoản.'),
+                500
+            );
         }
     }
 
     /**
-     * POST /api/auth/refresh
+     * POST /api/{version}/auth/refresh
      * Refresh Keycloak access token using refresh_token.
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/refresh',
+        operationId: 'authRefresh',
+        tags: ['Authentication'],
+        summary: 'Refresh access token',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: RefreshTokenRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Token refreshed successfully',
+                content: new OA\JsonContent(ref: RefreshTokenResponseDto::class)
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Invalid or expired refresh token',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function refresh(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'refreshToken' => ['required', 'string'],
-        ]);
+        $dto = RefreshTokenRequestDto::fromRequest($request);
 
         try {
-            $result = $this->keycloakAuthService->refreshToken($validated['refreshToken']);
-
-            return response()->json($result);
+            return response()->json($this->authService->refreshToken($dto));
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => collect($e->errors())->flatten()->first(),
-            ], 401);
+            $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Phiên đăng nhập đã hết hạn.');
+
+            return response()->json(
+                new MessageResponseDto($firstError),
+                401
+            );
         }
     }
 
     /**
-     * POST /api/auth/logout
+     * POST /api/{version}/auth/logout
      * Revoke Keycloak session.
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/logout',
+        operationId: 'authLogout',
+        tags: ['Authentication'],
+        summary: 'Log out user',
+        description: 'Revoke Keycloak session',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(ref: LogoutRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logged out successfully',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function logout(Request $request): JsonResponse
     {
-        $this->keycloakAuthService->logout($request->input('refreshToken'));
+        $dto = LogoutRequestDto::fromRequest($request);
 
-        return response()->json([
-            'message' => 'Đã đăng xuất thành công.',
-        ]);
+        return response()->json($this->authService->logout($dto));
     }
 
     /**
-     * GET /api/auth/me
+     * GET /api/{version}/auth/me
      * Return current authenticated user profile from Keycloak JWT + PostgreSQL.
      */
+    #[OA\Get(
+        path: self::AUTH_PREFIX . '/me',
+        operationId: 'getAuthMe',
+        tags: ['Authentication'],
+        summary: 'Get current authenticated user profile',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User profile retrieved successfully',
+                content: new OA\JsonContent(ref: UserProfileResponseDto::class)
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated',
+                content: new OA\JsonContent(ref: MessageResponseDto::class)
+            ),
+        ]
+    )]
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+        if (! $user instanceof User) {
+            return response()->json(new MessageResponseDto('Unauthenticated.'), 401);
         }
 
-        $user->loadMissing(['school', 'student', 'teacher']);
-        $role = (string) ($user->getAttribute('jwt_role') ?: 'STUDENT');
-
-        return response()->json([
-            'id' => $user->id,
-            'userId' => $user->id,
-            'usersId' => $user->users_id,
-            'keycloakId' => $user->keycloak_id,
-            'fullName' => $user->full_name,
-            'email' => $user->email,
-            'phone' => $user->phone,
-            'avatarUrl' => $user->avatar_url,
-            'role' => $role,
-            'roles' => $user->getAttribute('jwt_roles') ?? [$role],
-            'schoolId' => $user->school_id,
-            'schoolCode' => $user->school?->code,
-            'schoolName' => $user->school?->name,
-            'studentCode' => $user->student?->student_code,
-            'teacherCode' => $user->teacher?->teacher_code,
-        ]);
+        return response()->json($this->authService->getCurrentUserProfile($user));
     }
 
     /**
-     * POST /api/auth/2fa/setup
+     * POST /api/{version}/auth/2fa/setup
      * Provide QR code setup URI for 2FA modal compatibility in AdminLogin / SaaSAdminLogin.
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/2fa/setup',
+        operationId: 'authSetup2fa',
+        tags: ['Authentication'],
+        summary: 'Generate 2FA QR code setup URI',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(ref: Setup2faRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'QR code setup URI generated successfully',
+                content: new OA\JsonContent(ref: Setup2faResponseDto::class)
+            ),
+        ]
+    )]
     public function setup2fa(Request $request): JsonResponse
     {
-        $email = (string) $request->input('email', 'admin@edusaas.io');
-        $otpAuth = rawurlencode("otpauth://totp/EduSpace:{$email}?secret=JBSWY3DPEHPK3PXP&issuer=EduSpace");
+        $dto = Setup2faRequestDto::fromRequest($request);
 
-        return response()->json([
-            'qrCodeImageUri' => "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$otpAuth}",
-        ]);
+        return response()->json($this->authService->setup2fa($dto));
     }
 
     /**
-     * POST /api/auth/2fa/verify-setup
+     * POST /api/{version}/auth/2fa/verify-setup
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/2fa/verify-setup',
+        operationId: 'authVerifySetup2fa',
+        tags: ['Authentication'],
+        summary: 'Verify 2FA setup code',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: Verify2faRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Whether the 6-digit verification code is valid',
+                content: new OA\JsonContent(type: 'boolean')
+            ),
+        ]
+    )]
     public function verifySetup2fa(Request $request): JsonResponse
     {
-        $code = (string) $request->input('code', '');
+        $dto = Verify2faRequestDto::fromRequest($request);
 
-        return response()->json(strlen(trim($code)) === 6);
+        return response()->json($this->authService->verifySetup2fa($dto));
     }
 
     /**
-     * POST /api/auth/login/verify-2fa
+     * POST /api/{version}/auth/login/verify-2fa
      */
+    #[OA\Post(
+        path: self::AUTH_PREFIX . '/login/verify-2fa',
+        operationId: 'authVerifyLogin2fa',
+        tags: ['Authentication'],
+        summary: 'Verify 2FA code on login',
+        parameters: [
+            new OA\Parameter(
+                name: 'version',
+                in: 'path',
+                required: true,
+                description: 'API version (e.g. v1)',
+                schema: new OA\Schema(type: 'string', default: 'v1')
+            ),
+        ],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(ref: VerifyLogin2faRequestDto::class)
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: '2FA login verified successfully',
+                content: new OA\JsonContent(ref: VerifyLogin2faResponseDto::class)
+            ),
+        ]
+    )]
     public function verifyLogin2fa(Request $request): JsonResponse
     {
-        $token = $request->bearerToken();
+        $dto = VerifyLogin2faRequestDto::fromRequest($request);
         $user = $request->user('api');
 
-        return response()->json([
-            'token' => $token,
-            'id' => $user?->id,
-            'fullName' => $user?->full_name ?? 'Admin',
-            'email' => $user?->email ?? $request->input('email'),
-            'schoolId' => $user?->school_id ?? 1,
-        ]);
+        return response()->json($this->authService->verifyLogin2fa(
+            dto: $dto,
+            user: $user instanceof User ? $user : null,
+            token: $request->bearerToken(),
+        ));
     }
 }
-

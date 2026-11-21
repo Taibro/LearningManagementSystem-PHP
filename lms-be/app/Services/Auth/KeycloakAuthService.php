@@ -2,44 +2,72 @@
 
 namespace App\Services\Auth;
 
-use App\Models\Role;
+use App\DTOs\Auth\AuthTokenResponseDto;
+use App\DTOs\Auth\LoginRequestDto;
+use App\DTOs\Auth\LogoutRequestDto;
+use App\DTOs\Auth\RefreshTokenRequestDto;
+use App\DTOs\Auth\RefreshTokenResponseDto;
+use App\DTOs\Auth\RegisterRequestDto;
+use App\DTOs\Auth\SchoolResponseDto;
+use App\DTOs\Auth\Setup2faRequestDto;
+use App\DTOs\Auth\Setup2faResponseDto;
+use App\DTOs\Auth\UserProfileResponseDto;
+use App\DTOs\Auth\Verify2faRequestDto;
+use App\DTOs\Auth\VerifyLogin2faRequestDto;
+use App\DTOs\Auth\VerifyLogin2faResponseDto;
+use App\DTOs\Common\MessageResponseDto;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
-use App\Models\UserRole;
+use App\Repositories\Contracts\RepositoryWrapperInterface;
+use App\Services\Contracts\AuthServiceInterface;
 use App\Services\Database\PostgresContextService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-class KeycloakAuthService
+class KeycloakAuthService implements AuthServiceInterface
 {
     public function __construct(
         private readonly KeycloakJwksService $jwksService,
+        private readonly RepositoryWrapperInterface $repositories,
     ) {}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getActiveSchools(): array
+    {
+        return $this->repositories->schools()
+            ->getActiveSchools()
+            ->map(static fn (School $school): SchoolResponseDto => new SchoolResponseDto(
+                id: (int) $school->id,
+                value: (string) $school->code,
+                code: (string) $school->code,
+                label: (string) $school->name,
+                name: (string) $school->name,
+            ))
+            ->values()
+            ->all();
+    }
 
     /**
      * Authenticate user via Keycloak Direct Access Grant (grant_type=password)
      * without redirecting the browser to Keycloak's login page, then sync with PostgreSQL.
-     *
-     * @return array<string, mixed>
      */
-    public function login(
-        string $loginCode,
-        string $password,
-        string $userType = 'STUDENT',
-        ?string $schoolCode = null
-    ): array {
-        $normalizedType = strtoupper(trim($userType));
-        $normalizedSchoolCode = $schoolCode ? strtoupper(trim($schoolCode)) : null;
+    public function login(LoginRequestDto $dto): AuthTokenResponseDto
+    {
+        $loginCode = $dto->loginCode;
+        $password = $dto->password;
+        $normalizedType = strtoupper(trim($dto->userType));
+        $normalizedSchoolCode = $dto->school ? strtoupper(trim($dto->school)) : null;
 
         // Resolve school if provided
         $school = null;
         if ($normalizedSchoolCode && $normalizedType !== 'SAAS_ADMIN') {
-            $school = $this->findOrSeedDefaultSchool($normalizedSchoolCode);
+            $school = $this->repositories->schools()->findByCode($normalizedSchoolCode);
 
             if (! $school) {
                 throw ValidationException::withMessages([
@@ -71,8 +99,8 @@ class KeycloakAuthService
             ]);
         }
 
-        $accessToken = $tokenData['access_token'];
-        $refreshToken = $tokenData['refresh_token'] ?? null;
+        $accessToken = (string) $tokenData['access_token'];
+        $refreshToken = isset($tokenData['refresh_token']) ? (string) $tokenData['refresh_token'] : null;
         $expiresIn = (int) ($tokenData['expires_in'] ?? 900);
 
         // Cryptographically verify and decode the Keycloak JWT
@@ -111,12 +139,16 @@ class KeycloakAuthService
         // Synchronize user record into PostgreSQL and set RLS context
         $user = $this->syncUserWithDatabase($payload, $primaryRole, $school);
 
-        $resolvedSchool = $school ?? School::on('pgsql_owner')->find($user->school_id);
-        $userCode = $payload->user_code
-            ?? $user->student?->student_code
-            ?? $user->teacher?->teacher_code
+        $resolvedSchool = $school ?? $this->repositories->schools()->findById((int) $user->school_id);
+        $studentCode = $user->student instanceof Student ? $user->student->student_code : null;
+        $teacherCode = $user->teacher instanceof Teacher ? $user->teacher->teacher_code : null;
+        $userCode = (string) (
+            $payload->user_code
+            ?? $studentCode
+            ?? $teacherCode
             ?? $payload->preferred_username
-            ?? $user->email;
+            ?? $user->email
+        );
 
         PostgresContextService::setContext(
             schoolId: (int) $user->school_id,
@@ -124,48 +156,45 @@ class KeycloakAuthService
             role: $primaryRole
         );
 
-        return [
-            'token' => $accessToken,
-            'accessToken' => $accessToken,
-            'refreshToken' => $refreshToken,
-            'expiresIn' => $expiresIn,
-            'id' => $user->id,
-            'userId' => $user->id,
-            'usersId' => $user->users_id,
-            'keycloakId' => $user->keycloak_id,
-            'userCode' => $userCode,
-            'studentCode' => $user->student?->student_code ?? ($primaryRole === 'STUDENT' ? $userCode : null),
-            'teacherCode' => $user->teacher?->teacher_code ?? ($primaryRole === 'LECTURER' ? $userCode : null),
-            'fullName' => $user->full_name,
-            'email' => $user->email,
-            'phone' => $user->phone,
-            'avatarUrl' => $user->avatar_url,
-            'role' => $primaryRole,
-            'roles' => $jwtRoles,
-            'schoolId' => (int) $user->school_id,
-            'schoolCode' => $resolvedSchool?->code ?? ($jwtSchoolCode ?: 'HUIT'),
-            'schoolName' => $resolvedSchool?->name ?? '',
-            'require2fa' => false,
-            'requireSetup' => false,
-        ];
+        return new AuthTokenResponseDto(
+            token: $accessToken,
+            accessToken: $accessToken,
+            refreshToken: $refreshToken,
+            expiresIn: $expiresIn,
+            id: (int) $user->id,
+            userId: (int) $user->id,
+            usersId: $user->users_id ? (string) $user->users_id : null,
+            keycloakId: $user->keycloak_id ? (string) $user->keycloak_id : null,
+            userCode: $userCode,
+            studentCode: $studentCode ?? ($primaryRole === 'STUDENT' ? $userCode : null),
+            teacherCode: $teacherCode ?? ($primaryRole === 'LECTURER' ? $userCode : null),
+            fullName: (string) $user->full_name,
+            email: (string) $user->email,
+            phone: $user->phone ? (string) $user->phone : null,
+            avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+            role: $primaryRole,
+            roles: $jwtRoles,
+            schoolId: (int) $user->school_id,
+            schoolCode: $resolvedSchool !== null ? (string) $resolvedSchool->code : $jwtSchoolCode,
+            schoolName: $resolvedSchool !== null ? (string) $resolvedSchool->name : '',
+            require2fa: false,
+            requireSetup: false,
+        );
     }
 
     /**
      * Register a new user in both Keycloak (via Admin REST API) and PostgreSQL,
-     * then automatically authenticate and return the JWT session payload.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
+     * then automatically authenticate and return the mapped JWT session DTO.
      */
-    public function register(array $data): array
+    public function register(RegisterRequestDto $dto): AuthTokenResponseDto
     {
-        $roleName = strtoupper(trim((string) ($data['userType'] ?? $data['role'] ?? 'STUDENT')));
+        $roleName = strtoupper(trim((string) ($dto->userType ?? 'STUDENT')));
         if (! in_array($roleName, ['STUDENT', 'LECTURER', 'SCHOOL_ADMIN', 'DEAN_OF_FACULTY', 'DEAN_OF_DEPARTMENT'], true)) {
             $roleName = 'STUDENT';
         }
 
-        $schoolCode = strtoupper(trim((string) ($data['school'] ?? $data['schoolCode'] ?? 'HUIT')));
-        $school = $this->findOrSeedDefaultSchool($schoolCode);
+        $schoolCode = strtoupper(trim($dto->school));
+        $school = $schoolCode !== '' ? $this->repositories->schools()->findByCode($schoolCode) : null;
 
         if (! $school) {
             throw ValidationException::withMessages([
@@ -173,44 +202,29 @@ class KeycloakAuthService
             ]);
         }
 
-        $email = strtolower(trim((string) $data['email']));
-        $userCode = trim((string) ($data['userCode'] ?? $data['loginCode'] ?? $data['studentCode'] ?? $data['teacherCode'] ?? $email));
-        $fullName = trim((string) $data['fullName']);
-        $password = (string) $data['password'];
-        $phone = isset($data['phone']) ? trim((string) $data['phone']) : null;
+        $email = strtolower(trim($dto->email));
+        $userCode = trim((string) ($dto->userCode ?? $dto->loginCode ?? $dto->studentCode ?? $dto->teacherCode ?? $email));
+        $fullName = trim($dto->fullName);
+        $password = $dto->password;
+        $phone = $dto->phone !== null ? trim($dto->phone) : null;
 
         // Check existing email in this school
-        $existingEmail = User::on('pgsql_owner')
-            ->where('school_id', $school->id)
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->exists();
-
-        if ($existingEmail) {
+        if ($this->repositories->users()->existsByEmailInSchool($email, (int) $school->id)) {
             throw ValidationException::withMessages([
                 'email' => ['Email này đã được đăng ký tại trường của bạn.'],
             ]);
         }
 
-        if ($roleName === 'STUDENT') {
-            $existsCode = Student::on('pgsql_owner')
-                ->where('school_id', $school->id)
-                ->whereRaw('UPPER(student_code) = ?', [strtoupper($userCode)])
-                ->exists();
-            if ($existsCode) {
-                throw ValidationException::withMessages([
-                    'userCode' => ['Mã sinh viên này đã tồn tại trong trường.'],
-                ]);
-            }
-        } elseif ($roleName === 'LECTURER') {
-            $existsCode = Teacher::on('pgsql_owner')
-                ->where('school_id', $school->id)
-                ->whereRaw('UPPER(teacher_code) = ?', [strtoupper($userCode)])
-                ->exists();
-            if ($existsCode) {
-                throw ValidationException::withMessages([
-                    'userCode' => ['Mã giảng viên này đã tồn tại trong trường.'],
-                ]);
-            }
+        if ($roleName === 'STUDENT' && $this->repositories->students()->existsByCode($userCode)) {
+            throw ValidationException::withMessages([
+                'userCode' => ['Mã sinh viên này đã tồn tại trên hệ thống.'],
+            ]);
+        }
+
+        if ($roleName === 'LECTURER' && $this->repositories->teachers()->existsByCode($userCode)) {
+            throw ValidationException::withMessages([
+                'userCode' => ['Mã giảng viên này đã tồn tại trên hệ thống.'],
+            ]);
         }
 
         // 1. Create User in Keycloak via Admin REST API
@@ -224,8 +238,8 @@ class KeycloakAuthService
             userCode: $userCode
         );
 
-        // 2. Create User, UserRole, and Student/Teacher profile in PostgreSQL
-        $user = DB::connection('pgsql_owner')->transaction(function () use (
+        // 2. Create User, UserRole, and Student/Teacher profile inside Unit of Work transaction
+        $user = $this->repositories->transaction(function () use (
             $school,
             $keycloakUserId,
             $email,
@@ -234,9 +248,9 @@ class KeycloakAuthService
             $phone,
             $roleName,
             $userCode,
-            $data
-        ) {
-            $newUser = User::on('pgsql_owner')->create([
+            $dto
+        ): User {
+            $newUser = $this->repositories->users()->create([
                 'school_id' => $school->id,
                 'keycloak_id' => $keycloakUserId,
                 'email' => $email,
@@ -248,134 +262,92 @@ class KeycloakAuthService
                 'last_login_at' => now(),
             ]);
 
-            $role = Role::on('pgsql_owner')->where('name', $roleName)->first();
+            $role = $this->repositories->roles()->findByName($roleName);
             if ($role) {
-                UserRole::on('pgsql_owner')->updateOrCreate(
-                    [
-                        'school_id' => $school->id,
-                        'user_id' => $newUser->id,
-                        'role_id' => $role->id,
-                    ],
-                    [
-                        'department_id' => $data['departmentId'] ?? null,
-                        'is_active' => true,
-                    ]
+                $this->repositories->userRoles()->assignRoleToUser(
+                    schoolId: (int) $school->id,
+                    userId: (int) $newUser->id,
+                    roleId: (int) $role->id,
+                    departmentId: $dto->departmentId
                 );
             }
 
             if ($roleName === 'STUDENT') {
-                Student::on('pgsql_owner')->create([
+                $this->repositories->students()->create([
                     'school_id' => $school->id,
                     'user_id' => $newUser->id,
-                    'department_id' => $data['departmentId'] ?? null,
+                    'department_id' => $dto->departmentId,
                     'student_code' => strtoupper($userCode),
-                    'Major' => $data['major'] ?? 'Công nghệ thông tin',
-                    'DegreeLevel' => $data['degreeLevel'] ?? 'Đại học',
-                    'TrainingType' => $data['trainingType'] ?? 'Chính quy',
-                    'AdministrativeClass' => $data['className'] ?? null,
+                    'major' => $dto->major ?? 'Công nghệ thông tin',
+                    'degreelevel' => $dto->degreeLevel ?? 'Đại học',
+                    'trainingtype' => $dto->trainingType ?? 'Chính quy',
+                    'administrativeclass' => $dto->className,
                     'enrollment_date' => now()->toDateString(),
                     'enrollment_status' => 'ENROLLED',
                 ]);
             } elseif ($roleName === 'LECTURER') {
-                Teacher::on('pgsql_owner')->create([
+                $this->repositories->teachers()->create([
                     'school_id' => $school->id,
                     'user_id' => $newUser->id,
-                    'department_id' => $data['departmentId'] ?? null,
+                    'department_id' => $dto->departmentId,
                     'teacher_code' => strtoupper($userCode),
-                    'specialization' => $data['specialization'] ?? null,
-                    'qualification' => $data['qualification'] ?? 'Thạc sĩ',
+                    'specialization' => $dto->specialization,
+                    'qualification' => $dto->qualification ?? 'Thạc sĩ',
                     'hire_date' => now()->toDateString(),
                     'status' => 'ACTIVE',
                 ]);
             }
 
             return $newUser;
-        });
+        }, 'pgsql_owner');
 
         // 3. Automatically obtain JWT token from Keycloak so user can log in immediately
         try {
-            return $this->login(
+            return $this->login(new LoginRequestDto(
                 loginCode: strtolower($userCode),
                 password: $password,
                 userType: $roleName,
-                schoolCode: $school->code
-            );
+                school: $school->code,
+            ));
         } catch (\Throwable) {
-            return [
-                'token' => null,
-                'id' => $user->id,
-                'userId' => $user->id,
-                'keycloakId' => $keycloakUserId,
-                'userCode' => $userCode,
-                'fullName' => $user->full_name,
-                'email' => $user->email,
-                'role' => $roleName,
-                'schoolId' => $school->id,
-                'schoolCode' => $school->code,
-                'schoolName' => $school->name,
-                'message' => 'Đăng ký tài khoản thành công.',
-            ];
+            return new AuthTokenResponseDto(
+                token: null,
+                accessToken: null,
+                refreshToken: null,
+                expiresIn: null,
+                id: (int) $user->id,
+                userId: (int) $user->id,
+                usersId: $user->users_id ? (string) $user->users_id : null,
+                keycloakId: $keycloakUserId,
+                userCode: $userCode,
+                studentCode: $roleName === 'STUDENT' ? strtoupper($userCode) : null,
+                teacherCode: $roleName === 'LECTURER' ? strtoupper($userCode) : null,
+                fullName: (string) $user->full_name,
+                email: (string) $user->email,
+                phone: $user->phone ? (string) $user->phone : null,
+                avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+                role: $roleName,
+                roles: [$roleName],
+                schoolId: (int) $school->id,
+                schoolCode: (string) $school->code,
+                schoolName: (string) $school->name,
+                require2fa: false,
+                requireSetup: false,
+            );
         }
     }
 
     /**
-     * Find school by code or auto-seed default HUIT/HCMUT schools if database hasn't been seeded yet.
+     * Exchange a refresh token for a new access token DTO from Keycloak.
      */
-    public function findOrSeedDefaultSchool(string $normalizedSchoolCode): ?School
-    {
-        $school = School::on('pgsql_owner')
-            ->whereRaw('UPPER(code) = ?', [$normalizedSchoolCode])
-            ->first();
-
-        if ($school) {
-            return $school;
-        }
-
-        $defaults = [
-            'HUIT' => [
-                'code' => 'HUIT',
-                'name' => 'Trường ĐH Công Thương TP.HCM (HUIT)',
-                'domain' => 'huit.edu.vn',
-                'email' => 'admin@huit.edu.vn',
-                'subscription_status' => 'ACTIVE',
-                'is_active' => true,
-            ],
-            'HCMUT' => [
-                'code' => 'HCMUT',
-                'name' => 'Trường ĐH Bách Khoa TP.HCM (HCMUT)',
-                'domain' => 'hcmut.edu.vn',
-                'email' => 'admin@hcmut.edu.vn',
-                'subscription_status' => 'ACTIVE',
-                'is_active' => true,
-            ],
-        ];
-
-        if (isset($defaults[$normalizedSchoolCode])) {
-            foreach ($defaults as $code => $attrs) {
-                School::on('pgsql_owner')->firstOrCreate(['code' => $code], $attrs);
-            }
-
-            return School::on('pgsql_owner')
-                ->whereRaw('UPPER(code) = ?', [$normalizedSchoolCode])
-                ->first();
-        }
-
-        return null;
-    }
-
-    /**
-     * Exchange a refresh token for a new access token from Keycloak.
-     *
-     * @return array<string, mixed>
-     */
-    public function refreshToken(string $refreshToken): array
+    public function refreshToken(RefreshTokenRequestDto $dto): RefreshTokenResponseDto
     {
         $tokenUrl = config('keycloak.base_url').'/realms/'.config('keycloak.realm').'/protocol/openid-connect/token';
 
         $formParams = [
             'grant_type' => 'refresh_token',
             'client_id' => config('keycloak.client_id', 'lms-web'),
-            'refresh_token' => $refreshToken,
+            'refresh_token' => $dto->refreshToken,
         ];
 
         $clientSecret = config('keycloak.client_secret');
@@ -395,44 +367,120 @@ class KeycloakAuthService
         }
 
         $data = $response->json();
+        $accessToken = (string) ($data['access_token'] ?? '');
 
-        return [
-            'token' => $data['access_token'],
-            'accessToken' => $data['access_token'],
-            'refreshToken' => $data['refresh_token'] ?? $refreshToken,
-            'expiresIn' => (int) ($data['expires_in'] ?? 900),
-        ];
+        return new RefreshTokenResponseDto(
+            token: $accessToken,
+            accessToken: $accessToken,
+            refreshToken: (string) ($data['refresh_token'] ?? $dto->refreshToken),
+            expiresIn: (int) ($data['expires_in'] ?? 900),
+        );
     }
 
     /**
-     * Logout user session from Keycloak.
+     * Logout user session from Keycloak and return confirmation message DTO.
      */
-    public function logout(?string $refreshToken): void
+    public function logout(LogoutRequestDto $dto): MessageResponseDto
     {
-        if (! $refreshToken) {
-            return;
+        $refreshToken = $dto->refreshToken;
+
+        if ($refreshToken) {
+            $logoutUrl = config('keycloak.base_url').'/realms/'.config('keycloak.realm').'/protocol/openid-connect/logout';
+
+            $formParams = [
+                'client_id' => config('keycloak.client_id', 'lms-web'),
+                'refresh_token' => $refreshToken,
+            ];
+
+            $clientSecret = config('keycloak.client_secret');
+            if (! empty($clientSecret)) {
+                $formParams['client_secret'] = $clientSecret;
+            }
+
+            try {
+                Http::asForm()
+                    ->timeout(5)
+                    ->withOptions(['verify' => (bool) config('keycloak.verify_ssl', true)])
+                    ->post($logoutUrl, $formParams);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
-        $logoutUrl = config('keycloak.base_url').'/realms/'.config('keycloak.realm').'/protocol/openid-connect/logout';
+        return new MessageResponseDto('Đã đăng xuất thành công.');
+    }
 
-        $formParams = [
-            'client_id' => config('keycloak.client_id', 'lms-web'),
-            'refresh_token' => $refreshToken,
-        ];
+    /**
+     * Map authenticated User model and loaded profiles into UserProfileResponseDto.
+     */
+    public function getCurrentUserProfile(User $user): UserProfileResponseDto
+    {
+        $user->loadMissing(['school', 'student', 'teacher']);
 
-        $clientSecret = config('keycloak.client_secret');
-        if (! empty($clientSecret)) {
-            $formParams['client_secret'] = $clientSecret;
-        }
+        $school = $user->school instanceof School ? $user->school : null;
+        $student = $user->student instanceof Student ? $user->student : null;
+        $teacher = $user->teacher instanceof Teacher ? $user->teacher : null;
 
-        try {
-            Http::asForm()
-                ->timeout(5)
-                ->withOptions(['verify' => (bool) config('keycloak.verify_ssl', true)])
-                ->post($logoutUrl, $formParams);
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        $role = (string) ($user->getAttribute('jwt_role') ?: 'STUDENT');
+        $roles = array_values(array_map(
+            static fn (mixed $item): string => (string) $item,
+            (array) ($user->getAttribute('jwt_roles') ?? [$role])
+        ));
+
+        return new UserProfileResponseDto(
+            id: (int) $user->id,
+            userId: (int) $user->id,
+            usersId: $user->users_id ? (string) $user->users_id : null,
+            keycloakId: $user->keycloak_id ? (string) $user->keycloak_id : null,
+            fullName: (string) $user->full_name,
+            email: (string) $user->email,
+            phone: $user->phone ? (string) $user->phone : null,
+            avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+            role: $role,
+            roles: $roles,
+            schoolId: (int) $user->school_id,
+            schoolCode: $school !== null ? (string) $school->code : null,
+            schoolName: $school !== null ? (string) $school->name : null,
+            studentCode: $student !== null ? (string) $student->student_code : null,
+            teacherCode: $teacher !== null ? (string) $teacher->teacher_code : null,
+        );
+    }
+
+    /**
+     * Generate 2FA TOTP QR code setup URI DTO.
+     */
+    public function setup2fa(Setup2faRequestDto $dto): Setup2faResponseDto
+    {
+        $otpAuth = rawurlencode("otpauth://totp/EduSpace:{$dto->email}?secret=JBSWY3DPEHPK3PXP&issuer=EduSpace");
+
+        return new Setup2faResponseDto(
+            qrCodeImageUri: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$otpAuth}"
+        );
+    }
+
+    /**
+     * Verify 6-digit TOTP setup code.
+     */
+    public function verifySetup2fa(Verify2faRequestDto $dto): bool
+    {
+        return strlen(trim($dto->code)) === 6;
+    }
+
+    /**
+     * Verify 2FA login challenge and return mapped session DTO.
+     */
+    public function verifyLogin2fa(
+        VerifyLogin2faRequestDto $dto,
+        ?User $user = null,
+        ?string $token = null
+    ): VerifyLogin2faResponseDto {
+        return new VerifyLogin2faResponseDto(
+            token: $token,
+            id: $user !== null ? (int) $user->id : null,
+            fullName: $user !== null ? (string) $user->full_name : 'Admin',
+            email: $user !== null ? (string) $user->email : $dto->email,
+            schoolId: $user !== null ? (int) $user->school_id : 1,
+        );
     }
 
     /**
@@ -551,7 +599,7 @@ class KeycloakAuthService
         $location = $createResp->header('Location');
         $keycloakId = null;
         if ($location && str_contains($location, '/users/')) {
-            $keycloakId = basename(parse_url($location, PHP_URL_PATH));
+            $keycloakId = basename((string) parse_url($location, PHP_URL_PATH));
         }
 
         if (! $keycloakId) {
@@ -645,7 +693,7 @@ class KeycloakAuthService
     }
 
     /**
-     * Synchronize the authenticated Keycloak JWT user into PostgreSQL.
+     * Synchronize the authenticated Keycloak JWT user into PostgreSQL via Unit of Work.
      */
     public function syncUserWithDatabase(object $payload, string $primaryRole, ?School $school = null): User
     {
@@ -656,64 +704,46 @@ class KeycloakAuthService
         $fullName = trim((string) ($payload->name ?? (($payload->family_name ?? '').' '.($payload->given_name ?? ''))))
             ?: ($preferredUsername ?: $email);
 
-        if ($keycloakId === '' && $email !== '') {
-            $seedKeycloakIds = [
-                'superadmin@edusaas.io' => '11111111-1111-4111-8111-111111111001',
-                'admin@huit.edu.vn' => '11111111-1111-4111-8111-111111111002',
-                'admin@hcmut.edu.vn' => '11111111-1111-4111-8111-111111111003',
-                'nguyenvana@huit.edu.vn' => '11111111-1111-4111-8111-111111111004',
-                'ntai8448@gmail.com' => '11111111-1111-4111-8111-111111111005',
-            ];
-            $keycloakId = $seedKeycloakIds[$email] ?? '';
-        }
-
         $jwtSchoolId = (int) ($payload->school_id ?? 0);
         $jwtSchoolCode = isset($payload->school_code) ? strtoupper((string) $payload->school_code) : null;
 
         if (! $school) {
             if ($jwtSchoolId > 0) {
-                $school = School::on('pgsql_owner')->find($jwtSchoolId);
+                $school = $this->repositories->schools()->findById($jwtSchoolId);
             }
             if (! $school && $jwtSchoolCode && $jwtSchoolCode !== 'SAAS') {
-                $school = $this->findOrSeedDefaultSchool($jwtSchoolCode);
+                $school = $this->repositories->schools()->findByCode($jwtSchoolCode);
             }
-            if (! $school) {
-                $school = School::on('pgsql_owner')->orderBy('id')->first()
-                    ?? $this->findOrSeedDefaultSchool('HUIT');
+            if (! $school && $primaryRole === 'SAAS_ADMIN') {
+                $school = $this->repositories->schools()->findFirstOrderedById();
             }
         }
 
-        $resolvedSchoolId = $school ? (int) $school->id : 1;
+        if (! $school) {
+            throw ValidationException::withMessages([
+                'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
+            ]);
+        }
 
-        return DB::connection('pgsql_owner')->transaction(function () use (
+        $resolvedSchoolId = (int) $school->id;
+
+        return $this->repositories->transaction(function () use (
             $keycloakId,
             $email,
             $fullName,
             $userCode,
             $primaryRole,
             $resolvedSchoolId
-        ) {
-            $user = User::on('pgsql_owner')
-                ->with(['student', 'teacher'])
-                ->where(function ($q) use ($keycloakId, $email, $resolvedSchoolId, $primaryRole) {
-                    if ($keycloakId !== '') {
-                        $q->where('keycloak_id', $keycloakId);
-                    }
-                    if ($email !== '') {
-                        if ($primaryRole === 'SAAS_ADMIN') {
-                            $q->orWhereRaw('LOWER(email) = ?', [$email]);
-                        } else {
-                            $q->orWhere(function ($sub) use ($email, $resolvedSchoolId) {
-                                $sub->whereRaw('LOWER(email) = ?', [$email])
-                                    ->where('school_id', $resolvedSchoolId);
-                            });
-                        }
-                    }
-                })
-                ->first();
+        ): User {
+            $user = $this->repositories->users()->findForJwtSync(
+                keycloakId: $keycloakId,
+                email: $email,
+                schoolId: $resolvedSchoolId,
+                primaryRole: $primaryRole
+            );
 
             if (! $user) {
-                $user = User::on('pgsql_owner')->create([
+                $user = $this->repositories->users()->create([
                     'school_id' => $resolvedSchoolId,
                     'keycloak_id' => $keycloakId ?: null,
                     'email' => $email ?: ($userCode.'@lms.local'),
@@ -727,53 +757,36 @@ class KeycloakAuthService
                 if (empty($user->keycloak_id) && $keycloakId !== '') {
                     $updates['keycloak_id'] = $keycloakId;
                 }
-                $user->update($updates);
+                $user = $this->repositories->users()->update($user, $updates);
             }
 
             // Ensure role mapping exists in user_roles
-            $roleRecord = Role::on('pgsql_owner')->where('name', $primaryRole)->first();
+            $roleRecord = $this->repositories->roles()->findByName($primaryRole);
             if ($roleRecord) {
-                UserRole::on('pgsql_owner')->firstOrCreate(
-                    [
-                        'school_id' => $user->school_id,
-                        'user_id' => $user->id,
-                        'role_id' => $roleRecord->id,
-                    ],
-                    [
-                        'is_active' => true,
-                    ]
+                $this->repositories->userRoles()->ensureUserRole(
+                    schoolId: (int) $user->school_id,
+                    userId: (int) $user->id,
+                    roleId: (int) $roleRecord->id
                 );
             }
 
             // Ensure student or teacher profile exists if applicable
             if ($primaryRole === 'STUDENT' && ! $user->student && $userCode !== '') {
-                Student::on('pgsql_owner')->firstOrCreate(
-                    [
-                        'school_id' => $user->school_id,
-                        'user_id' => $user->id,
-                    ],
-                    [
-                        'student_code' => strtoupper($userCode),
-                        'enrollment_date' => now()->toDateString(),
-                        'enrollment_status' => 'ENROLLED',
-                    ]
+                $this->repositories->students()->firstOrCreateForUser(
+                    schoolId: (int) $user->school_id,
+                    userId: (int) $user->id,
+                    studentCode: $userCode
                 );
             } elseif ($primaryRole === 'LECTURER' && ! $user->teacher && $userCode !== '') {
-                Teacher::on('pgsql_owner')->firstOrCreate(
-                    [
-                        'school_id' => $user->school_id,
-                        'user_id' => $user->id,
-                    ],
-                    [
-                        'teacher_code' => strtoupper($userCode),
-                        'hire_date' => now()->toDateString(),
-                        'status' => 'ACTIVE',
-                    ]
+                $this->repositories->teachers()->firstOrCreateForUser(
+                    schoolId: (int) $user->school_id,
+                    userId: (int) $user->id,
+                    teacherCode: $userCode
                 );
             }
 
-            return $user->fresh(['student', 'teacher']);
-        });
+            return $this->repositories->users()->refreshWithProfiles($user);
+        }, 'pgsql_owner');
     }
 
     /**
@@ -784,22 +797,9 @@ class KeycloakAuthService
     protected function resolveDatabaseRolesForPayload(object $payload, string $fallbackRole): array
     {
         $email = strtolower(trim((string) ($payload->email ?? '')));
-        $username = strtolower(trim((string) ($payload->preferred_username ?? '')));
-
-        $knownUsernameRoles = [
-            'sa001' => ['SAAS_ADMIN'],
-            'ad_huit_01' => ['SCHOOL_ADMIN'],
-            'ad_hcmut_01' => ['SCHOOL_ADMIN'],
-            'gv001' => ['LECTURER'],
-            '2001230773' => ['STUDENT'],
-        ];
-
-        if (isset($knownUsernameRoles[$username])) {
-            return $knownUsernameRoles[$username];
-        }
 
         if ($email !== '') {
-            $user = User::on('pgsql_owner')->with('roles')->whereRaw('LOWER(email) = ?', [$email])->first();
+            $user = $this->repositories->users()->findByEmailWithRoles($email);
             if ($user && $user->roles->isNotEmpty()) {
                 return $user->roles->pluck('name')->all();
             }
@@ -819,22 +819,12 @@ class KeycloakAuthService
         }
 
         if ($schoolId) {
-            $student = Student::on('pgsql_owner')
-                ->with('user')
-                ->where('school_id', $schoolId)
-                ->whereRaw('UPPER(student_code) = ?', [strtoupper($trimmed)])
-                ->first();
-
+            $student = $this->repositories->students()->findByCodeInSchool($trimmed, $schoolId);
             if ($student && $student->user) {
                 return strtolower($trimmed);
             }
 
-            $teacher = Teacher::on('pgsql_owner')
-                ->with('user')
-                ->where('school_id', $schoolId)
-                ->whereRaw('UPPER(teacher_code) = ?', [strtoupper($trimmed)])
-                ->first();
-
+            $teacher = $this->repositories->teachers()->findByCodeInSchool($trimmed, $schoolId);
             if ($teacher && $teacher->user) {
                 return strtolower($trimmed);
             }

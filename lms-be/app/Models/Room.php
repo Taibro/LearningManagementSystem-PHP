@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class Room
  * 
  * @property int $id
- * @property uuid $rooms_id
+ * @property string $rooms_id
  * @property int $school_id
  * @property int|null $branch_id
  * @property string $code

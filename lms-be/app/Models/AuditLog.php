@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class AuditLog
  * 
  * @property int $id
- * @property uuid $audit_logs_id
+ * @property string $audit_logs_id
  * @property int|null $school_id
  * @property int $user_id
  * @property string $action

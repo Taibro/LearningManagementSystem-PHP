@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class Semester
  * 
  * @property int $id
- * @property uuid $semesters_id
+ * @property string $semesters_id
  * @property int $school_id
  * @property int $academic_year_id
  * @property string $code
@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property School $school
  * @property AcademicYear $academic_year
  * @property User|null $user
- * @property Collection|Class[] $classes
+ * @property Collection<int, CourseClass> $classes
  * @property Collection|TuitionInvoice[] $tuition_invoices
  * @property Collection|Student[] $students
  * @property Collection|TeacherDeclaration[] $teacher_declarations

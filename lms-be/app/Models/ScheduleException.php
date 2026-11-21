@@ -13,14 +13,14 @@ use Illuminate\Database\Eloquent\Model;
  * Class ScheduleException
  * 
  * @property int $id
- * @property uuid $schedule_exceptions_id
+ * @property string $schedule_exceptions_id
  * @property int $school_id
  * @property int $schedule_id
  * @property Carbon $exception_date
  * @property string $exception_type
  * @property Carbon|null $new_date
- * @property time without time zone|null $new_start_time
- * @property time without time zone|null $new_end_time
+ * @property string|null $new_start_time
+ * @property string|null $new_end_time
  * @property int|null $new_room_id
  * @property int|null $substitute_teacher_id
  * @property string|null $reason

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Class Student
  * 
  * @property int $id
- * @property uuid $students_id
+ * @property string $students_id
  * @property int $school_id
  * @property int $user_id
  * @property int|null $department_id

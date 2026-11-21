@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SaasSubscription
  * 
  * @property int $id
- * @property uuid $saas_subscriptions_id
+ * @property string $saas_subscriptions_id
  * @property int $school_id
  * @property int $plan_id
  * @property string $billing_cycle

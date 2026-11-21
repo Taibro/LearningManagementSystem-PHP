@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SalaryGrade
  * 
  * @property int $id
- * @property uuid $salary_grade_id
+ * @property string $salary_grade_id
  * @property string $grade_code
  * @property int $step_number
  * @property float $coefficient

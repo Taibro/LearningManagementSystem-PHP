@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SchoolBranch
  * 
  * @property int $id
- * @property uuid $school_branches_id
+ * @property string $school_branches_id
  * @property int $school_id
  * @property string $code
  * @property string $name

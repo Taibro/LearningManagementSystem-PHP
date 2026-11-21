@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class School
  * 
  * @property int $id
- * @property uuid $school_id
+ * @property string $school_id
  * @property string $code
  * @property string $name
  * @property string|null $domain
@@ -40,7 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Collection|Student[] $students
  * @property Collection|Course[] $courses
  * @property Collection|Room[] $rooms
- * @property Collection|Class[] $classes
+ * @property Collection<int, CourseClass> $classes
  * @property Collection|Schedule[] $schedules
  * @property Collection|ScheduleException[] $schedule_exceptions
  * @property Collection|Enrollment[] $enrollments

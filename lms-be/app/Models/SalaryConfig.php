@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SalaryConfig
  * 
  * @property int $id
- * @property uuid $salary_config_id
+ * @property string $salary_config_id
  * @property string $qualification_code
  * @property string $qualification_name
  * @property float $price_per_period

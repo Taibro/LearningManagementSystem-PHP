@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Class Teacher
  * 
  * @property int $id
- * @property uuid $teachers_id
+ * @property string $teachers_id
  * @property int $school_id
  * @property int $user_id
  * @property int|null $department_id
@@ -32,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property School $school
  * @property User|null $user
  * @property Department|null $department
- * @property Collection|Class[] $classes
+ * @property Collection<int, CourseClass> $classes
  * @property Collection|ScheduleException[] $schedule_exceptions
  * @property Collection|TeacherDeclaration[] $teacher_declarations
  * @property Collection|TeacherSalarySheet[] $teacher_salary_sheets

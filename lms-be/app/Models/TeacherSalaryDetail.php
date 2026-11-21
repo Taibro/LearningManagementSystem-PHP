@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class TeacherSalaryDetail
  * 
  * @property int $id
- * @property uuid $teacher_salary_detail_id
+ * @property string $teacher_salary_detail_id
  * @property int $school_id
  * @property int $salary_sheet_id
  * @property int $class_id
@@ -31,7 +31,7 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property School $school
  * @property TeacherSalarySheet $teacher_salary_sheet
- * @property Class $class
+ * @property CourseClass $class
  *
  * @package App\Models
  */

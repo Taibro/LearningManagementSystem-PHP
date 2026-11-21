@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class SystemErrorLog
  * 
  * @property int $id
- * @property uuid $system_error_logs_id
+ * @property string $system_error_logs_id
  * @property int|null $school_id
  * @property int|null $user_id
  * @property string $error_level

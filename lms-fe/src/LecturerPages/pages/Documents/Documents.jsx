@@ -22,7 +22,7 @@ const Documents = () => {
   const [selectedClassId, setSelectedClassId] = useState('');
   const [uploadClassId, setUploadClassId] = useState('');
   const getToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  const [uploadDate, setUploadDate] = useState(getToday());
+  const [uploadDate] = useState(getToday());
 
   const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
 

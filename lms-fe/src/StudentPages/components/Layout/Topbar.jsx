@@ -29,7 +29,7 @@ export default function Topbar() {
           shortName = fullName.substring(0, 2).toUpperCase();
         }
       }
-    } catch (e) {}
+    } catch { /* ignore invalid JSON */ }
   }
 
   useEffect(() => {

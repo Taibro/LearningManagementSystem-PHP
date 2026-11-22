@@ -5,12 +5,13 @@ import { logoutPortal } from '../../../config/apiConfig';
 export default function Sidebar() {
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''}`;
 
-  let saasUser = {};
-  try {
-    saasUser = JSON.parse(localStorage.getItem('saas_user') || '{}') || {};
-  } catch {
-    saasUser = {};
-  }
+  const saasUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('saas_user') || '{}') || {};
+    } catch {
+      return {};
+    }
+  })();
   const displayName = saasUser.fullName || 'Super Admin';
   const displayEmail = saasUser.email || 'superadmin@edusaas.io';
 

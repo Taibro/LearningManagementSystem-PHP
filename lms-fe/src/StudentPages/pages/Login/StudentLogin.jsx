@@ -20,7 +20,6 @@ export default function StudentLogin({ initialSchool }) {
   const [regFullName, setRegFullName] = useState('');
   const [regStudentCode, setRegStudentCode] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
   const [regClassName, setRegClassName] = useState('');
   const [regPassword, setRegPassword] = useState('');
 
@@ -129,7 +128,6 @@ export default function StudentLogin({ initialSchool }) {
         loginCode: studentCode,
         studentCode,
         email: regEmail.trim(),
-        phone: regPhone.trim() || undefined,
         className: regClassName.trim() || undefined,
         password: regPassword,
       });

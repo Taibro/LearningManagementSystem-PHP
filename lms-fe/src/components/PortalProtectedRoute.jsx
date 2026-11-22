@@ -23,7 +23,6 @@ export default function PortalProtectedRoute({
     let isMounted = true;
 
     if (!hasStoredSession) {
-      setIsAuthenticated(false);
       return undefined;
     }
 

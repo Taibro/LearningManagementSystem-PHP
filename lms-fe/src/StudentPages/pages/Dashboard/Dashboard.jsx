@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfile, getWeeklySchedule, getNotifications, getGrades } from '../../studentApi';
+import { getProfile, getWeeklySchedule, getNotifications } from '../../studentApi';
 import { BarChart, DollarSign, LineChart, Calendar, ClipboardList, CheckCircle2, GraduationCap, Medal } from 'lucide-react';
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [grades, setGrades] = useState([]);
+
 
   useEffect(() => {
     getProfile().then(setProfile).catch(() => {});
     getWeeklySchedule().then(setSchedule).catch(() => {});
     getNotifications().then(setNotifications).catch(() => {});
-    getGrades().then(setGrades).catch(() => {});
+
   }, []);
 
   const initials = profile?.fullName
@@ -27,7 +27,7 @@ export default function Dashboard() {
   const uniqueClasses = [...new Map(schedule.map(s => [s.classCode, s])).values()];
 
   // Thống kê điểm
-  const currentSemGrades = grades.slice(0, Math.min(3, grades.length));
+
 
   return (
     <div className="page active">

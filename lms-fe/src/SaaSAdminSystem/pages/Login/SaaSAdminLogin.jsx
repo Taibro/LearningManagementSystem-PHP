@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SaaSAdminLogin.css';
 import { CheckCircle2, XCircle, School, Key, AlertTriangle, Info, Mail, Lock, EyeOff, Eye, Shield } from 'lucide-react';
 import {
@@ -42,13 +42,14 @@ export default function SaaSAdminLogin() {
   const [saShake, setSaShake] = useState(false);
 
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
 
   useEffect(() => {
     fetchActiveSchools().then(data => setSchoolOptions(data));
   }, []);
 
   const showToast = (msg, type = 'blue') => {
-    const id = Date.now();
+    const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };

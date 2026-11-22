@@ -25,7 +25,7 @@ export default function Settings() {
         const data = await res.json();
         setStats(data);
       }
-    } catch (err) { }
+    } catch { /* ignore */ }
   };
 
   return (

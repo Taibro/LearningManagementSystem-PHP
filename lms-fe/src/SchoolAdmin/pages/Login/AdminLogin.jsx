@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../../../components/SearchableSelect';
 import './AdminLogin.css';
@@ -44,12 +44,12 @@ export default function AdminLogin({ initialSchool }) {
   const [saEmail, setSaEmail] = useState('');
   const [saPass, setSaPass] = useState('');
   const [saShowPass, setSaShowPass] = useState(false);
-  const [use2fa, setUse2fa] = useState(true);
   const [saLoading, setSaLoading] = useState(false);
   const [saError, setSaError] = useState('');
 
   // Toast State
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
   const [schoolOptions, setSchoolOptions] = useState([]);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function AdminLogin({ initialSchool }) {
   }, [initialSchool]);
 
   const addToast = (msg, type = 'blue') => {
-    const id = Date.now();
+    const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };

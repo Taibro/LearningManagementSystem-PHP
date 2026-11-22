@@ -32,7 +32,7 @@ export default function useNotifications(tokenKey) {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       fetchNotifications();
-    } catch (e) {}
+    } catch { /* ignore */ }
   };
 
   useEffect(() => {

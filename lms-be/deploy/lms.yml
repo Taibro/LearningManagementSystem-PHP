@@ -7,6 +7,8 @@
     db_password: "{{ lookup('env', 'LMS_DB_PASSWORD') }}"
     app_key: "{{ lookup('env', 'LMS_APP_KEY') }}"
     kc_client_secret: "{{ lookup('env', 'LMS_KC_CLIENT_SECRET') }}"
+    kc_admin_user: "{{ lookup('env', 'LMS_KC_ADMIN_USERNAME') | default('admin', true) }}"
+    kc_admin_password: "{{ lookup('env', 'LMS_KC_ADMIN_PASSWORD') }}"
     image_tag: "{{ lookup('env', 'IMAGE_TAG') | default('latest', true) }}"
     ghcr_pat: "{{ lookup('env', 'GHCR_PAT') }}"
     ghcr_owner: "{{ lookup('env', 'GHCR_OWNER') }}"

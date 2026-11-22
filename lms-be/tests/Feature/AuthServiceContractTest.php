@@ -1,6 +1,7 @@
 <?php
 
 use App\DTOs\Auth\LogoutRequestDto;
+use App\DTOs\Auth\RegisterRequestDto;
 use App\DTOs\Auth\SchoolResponseDto;
 use App\DTOs\Auth\Setup2faRequestDto;
 use App\DTOs\Auth\Setup2faResponseDto;
@@ -19,6 +20,8 @@ use App\Services\Auth\KeycloakAuthService;
 use App\Services\Auth\KeycloakJwksService;
 use App\Services\Contracts\AuthServiceInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 test('AuthServiceInterface resolves to KeycloakAuthService via container', function () {
     $service = app(AuthServiceInterface::class);
@@ -142,4 +145,31 @@ test('AuthController delegates 2FA and logout endpoints cleanly to AuthServiceIn
         ->assertJson([
             'message' => 'Đã đăng xuất thành công.',
         ]);
+});
+
+test('RegisterRequestDto allows SAAS_ADMIN without school while non-SAAS roles require school', function () {
+    $request = Request::create('/api/v1/auth/register', 'POST', [
+        'fullName' => 'Super Admin 02',
+        'email' => 'superadmin02@edusaas.io',
+        'password' => 'Password@123',
+        'userCode' => 'sa002',
+        'userType' => 'SAAS_ADMIN',
+    ]);
+
+    $dto = RegisterRequestDto::fromRequest($request);
+    expect($dto->userType)->toBe('SAAS_ADMIN')
+        ->and($dto->school)->toBeNull();
+
+    $service = new KeycloakAuthService(
+        jwksService: Mockery::mock(KeycloakJwksService::class),
+        repositories: Mockery::mock(RepositoryWrapperInterface::class),
+    );
+
+    expect(fn () => $service->register(new RegisterRequestDto(
+        fullName: 'Sinh Vien A',
+        email: 'sv@huit.edu.vn',
+        password: 'Password@123',
+        school: null,
+        userType: 'STUDENT',
+    )))->toThrow(ValidationException::class);
 });

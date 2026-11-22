@@ -23,14 +23,7 @@ import Tuition from './pages/Tuition/Tuition';
 import Payments from './pages/Payments/Payments';
 import Notifications from './pages/Notifications/Notifications';
 import Settings from './pages/Settings/Settings';
-
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('adminToken');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+import PortalProtectedRoute from '../components/PortalProtectedRoute';
 
 export default function AppAdmin({ schoolName, roleName }) {
   const basename = schoolName ? `/${schoolName}/${roleName}` : `/${roleName}`;
@@ -40,9 +33,9 @@ export default function AppAdmin({ schoolName, roleName }) {
         <Route path="/login" element={<AdminLogin initialSchool={schoolName} />} />
         
         <Route path="/" element={
-          <ProtectedRoute>
+          <PortalProtectedRoute portal="admin" loginPath="/login">
             <MainLayout />
-          </ProtectedRoute>
+          </PortalProtectedRoute>
         }>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />

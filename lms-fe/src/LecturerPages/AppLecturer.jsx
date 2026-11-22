@@ -22,19 +22,9 @@ import StopTeaching from './pages/Proposals/StopTeaching';
 import MakeupTeaching from './pages/Proposals/MakeupTeaching';
 import SubstituteTeaching from './pages/Proposals/SubstituteTeaching';
 
-import Statistics from './pages/Statistics/Statistics';
-import Survey from './pages/Survey/Survey';
 import Settings from './pages/Settings/settings';
 import LecturerLogin from './pages/Login/LecturerLogin';
-
-// Component Bảo vệ: Ai chưa có token thì đuổi về trang login
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('lecturerToken');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+import PortalProtectedRoute from '../components/PortalProtectedRoute';
 
 function AppLecturer({ schoolName }) {
   const basename = schoolName ? `/${schoolName}/lecturer` : '/lecturer';
@@ -45,11 +35,11 @@ function AppLecturer({ schoolName }) {
         
         {/* Bọc MainLayout trong Bảo vệ và Provider */}
         <Route path="/" element={
-          <ProtectedRoute>
+          <PortalProtectedRoute portal="lecturer" loginPath="/login">
             <LecturerProvider>
               <MainLayout />
             </LecturerProvider>
-          </ProtectedRoute>
+          </PortalProtectedRoute>
         }>
 
           <Route index element={<Navigate to="/weekly-schedule" />} />
@@ -72,8 +62,6 @@ function AppLecturer({ schoolName }) {
           <Route path="makeup-teaching" element={<MakeupTeaching />} />
           <Route path="substitute-teaching" element={<SubstituteTeaching />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="statistics" element={<Statistics />} />
-          <Route path="survey" element={<Survey />} />
           {/* <Route path="/view-schedule" element={<WeeklySchedule />} /> */}
         </Route>
       </Routes>

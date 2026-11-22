@@ -6,7 +6,6 @@ import MainLayout from './components/Layout/MainLayout';
 import Dashboard from './pages/Dashboard/Dashboard';
 import StudentInfo from './pages/StudentInfo/StudentInfo';
 import Notifications from './pages/Notifications/Notifications';
-import Surveys from './pages/Surveys/Surveys';
 import Grades from './pages/Grades/Grades';
 import WeeklySchedule from './pages/WeeklySchedule/WeeklySchedule';
 import ProgressSchedule from './pages/ProgressSchedule/ProgressSchedule';
@@ -23,15 +22,7 @@ import DefaultPage from './pages/DefaultPage/DefaultPage';
 import CourseRegistration from './pages/CourseRegistration/CourseRegistration';
 import StudentDeclaration from './pages/Declaration/StudentDeclaration';
 import StudentLogin from './pages/Login/StudentLogin';
-
-// Component Bảo vệ: Chưa có token thì bắt quay lại trang login
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+import PortalProtectedRoute from '../components/PortalProtectedRoute';
 
 export default function AppStudent({ schoolName }) {
   const basename = schoolName ? `/${schoolName}/student` : '/student';
@@ -41,9 +32,9 @@ export default function AppStudent({ schoolName }) {
         <Route path="/login" element={<StudentLogin initialSchool={schoolName} />} />
         
         <Route path="/" element={
-          <ProtectedRoute>
+          <PortalProtectedRoute portal="student" loginPath="/login">
             <MainLayout />
-          </ProtectedRoute>
+          </PortalProtectedRoute>
         }>
           
           <Route index element={<Navigate to="/dashboard" />} />
@@ -51,7 +42,6 @@ export default function AppStudent({ schoolName }) {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="student-info" element={<StudentInfo />} />
           <Route path="notifications" element={<Notifications />} />
-          <Route path="surveys" element={<Surveys />} />
           <Route path="grades" element={<Grades />} />
           <Route path="weekly-schedule" element={<WeeklySchedule />} />
           <Route path="progress-schedule" element={<ProgressSchedule />} />

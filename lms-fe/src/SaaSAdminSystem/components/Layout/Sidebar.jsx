@@ -1,12 +1,21 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { logoutPortal } from '../../../config/apiConfig';
 
 export default function Sidebar() {
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''}`;
 
-  const handleLogout = () => {
-    localStorage.removeItem('saas_token');
-    localStorage.removeItem('saas_user');
+  let saasUser = {};
+  try {
+    saasUser = JSON.parse(localStorage.getItem('saas_user') || '{}') || {};
+  } catch {
+    saasUser = {};
+  }
+  const displayName = saasUser.fullName || 'Super Admin';
+  const displayEmail = saasUser.email || 'superadmin@edusaas.io';
+
+  const handleLogout = async () => {
+    await logoutPortal('saas');
     window.location.href = '/saas/login';
   };
 
@@ -55,8 +64,8 @@ export default function Sidebar() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg,var(--accent),var(--accent2))' }}>SA</div>
             <div>
-              <p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>Super Admin</p>
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>admin@eduspace.vn</p>
+              <p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>{displayName}</p>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>{displayEmail}</p>
             </div>
           </div>
           <button 

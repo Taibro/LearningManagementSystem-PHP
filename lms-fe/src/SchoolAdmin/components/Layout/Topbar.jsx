@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Settings, ChevronDown, School, Search } from 'lucide-react';
 import NotificationDropdown from '../../../components/NotificationDropdown';
+import { logoutPortal } from '../../../config/apiConfig';
 
 export default function Topbar() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -13,13 +16,9 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminName');
-    localStorage.removeItem('adminEmail');
-    localStorage.removeItem('schoolId');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    await logoutPortal('admin');
+    navigate('/login', { replace: true });
   };
 
   return (

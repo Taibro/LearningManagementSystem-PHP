@@ -1,11 +1,18 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useLecturerContext } from '../../context/LecturerContext';
 import NotificationDropdown from '../../../components/NotificationDropdown';
+import { logoutPortal } from '../../../config/apiConfig';
 
 const MainLayout = () => {
+  const navigate = useNavigate();
   const { classes, activeClass, setActiveClass } = useLecturerContext();
+
+  const handleLogout = async () => {
+    await logoutPortal('lecturer');
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
@@ -58,11 +65,7 @@ const MainLayout = () => {
                 </div>
                 {/* NÚT ĐĂNG XUẤT */}
                 <button 
-                  onClick={() => {
-                    localStorage.removeItem('lecturerToken');
-                    localStorage.removeItem('lecturerName');
-                    window.location.href = '/login';
-                  }}
+                  onClick={handleLogout}
                   className="ml-2 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold border border-red-200 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
                 >
                   Đăng xuất

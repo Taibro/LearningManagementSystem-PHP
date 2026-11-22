@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Settings, CheckCircle2, GraduationCap, CreditCard, LogOut } from 'lucide-react';
 import { FaHome } from "react-icons/fa";
+import { logoutPortal } from '../../../config/apiConfig';
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -17,16 +18,9 @@ export default function Sidebar() {
   
   const navClass = ({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`;
 
-  const handleLogout = () => {
-    // Xóa toàn bộ token/thông tin user
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
-    localStorage.removeItem('schoolId');
-    localStorage.clear();
-    
-    // Điều hướng về trang đăng nhập
-    navigate('/login');
+  const handleLogout = async () => {
+    await logoutPortal('student');
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -44,8 +38,6 @@ export default function Sidebar() {
         <div className={`sub-menu ${open.ttc ? 'open' : ''}`}>
           <NavLink to="/student-info" className={navClass}>Thông tin sinh viên</NavLink>
           {/* <NavLink to="/declaration" className={navClass}>Kê khai thông tin sinh viên</NavLink> */}
-          <NavLink to="/notifications" className={navClass}>Ghi chú nhắc nhở</NavLink>
-          <NavLink to="/surveys" className={navClass}>Khảo sát sự kiện</NavLink>
         </div>
       </div>
 

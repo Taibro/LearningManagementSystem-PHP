@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../../../components/SearchableSelect';
 import { BookOpen, Lock, User, GraduationCap, AlertCircle, ArrowRight, Loader2, School, Mail } from 'lucide-react';
-import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
+import {
+  fetchActiveSchools,
+  loginViaApi,
+  registerViaApi,
+  savePortalSession,
+} from '../../../config/apiConfig';
 
 const LecturerLogin = ({ initialSchool }) => {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -36,16 +41,10 @@ const LecturerLogin = ({ initialSchool }) => {
   }, [initialSchool]);
 
   const saveSessionAndRedirect = (data) => {
-    if (data.token) localStorage.setItem('lecturerToken', data.token);
-    if (data.refreshToken) localStorage.setItem('lecturerRefreshToken', data.refreshToken);
-    localStorage.setItem('lecturerName', data.fullName || 'Giảng viên');
-    localStorage.setItem('lecturerUser', JSON.stringify(data));
-
     const selectedSchool = schoolOptions.find(
       s => String(s.value).toLowerCase() === String(school).toLowerCase()
     );
-    if (selectedSchool) localStorage.setItem('schoolName', selectedSchool.label);
-    localStorage.setItem('schoolShortName', data.schoolCode || school);
+    savePortalSession('lecturer', data, selectedSchool);
 
     navigate('/weekly-schedule');
   };
@@ -63,25 +62,20 @@ const LecturerLogin = ({ initialSchool }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          loginCode: loginCode.trim(),
-          password,
-          userType: 'LECTURER',
-          school
-        })
+      const data = await loginViaApi({
+        loginCode: loginCode.trim(),
+        password,
+        userType: 'LECTURER',
+        school,
       });
 
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.token) {
+      if (data && (data.accessToken || data.token)) {
         saveSessionAndRedirect(data);
       } else {
-        setError(data.message || 'Mã giảng viên hoặc mật khẩu không chính xác!');
+        setError('Mã giảng viên hoặc mật khẩu không chính xác!');
       }
     } catch (err) {
-      setError('Lỗi kết nối máy chủ. Vui lòng thử lại sau!');
+      setError(err.message || 'Lỗi kết nối máy chủ. Vui lòng thử lại sau!');
     } finally {
       setIsLoading(false);
     }
@@ -99,36 +93,29 @@ const LecturerLogin = ({ initialSchool }) => {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          userType: 'LECTURER',
-          school,
-          fullName: regFullName.trim(),
-          userCode: regTeacherCode.trim(),
-          teacherCode: regTeacherCode.trim(),
-          email: regEmail.trim(),
-          specialization: regSpecialization.trim() || undefined,
-          password: regPassword
-        })
+      const teacherCode = regTeacherCode.trim();
+      const data = await registerViaApi({
+        userType: 'LECTURER',
+        school,
+        fullName: regFullName.trim(),
+        userCode: teacherCode,
+        loginCode: teacherCode,
+        teacherCode,
+        email: regEmail.trim(),
+        specialization: regSpecialization.trim() || undefined,
+        password: regPassword,
       });
 
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        if (data.token) {
-          saveSessionAndRedirect(data);
-        } else {
-          setSuccessMsg('Đăng ký tài khoản Giảng viên thành công! Vui lòng đăng nhập.');
-          setLoginCode(regTeacherCode.trim());
-          setPassword(regPassword);
-          setMode('login');
-        }
+      if (data && (data.accessToken || data.token)) {
+        saveSessionAndRedirect(data);
       } else {
-        setError(data.message || 'Không thể đăng ký tài khoản Giảng viên.');
+        setSuccessMsg('Đăng ký tài khoản Giảng viên thành công! Vui lòng đăng nhập.');
+        setLoginCode(teacherCode);
+        setPassword(regPassword);
+        setMode('login');
       }
     } catch (err) {
-      setError('Lỗi kết nối máy chủ. Vui lòng thử lại sau!');
+      setError(err.message || 'Không thể đăng ký tài khoản Giảng viên.');
     } finally {
       setIsLoading(false);
     }

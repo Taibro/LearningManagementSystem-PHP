@@ -1,9 +1,16 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { BarChart, CalendarDays, Settings, User, DollarSign, ClipboardList, CheckCircle2, GraduationCap, School, Bell, AlertTriangle, MapPin, Landmark, Library, Receipt } from 'lucide-react';
+import { logoutPortal } from '../../../config/apiConfig';
 
 export default function Sidebar() {
+  const navigate = useNavigate();
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''}`;
+
+  const handleLogout = async () => {
+    await logoutPortal('admin');
+    navigate('/login', { replace: true });
+  };
   
   // Lấy dữ liệu từ LocalStorage
   const adminName = localStorage.getItem('adminName') || 'Quản trị viên';
@@ -79,14 +86,7 @@ export default function Sidebar() {
           <button 
             title="Đăng xuất"
             style={{marginLeft:'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', background:'rgba(255,0,0,0.1)', color:'#ff6b6b', border:'1px solid rgba(255,0,0,0.2)', borderRadius:'6px', padding:'6px 10px', cursor:'pointer', fontWeight:'bold', fontSize: '12px'}}
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('adminToken');
-              localStorage.removeItem('adminName');
-              localStorage.removeItem('adminEmail');
-              localStorage.removeItem('schoolId');
-              window.location.href = '/login';
-            }}
+            onClick={handleLogout}
           >
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             Đăng xuất

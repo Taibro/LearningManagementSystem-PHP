@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../../../components/SearchableSelect';
 import { Loader2 } from 'lucide-react';
 import './StudentLogin.css';
-import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
+import {
+  fetchActiveSchools,
+  loginViaApi,
+  registerViaApi,
+  savePortalSession,
+} from '../../../config/apiConfig';
 
 export default function StudentLogin({ initialSchool }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -16,7 +20,6 @@ export default function StudentLogin({ initialSchool }) {
   const [regFullName, setRegFullName] = useState('');
   const [regStudentCode, setRegStudentCode] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
   const [regClassName, setRegClassName] = useState('');
   const [regPassword, setRegPassword] = useState('');
 
@@ -49,15 +52,10 @@ export default function StudentLogin({ initialSchool }) {
   const navigate = useNavigate();
 
   const saveSessionAndRedirect = (data) => {
-    localStorage.setItem('token', data.token);
-    if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-    localStorage.setItem('user', JSON.stringify(data));
-
     const selectedSchool = schoolOptions.find(
       s => String(s.value).toLowerCase() === String(school).toLowerCase()
     );
-    if (selectedSchool) localStorage.setItem('schoolName', selectedSchool.label);
-    localStorage.setItem('schoolShortName', data.schoolCode || school);
+    savePortalSession('student', data, selectedSchool);
 
     setShowSuccess(true);
     setTimeout(() => setProgressWidth('100%'), 50);
@@ -86,21 +84,21 @@ export default function StudentLogin({ initialSchool }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/login`, {
+      const data = await loginViaApi({
         userType: 'STUDENT',
         loginCode: email.trim(),
-        password: password,
-        school: school
+        password,
+        school,
       });
 
-      if (res.data && res.data.token) {
-        saveSessionAndRedirect(res.data);
+      if (data && (data.accessToken || data.token)) {
+        saveSessionAndRedirect(data);
       } else {
         setGeneralError('Đăng nhập thất bại. Vui lòng thử lại.');
         setLoading(false);
       }
     } catch (err) {
-      setGeneralError(err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác.');
+      setGeneralError(err.message || 'Tài khoản hoặc mật khẩu không chính xác.');
       setLoading(false);
     }
   };
@@ -121,29 +119,30 @@ export default function StudentLogin({ initialSchool }) {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/register`, {
+      const studentCode = regStudentCode.trim();
+      const data = await registerViaApi({
         userType: 'STUDENT',
-        school: school,
+        school,
         fullName: regFullName.trim(),
-        userCode: regStudentCode.trim(),
-        studentCode: regStudentCode.trim(),
+        userCode: studentCode,
+        loginCode: studentCode,
+        studentCode,
         email: regEmail.trim(),
-        phone: regPhone.trim() || undefined,
         className: regClassName.trim() || undefined,
-        password: regPassword
+        password: regPassword,
       });
 
-      if (res.data && res.data.token) {
-        saveSessionAndRedirect(res.data);
+      if (data && (data.accessToken || data.token)) {
+        saveSessionAndRedirect(data);
       } else {
         setLoading(false);
         setSuccessMsg('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
-        setEmail(regStudentCode.trim());
+        setEmail(studentCode);
         setPassword(regPassword);
         setMode('login');
       }
     } catch (err) {
-      setGeneralError(err.response?.data?.message || 'Đăng ký tài khoản thất bại.');
+      setGeneralError(err.message || 'Đăng ký tài khoản thất bại.');
       setLoading(false);
     }
   };

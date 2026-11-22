@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
-import { BarChart, Users, CalendarDays, FileText, Settings, User, DollarSign, FolderOpen, Check, ChevronDown, LineChart, Calendar, StopCircle, RefreshCw, TrendingDown, ClipboardList } from 'lucide-react';
+import { BarChart, Users, CalendarDays, FileText, Settings, User, DollarSign, FolderOpen, Check, ChevronDown, LineChart, Calendar, StopCircle, RefreshCw } from 'lucide-react';
 
 const Sidebar = () => {
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(true);
@@ -77,10 +77,6 @@ const Sidebar = () => {
         <NavLink to="/stop-teaching" className={navClass}><StopCircle className="w-4 h-4 inline-block mr-2" /> Tạm ngừng dạy</NavLink>
         <NavLink to="/makeup-teaching" className={navClass}><RefreshCw className="w-4 h-4 inline-block mr-2" /> Dạy bù</NavLink>
         <NavLink to="/substitute-teaching" className={navClass}><Users className="w-4 h-4 inline-block mr-2" /> Dạy thay</NavLink>
-
-        <div className="text-[10px] tracking-[1.5px] uppercase text-white/40 px-6 pt-3 pb-1 font-black">BÁO CÁO</div>
-        <NavLink to="/statistics" className={navClass}><TrendingDown className="w-4 h-4 inline-block mr-2" /> Thống kê thực giảng</NavLink>
-        <NavLink to="/survey" className={navClass}><ClipboardList className="w-4 h-4 inline-block mr-2" /> Khảo sát</NavLink>
 
         <div className="text-[10px] tracking-[1.5px] uppercase text-white/40 px-6 pt-3 pb-1 font-black">HỆ THỐNG</div>
         <NavLink to="/settings" className={navClass}><Settings className="w-4 h-4 inline-block mr-2" /> Cài đặt hệ thống</NavLink>

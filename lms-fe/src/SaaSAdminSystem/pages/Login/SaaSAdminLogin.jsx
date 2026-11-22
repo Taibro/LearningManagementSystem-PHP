@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SaaSAdminLogin.css';
 import { CheckCircle2, XCircle, School, Key, AlertTriangle, Info, Mail, Lock, EyeOff, Eye, Shield } from 'lucide-react';
-import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
+import {
+  fetchActiveSchools,
+  loginViaApi,
+  setup2faViaApi,
+  verifySetup2faViaApi,
+  verifyLogin2faViaApi,
+  savePortalSession,
+} from '../../../config/apiConfig';
 
 export default function SaaSAdminLogin() {
   const [activeScreen, setActiveScreen] = useState(
@@ -11,6 +18,8 @@ export default function SaaSAdminLogin() {
   const [saasView, setSaasView] = useState('main'); // main | otp | setup
 
   const [tempToken, setTempToken] = useState('');
+  const [pendingSchoolAuth, setPendingSchoolAuth] = useState(null);
+  const [pendingSaasAuth, setPendingSaasAuth] = useState(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [schoolOptions, setSchoolOptions] = useState([]);
 
@@ -24,8 +33,8 @@ export default function SaaSAdminLogin() {
   const [sShake, setSShake] = useState(false);
 
   // Form State Cổng Toàn Cục SaaS
-  const [saEmail, setSaEmail] = useState('superadmin@edusaas.io');
-  const [saPass, setSaPass] = useState('SuperAdmin@2024');
+  const [saEmail, setSaEmail] = useState('');
+  const [saPass, setSaPass] = useState('');
   const [saShowPass, setSaShowPass] = useState(false);
   const [use2fa, setUse2fa] = useState(true);
   const [saLoading, setSaLoading] = useState(false);
@@ -33,16 +42,22 @@ export default function SaaSAdminLogin() {
   const [saShake, setSaShake] = useState(false);
 
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
 
   useEffect(() => {
     fetchActiveSchools().then(data => setSchoolOptions(data));
   }, []);
 
   const showToast = (msg, type = 'blue') => {
-    const id = Date.now();
+    const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
+
+  const getSelectedSchool = () =>
+    schoolOptions.find(
+      s => String(s.value).toLowerCase() === String(sSchool).toLowerCase()
+    );
 
   /* ==========================================
      XỬ LÝ ĐĂNG NHẬP & OTP CHO ADMIN SCHOOL
@@ -50,54 +65,73 @@ export default function SaaSAdminLogin() {
   const handleSchoolLogin = async () => {
     setSError('');
     if (!sSchool) return setSError('Vui lòng chọn trường / trung tâm.');
-    if (!sEmail) return setSError('Vui lòng nhập email đăng nhập.');
+    if (!sEmail.trim()) return setSError('Vui lòng nhập email đăng nhập.');
     if (!sPass) return setSError('Vui lòng nhập mật khẩu.');
 
     setSLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          userType: 'SCHOOL_ADMIN',
-          loginCode: sEmail,
-          password: sPass,
-          school: sSchool
-        })
+      const data = await loginViaApi({
+        userType: 'SCHOOL_ADMIN',
+        loginCode: sEmail.trim(),
+        password: sPass,
+        school: sSchool,
       });
 
-      const data = await response.json().catch(() => ({}));
-      setSLoading(false);
-
-      if (!response.ok) {
-        setSError(data.message || 'Email hoặc mật khẩu không đúng.');
-        setSShake(true);
-        setTimeout(() => setSShake(false), 400);
-        return;
+      const token = data?.accessToken || data?.token;
+      if (!token) {
+        throw new Error('Email hoặc mật khẩu không đúng.');
       }
 
-      localStorage.setItem('school_token', data.token);
-      localStorage.setItem('adminToken', data.token);
-      localStorage.setItem('school_user', JSON.stringify(data));
-      localStorage.setItem('schoolShortName', data.schoolCode || sSchool);
-
-      showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
-      setTimeout(() => {
-        window.location.href = `/${data.schoolCode || sSchool}/admin/dashboard`;
-      }, 800);
+      if (data.require2fa) {
+        setPendingSchoolAuth(data);
+        setTempToken(token);
+        setSchoolView('otp');
+        showToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
+      } else {
+        savePortalSession('admin', data, getSelectedSchool());
+        showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
+        setTimeout(() => {
+          window.location.href = `/${data.schoolCode || sSchool}/admin/dashboard`;
+        }, 800);
+      }
     } catch (err) {
-      setSLoading(false);
-      setSError('Không thể kết nối đến Backend Server. Vui lòng thử lại sau.');
+      setSError(err.message || 'Email hoặc mật khẩu không đúng.');
       setSShake(true);
       setTimeout(() => setSShake(false), 400);
+    } finally {
+      setSLoading(false);
     }
   };
 
-  const verifySchoolOtp = () => {
-    showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
-    setTimeout(() => {
-      window.location.href = `/${sSchool || 'HUIT'}/admin/dashboard`;
-    }, 800);
+  const verifySchoolOtp = async (codeOverride) => {
+    const inputs = document.querySelectorAll('.school-bg .otp-input');
+    const code = typeof codeOverride === 'string'
+      ? codeOverride
+      : Array.from(inputs).map(inp => inp.value).join('');
+
+    if (code.length !== 6) {
+      return showToast('Vui lòng nhập đủ 6 số OTP', 'red');
+    }
+
+    const emailFor2fa = pendingSchoolAuth?.email || sEmail.trim();
+    const activeTempToken = pendingSchoolAuth?.accessToken || pendingSchoolAuth?.token || tempToken;
+
+    try {
+      const verifiedData = await verifyLogin2faViaApi(
+        { email: emailFor2fa, code },
+        activeTempToken
+      );
+      const merged = { ...pendingSchoolAuth, ...verifiedData };
+      savePortalSession('admin', merged, getSelectedSchool());
+      showToast('Đăng nhập thành công! Đang chuyển hướng...', 'green');
+      setTimeout(() => {
+        window.location.href = `/${merged.schoolCode || sSchool || 'HUIT'}/admin/dashboard`;
+      }, 800);
+    } catch (err) {
+      showToast(err.message || 'Mã OTP không đúng hoặc đã hết hạn', 'red');
+      setSShake(true);
+      setTimeout(() => setSShake(false), 400);
+    }
   };
 
   /* ==========================================
@@ -105,65 +139,51 @@ export default function SaaSAdminLogin() {
   ========================================== */
   const handleSaasLogin = async () => {
     setSaError('');
-    if (!saEmail) return setSaError('Vui lòng nhập email Super Admin.');
+    if (!saEmail.trim()) return setSaError('Vui lòng nhập email Super Admin.');
     if (!saPass) return setSaError('Vui lòng nhập mật khẩu.');
 
     setSaLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          userType: 'SAAS_ADMIN',
-          loginCode: saEmail,
-          password: saPass
-        })
+      const data = await loginViaApi({
+        userType: 'SAAS_ADMIN',
+        loginCode: saEmail.trim(),
+        password: saPass,
       });
 
-      const data = await response.json().catch(() => ({}));
-      setSaLoading(false);
-
-      if (!response.ok) {
-        setSaError(data.message || 'Tài khoản hệ thống hoặc mật khẩu không chính xác.');
-        setSaShake(true);
-        setTimeout(() => setSaShake(false), 400);
-        return;
+      const token = data?.accessToken || data?.token;
+      if (!token) {
+        throw new Error('Tài khoản hệ thống hoặc mật khẩu không chính xác.');
       }
 
       if (data.requireSetup) {
-        setTempToken(data.token);
-        fetchQrCode(saEmail);
+        setPendingSaasAuth(data);
+        setTempToken(token);
+        fetchQrCode(data.email || saEmail.trim(), token);
         setSaasView('setup');
         showToast('Vui lòng thiết lập Xác thực 2 bước', 'blue');
-      } else if (data.require2fa) {
-        setTempToken(data.token);
+      } else if (use2fa && data.require2fa) {
+        setPendingSaasAuth(data);
+        setTempToken(token);
         setSaasView('otp');
         showToast('Mã OTP từ Authenticator App', 'blue');
       } else {
-        localStorage.setItem('saas_token', data.token);
-        localStorage.setItem('saas_user', JSON.stringify(data));
+        savePortalSession('saas', data);
         showToast('Đăng nhập thành công!', 'green');
-        setTimeout(() => window.location.href = '/saas/dashboard', 800);
+        setTimeout(() => { window.location.href = '/saas/dashboard'; }, 800);
       }
     } catch (err) {
-      setSaLoading(false);
-      setSaError('Không thể kết nối đến Backend Server. Vui lòng thử lại sau.');
+      setSaError(err.message || 'Không thể kết nối đến Backend Server. Vui lòng thử lại sau.');
       setSaShake(true);
       setTimeout(() => setSaShake(false), 400);
+    } finally {
+      setSaLoading(false);
     }
   };
 
-  const fetchQrCode = async (email) => {
+  const fetchQrCode = async (email, accessToken) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/2fa/setup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setQrCodeUrl(data.qrCodeImageUri);
-      }
+      const data = await setup2faViaApi(email, accessToken);
+      setQrCodeUrl(data?.qrCodeImageUri || '');
     } catch (error) {
       console.error('Error fetching QR code', error);
     }
@@ -171,68 +191,40 @@ export default function SaaSAdminLogin() {
 
   const verifySaasOtp = async (codeOverride) => {
     const inputs = document.querySelectorAll('.saas-screen .otp-input');
-    const code = typeof codeOverride === 'string' ? codeOverride : Array.from(inputs).map(inp => inp.value).join('');
+    const code = typeof codeOverride === 'string'
+      ? codeOverride
+      : Array.from(inputs).map(inp => inp.value).join('');
     if (code.length !== 6) return;
+
+    const emailFor2fa = pendingSaasAuth?.email || saEmail.trim();
+    const activeTempToken = pendingSaasAuth?.accessToken || pendingSaasAuth?.token || tempToken;
 
     try {
       if (saasView === 'setup') {
-        const response = await fetch(`${API_BASE_URL}/auth/2fa/verify-setup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: saEmail, code })
-        });
-        if (response.ok) {
-          const isValid = await response.json();
-          if (isValid) {
-            const loginResp = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${tempToken}`
-              },
-              body: JSON.stringify({ email: saEmail, code })
-            });
-            if (loginResp.ok) {
-              const data = await loginResp.json();
-              localStorage.setItem('saas_token', data.token);
-              localStorage.setItem('saas_user', JSON.stringify(data));
-
-              showToast('Xác thực & Thiết lập thành công!', 'green');
-              setTimeout(() => {
-                window.location.href = '/saas/dashboard';
-              }, 800);
-            } else {
-              showToast('Có lỗi xảy ra khi đăng nhập', 'red');
-            }
-          } else {
-            showToast('Mã OTP không đúng, vui lòng thử lại', 'red');
-          }
-        }
-      } else {
-        const response = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tempToken}`
-          },
-          body: JSON.stringify({ email: saEmail, code })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('saas_token', data.token);
-          localStorage.setItem('saas_user', JSON.stringify(data));
-
-          showToast('Xác thực Super Admin thành công!', 'green');
-          setTimeout(() => {
-            window.location.href = '/saas/dashboard';
-          }, 800);
-        } else {
-          showToast('Mã OTP không đúng hoặc đã hết hạn', 'red');
+        const isValid = await verifySetup2faViaApi(code, activeTempToken);
+        if (!isValid) {
+          showToast('Mã OTP không đúng, vui lòng thử lại', 'red');
+          return;
         }
       }
+
+      const verifiedData = await verifyLogin2faViaApi(
+        { email: emailFor2fa, code },
+        activeTempToken
+      );
+      savePortalSession('saas', { ...pendingSaasAuth, ...verifiedData });
+
+      showToast(
+        saasView === 'setup'
+          ? 'Xác thực & Thiết lập thành công!'
+          : 'Xác thực Super Admin thành công!',
+        'green'
+      );
+      setTimeout(() => {
+        window.location.href = '/saas/dashboard';
+      }, 800);
     } catch (err) {
-      showToast('Lỗi kết nối máy chủ xác thực', 'red');
+      showToast(err.message || 'Mã OTP không đúng hoặc đã hết hạn', 'red');
     }
   };
 

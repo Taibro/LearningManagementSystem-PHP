@@ -6,7 +6,7 @@ const DAY_NAMES = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'T
 export default function ProgressSchedule() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [semesterId, setSemesterId] = useState('');
+  const [semesterId] = useState('');
 
   const load = (sid) => {
     setLoading(true);

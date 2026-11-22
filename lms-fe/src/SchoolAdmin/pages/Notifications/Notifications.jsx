@@ -87,7 +87,7 @@ export default function Notifications() {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
       fetchNotifications();
-    } catch (err) {}
+    } catch { /* ignore */ }
   };
 
   const renderTypeBadge = (type) => {

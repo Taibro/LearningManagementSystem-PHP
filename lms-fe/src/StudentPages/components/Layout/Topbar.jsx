@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { FaHome } from "react-icons/fa";
 import useNotifications from '../../../hooks/useNotifications';
+import { logoutPortal } from '../../../config/apiConfig';
 
 export default function Topbar() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -14,8 +15,8 @@ export default function Topbar() {
   const schoolShort = localStorage.getItem('schoolShortName') || 'HUIT';
 
   const userStr = localStorage.getItem('user');
-  let fullName = 'Phan Sĩ Thịnh';
-  let shortName = 'PT';
+  let fullName = 'Sinh viên';
+  let shortName = 'SV';
   if (userStr) {
     try {
       const userObj = JSON.parse(userStr);
@@ -28,7 +29,7 @@ export default function Topbar() {
           shortName = fullName.substring(0, 2).toUpperCase();
         }
       }
-    } catch (e) {}
+    } catch { /* ignore invalid JSON */ }
   }
 
   useEffect(() => {
@@ -41,9 +42,9 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    // localStorage.removeItem('token');
-    navigate('/login');
+  const handleLogout = async () => {
+    await logoutPortal('student');
+    navigate('/login', { replace: true });
   };
   return (
     <div className="topbar">

@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../../../components/SearchableSelect';
 import './AdminLogin.css';
 import { BarChart, Check, CheckCircle2, XCircle, GraduationCap, School, AlertTriangle, Info, PartyPopper, Rocket, Globe, Mail, Lock, EyeOff, Eye, Circle, Upload, Hand, Shield, Zap } from 'lucide-react';
-import { API_BASE_URL, fetchActiveSchools } from '../../../config/apiConfig';
+import {
+  fetchActiveSchools,
+  loginViaApi,
+  registerViaApi,
+  setup2faViaApi,
+  verifySetup2faViaApi,
+  verifyLogin2faViaApi,
+  savePortalSession,
+} from '../../../config/apiConfig';
 
 export default function AdminLogin({ initialSchool }) {
   const navigate = useNavigate();
@@ -14,11 +22,13 @@ export default function AdminLogin({ initialSchool }) {
   const [saasView, setSaasView] = useState('main'); // 'main' | 'otp'
 
   const [tempToken, setTempToken] = useState('');
+  const [pendingAdminAuth, setPendingAdminAuth] = useState(null);
+  const [pendingSaasAuth, setPendingSaasAuth] = useState(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Input States
-  const [sEmail, setSEmail] = useState('admin@huit.edu.vn');
-  const [sPass, setSPass] = useState('Admin@123');
+  const [sEmail, setSEmail] = useState('');
+  const [sPass, setSPass] = useState('');
   const [school, setSchool] = useState(initialSchool || '');
   const [sShowPass, setSShowPass] = useState(false);
   const [sLoading, setSLoading] = useState(false);
@@ -31,15 +41,15 @@ export default function AdminLogin({ initialSchool }) {
   const [regEmail, setRegEmail] = useState('');
   const [regPass, setRegPass] = useState('');
 
-  const [saEmail, setSaEmail] = useState('superadmin@edusaas.io');
-  const [saPass, setSaPass] = useState('SuperAdmin@2024');
+  const [saEmail, setSaEmail] = useState('');
+  const [saPass, setSaPass] = useState('');
   const [saShowPass, setSaShowPass] = useState(false);
-  const [use2fa, setUse2fa] = useState(true);
   const [saLoading, setSaLoading] = useState(false);
   const [saError, setSaError] = useState('');
 
   // Toast State
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
   const [schoolOptions, setSchoolOptions] = useState([]);
 
   useEffect(() => {
@@ -55,72 +65,59 @@ export default function AdminLogin({ initialSchool }) {
   }, [initialSchool]);
 
   const addToast = (msg, type = 'blue') => {
-    const id = Date.now();
+    const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
+
+  const getSelectedSchool = () =>
+    schoolOptions.find(
+      s => String(s.value).toLowerCase() === String(school).toLowerCase()
+    );
 
   // --- Handlers ---
   const handleSchoolLogin = async () => {
     setSError('');
     if (!school) return setSError('Vui lòng chọn trường học.');
-    if (!sEmail) return setSError('Vui lòng nhập email đăng nhập.');
+    if (!sEmail.trim()) return setSError('Vui lòng nhập email hoặc mã quản trị.');
     if (!sPass) return setSError('Vui lòng nhập mật khẩu.');
 
     setSLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          loginCode: sEmail,
-          password: sPass,
-          userType: 'SCHOOL_ADMIN',
-          school: school
-        })
+      const data = await loginViaApi({
+        loginCode: sEmail.trim(),
+        password: sPass,
+        userType: 'SCHOOL_ADMIN',
+        school,
       });
-      const data = await res.json().catch(() => ({}));
-      setSLoading(false);
 
-      if (res.ok && data.token) {
-        localStorage.setItem('adminToken', data.token);
-        if (data.refreshToken) localStorage.setItem('adminRefreshToken', data.refreshToken);
-        localStorage.setItem('adminName', data.fullName || 'Admin');
-        localStorage.setItem('adminEmail', data.email || '');
-        if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
+      const token = data?.accessToken || data?.token;
+      if (!token) {
+        throw new Error('Phản hồi đăng nhập không hợp lệ.');
+      }
 
-        const selectedSchool = schoolOptions.find(
-          s => String(s.value).toLowerCase() === String(school).toLowerCase()
-        );
-        if (selectedSchool) localStorage.setItem('schoolName', selectedSchool.label);
-        localStorage.setItem('schoolShortName', data.schoolCode || school);
-
-        if (data.requireSetup) {
-          setTempToken(data.token);
-          fetchQrCode(sEmail);
-          setSchoolView('setup');
-          addToast('Vui lòng thiết lập Xác thực 2 bước', 'blue');
-        } else if (data.require2fa) {
-          setTempToken(data.token);
-          setSchoolView('otp');
-          addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
-        } else {
-          addToast('Đăng nhập thành công, đang chuyển hướng...', 'green');
-          setTimeout(() => navigate('/dashboard'), 1000);
-        }
+      if (data.requireSetup) {
+        setPendingAdminAuth(data);
+        setTempToken(token);
+        fetchQrCode(data.email || sEmail.trim(), token);
+        setSchoolView('setup');
+        addToast('Vui lòng thiết lập Xác thực 2 bước', 'blue');
+      } else if (data.require2fa) {
+        setPendingAdminAuth(data);
+        setTempToken(token);
+        setSchoolView('otp');
+        addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
       } else {
-        setSError(data.message || 'Email hoặc mật khẩu không đúng!');
-        setShake(true);
-        setTimeout(() => setShake(false), 400);
+        savePortalSession('admin', data, getSelectedSchool());
+        addToast('Đăng nhập thành công, đang chuyển hướng...', 'green');
+        setTimeout(() => navigate('/dashboard'), 1000);
       }
     } catch (err) {
-      setSLoading(false);
-      setSError('Lỗi kết nối đến máy chủ!');
+      setSError(err.message || 'Email hoặc mật khẩu không đúng!');
       setShake(true);
       setTimeout(() => setShake(false), 400);
+    } finally {
+      setSLoading(false);
     }
   };
 
@@ -133,95 +130,73 @@ export default function AdminLogin({ initialSchool }) {
 
     setSLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          userType: 'SCHOOL_ADMIN',
-          school,
-          fullName: regName.trim(),
-          userCode: regCode.trim(),
-          email: regEmail.trim(),
-          password: regPass
-        })
+      const code = regCode.trim();
+      const data = await registerViaApi({
+        userType: 'SCHOOL_ADMIN',
+        school,
+        fullName: regName.trim(),
+        userCode: code,
+        loginCode: code,
+        email: regEmail.trim(),
+        password: regPass,
       });
-      const data = await res.json().catch(() => ({}));
-      setSLoading(false);
 
-      if (res.ok) {
-        if (data.token) {
-          localStorage.setItem('adminToken', data.token);
-          localStorage.setItem('adminName', data.fullName || regName);
-          localStorage.setItem('adminEmail', data.email || regEmail);
-          if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
-          localStorage.setItem('schoolShortName', data.schoolCode || school);
-          addToast('Đăng ký tài khoản Quản trị trường thành công!', 'green');
-          setTimeout(() => navigate('/dashboard'), 1000);
-        } else {
-          addToast('Đăng ký thành công! Vui lòng đăng nhập.', 'green');
-          setSEmail(regEmail.trim());
-          setSPass(regPass);
-          setSchoolView('main');
-        }
+      if (data && (data.accessToken || data.token)) {
+        savePortalSession('admin', data, getSelectedSchool());
+        addToast('Đăng ký tài khoản Quản trị trường thành công!', 'green');
+        setTimeout(() => navigate('/dashboard'), 1000);
       } else {
-        setSError(data.message || 'Đăng ký tài khoản thất bại.');
+        addToast('Đăng ký thành công! Vui lòng đăng nhập.', 'green');
+        setSEmail(regEmail.trim());
+        setSPass(regPass);
+        setSchoolView('main');
       }
     } catch (err) {
+      setSError(err.message || 'Đăng ký tài khoản thất bại.');
+    } finally {
       setSLoading(false);
-      setSError('Lỗi kết nối đến máy chủ!');
     }
   };
 
   const handleSaasLogin = async () => {
     setSaError('');
-    if (!saEmail) return setSaError('Vui lòng nhập email Super Admin.');
+    if (!saEmail.trim()) return setSaError('Vui lòng nhập email Super Admin.');
     if (!saPass) return setSaError('Vui lòng nhập mật khẩu.');
 
     setSaLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          userType: 'SAAS_ADMIN',
-          loginCode: saEmail,
-          password: saPass
-        })
+      const data = await loginViaApi({
+        userType: 'SAAS_ADMIN',
+        loginCode: saEmail.trim(),
+        password: saPass,
       });
-      const data = await res.json().catch(() => ({}));
-      setSaLoading(false);
 
-      if (res.ok && data.token) {
-        localStorage.setItem('saas_token', data.token);
-        localStorage.setItem('saas_user', JSON.stringify(data));
-        localStorage.setItem('adminToken', data.token);
-        if (use2fa && data.require2fa) {
-          setSaasView('otp');
-          addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
-        } else {
-          addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Đăng nhập Super Admin thành công!</>, 'green');
-          setTimeout(() => { window.location.href = '/saas/dashboard'; }, 900);
-        }
+      const token = data?.accessToken || data?.token;
+      if (!token) {
+        throw new Error('Sai thông tin Super Admin.');
+      }
+
+      if (data.require2fa) {
+        setPendingSaasAuth(data);
+        setTempToken(token);
+        setSaasView('otp');
+        addToast('Mã OTP đã gửi đến thiết bị xác thực', 'blue');
       } else {
-        setSaError(data.message || 'Sai thông tin Super Admin.');
+        savePortalSession('saas', data);
+        addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Đăng nhập Super Admin thành công!</>, 'green');
+        setTimeout(() => { window.location.href = '/saas/dashboard'; }, 900);
       }
     } catch (err) {
+      setSaError(err.message || 'Sai thông tin Super Admin.');
+    } finally {
       setSaLoading(false);
-      setSaError('Không thể kết nối đến máy chủ xác thực.');
     }
   };
 
-  const fetchQrCode = async (email) => {
+  const fetchQrCode = async (email, accessToken) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/2fa/setup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-        body: JSON.stringify({ email })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setQrCodeUrl(data.qrCodeImageUri);
-      }
+      const data = await setup2faViaApi(email, accessToken);
+      setQrCodeUrl(data?.qrCodeImageUri || '');
     } catch (error) {
       console.error('Error fetching QR code', error);
     }
@@ -235,68 +210,68 @@ export default function AdminLogin({ initialSchool }) {
       return addToast('Vui lòng nhập đủ 6 số OTP', 'red');
     }
 
+    const emailFor2fa = pendingAdminAuth?.email || sEmail.trim();
+    const activeTempToken = pendingAdminAuth?.accessToken || pendingAdminAuth?.token || tempToken;
+
     try {
       if (schoolView === 'setup') {
-        const response = await fetch(`${API_BASE_URL}/auth/2fa/verify-setup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-          body: JSON.stringify({ email: sEmail, code })
-        });
-        if (response.ok) {
-          const isValid = await response.json();
-          if (isValid) {
-            const loginResp = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${tempToken}`
-              },
-              body: JSON.stringify({ email: sEmail, code })
-            });
-            if (loginResp.ok) {
-              const data = await loginResp.json();
-              localStorage.setItem('adminToken', data.token);
-              if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
-              addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Thiết lập 2FA & Đăng nhập thành công!</>, 'green');
-              setTimeout(() => navigate('/dashboard'), 1000);
-            } else {
-              addToast('Có lỗi xảy ra khi xác thực token thật', 'red');
-            }
-          } else {
-            addToast('Mã OTP không đúng, vui lòng thử lại', 'red');
-            setShake(true); setTimeout(() => setShake(false), 400);
-          }
-        }
-      } else {
-        const res = await fetch(`${API_BASE_URL}/auth/login/verify-2fa`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tempToken}`
-          },
-          body: JSON.stringify({ email: sEmail, code })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          localStorage.setItem('adminToken', data.token);
-          if (data.schoolId) localStorage.setItem('schoolId', data.schoolId);
-          addToast(<><PartyPopper className="w-4 h-4 inline-block mr-2" /> Đăng nhập thành công! Chào mừng Admin!</>, 'green');
-          setTimeout(() => navigate('/dashboard'), 1000);
-        } else {
-          addToast('Mã OTP không chính xác!', 'red');
+        const isValid = await verifySetup2faViaApi(code, activeTempToken);
+        if (!isValid) {
+          addToast('Mã OTP không đúng, vui lòng thử lại', 'red');
           setShake(true);
           setTimeout(() => setShake(false), 400);
+          return;
         }
       }
+
+      const verifiedData = await verifyLogin2faViaApi(
+        { email: emailFor2fa, code },
+        activeTempToken
+      );
+      savePortalSession(
+        'admin',
+        { ...pendingAdminAuth, ...verifiedData },
+        getSelectedSchool()
+      );
+      addToast(
+        <>
+          <PartyPopper className="w-4 h-4 inline-block mr-2" />{' '}
+          {schoolView === 'setup'
+            ? 'Thiết lập 2FA & Đăng nhập thành công!'
+            : 'Đăng nhập thành công! Chào mừng Admin!'}
+        </>,
+        'green'
+      );
+      setTimeout(() => navigate('/dashboard'), 1000);
     } catch (err) {
-      addToast('Lỗi kết nối máy chủ', 'red');
+      addToast(err.message || 'Mã OTP không chính xác!', 'red');
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
     }
   };
 
-  const handleVerifySaasOtp = () => {
-    addToast(<><Rocket className="w-4 h-4 inline-block mr-2" /> Super Admin đã xác thực thành công!</>, 'green');
-    setTimeout(() => { window.location.href = '/saas/dashboard'; }, 1000);
+  const handleVerifySaasOtp = async (codeOverride) => {
+    const inputs = document.querySelectorAll('.saas-screen .otp-input');
+    const code = typeof codeOverride === 'string' ? codeOverride : Array.from(inputs).map(inp => inp.value).join('');
+
+    if (code.length !== 6) {
+      return addToast('Vui lòng nhập đủ 6 số OTP', 'red');
+    }
+
+    const emailFor2fa = pendingSaasAuth?.email || saEmail.trim();
+    const activeTempToken = pendingSaasAuth?.accessToken || pendingSaasAuth?.token || tempToken;
+
+    try {
+      const verifiedData = await verifyLogin2faViaApi(
+        { email: emailFor2fa, code },
+        activeTempToken
+      );
+      savePortalSession('saas', { ...pendingSaasAuth, ...verifiedData });
+      addToast(<><Rocket className="w-4 h-4 inline-block mr-2" /> Super Admin đã xác thực thành công!</>, 'green');
+      setTimeout(() => { window.location.href = '/saas/dashboard'; }, 1000);
+    } catch (err) {
+      addToast(err.message || 'Mã OTP không chính xác hoặc đã hết hạn!', 'red');
+    }
   };
 
   const handleOtpInput = (e, nextIdx, verifyFunc) => {

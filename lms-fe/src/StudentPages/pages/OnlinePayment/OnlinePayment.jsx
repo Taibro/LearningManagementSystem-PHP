@@ -37,7 +37,7 @@ export default function OnlinePayment() {
           try {
             const courseData = JSON.parse(p.courseData || '[]');
             courseData.forEach(c => lockedClassCodes.add(c.classCode));
-          } catch (e) {}
+          } catch { /* ignore invalid JSON */ }
         });
 
         const filteredDebt = (debtData || []).filter(r => !lockedClassCodes.has(r.classCode));

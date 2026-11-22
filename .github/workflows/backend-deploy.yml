@@ -56,6 +56,8 @@ jobs:
           LMS_DB_PASSWORD: ${{ secrets.LMS_DB_PASSWORD }}
           LMS_APP_KEY: ${{ secrets.LMS_APP_KEY }}
           LMS_KC_CLIENT_SECRET: ${{ secrets.LMS_KC_CLIENT_SECRET }}
+          LMS_KC_ADMIN_USERNAME: ${{ secrets.LMS_KC_ADMIN_USERNAME }}
+          LMS_KC_ADMIN_PASSWORD: ${{ secrets.LMS_KC_ADMIN_PASSWORD }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GHCR_OWNER: ${{ env.REPO_OWNER }}
           IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}

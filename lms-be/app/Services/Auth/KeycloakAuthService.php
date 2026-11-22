@@ -189,16 +189,30 @@ class KeycloakAuthService implements AuthServiceInterface
     public function register(RegisterRequestDto $dto): AuthTokenResponseDto
     {
         $roleName = strtoupper(trim((string) ($dto->userType ?? 'STUDENT')));
-        if (! in_array($roleName, ['STUDENT', 'LECTURER', 'SCHOOL_ADMIN', 'DEAN_OF_FACULTY', 'DEAN_OF_DEPARTMENT'], true)) {
+        if (! in_array($roleName, ['STUDENT', 'LECTURER', 'SCHOOL_ADMIN', 'DEAN_OF_FACULTY', 'DEAN_OF_DEPARTMENT', 'SAAS_ADMIN'], true)) {
             $roleName = 'STUDENT';
         }
 
-        $schoolCode = strtoupper(trim($dto->school));
-        $school = $schoolCode !== '' ? $this->repositories->schools()->findByCode($schoolCode) : null;
+        $schoolCode = $dto->school !== null ? strtoupper(trim($dto->school)) : '';
+        $hasExplicitSchool = $schoolCode !== '' && $schoolCode !== 'SAAS';
 
-        if (! $school) {
+        if ($hasExplicitSchool) {
+            $school = $this->repositories->schools()->findByCode($schoolCode);
+            if (! $school) {
+                throw ValidationException::withMessages([
+                    'school' => ["Không tìm thấy trường học với mã {$schoolCode}."],
+                ]);
+            }
+        } elseif ($roleName === 'SAAS_ADMIN') {
+            $school = $this->repositories->schools()->findFirstOrderedById();
+            if (! $school) {
+                throw ValidationException::withMessages([
+                    'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
+                ]);
+            }
+        } else {
             throw ValidationException::withMessages([
-                'school' => ["Không tìm thấy trường học với mã {$schoolCode}."],
+                'school' => ['Vui lòng chọn trường / đơn vị đào tạo.'],
             ]);
         }
 
@@ -234,7 +248,7 @@ class KeycloakAuthService implements AuthServiceInterface
             fullName: $fullName,
             password: $password,
             roleName: $roleName,
-            school: $school,
+            school: $roleName === 'SAAS_ADMIN' && ! $hasExplicitSchool ? null : $school,
             userCode: $userCode
         );
 
@@ -307,7 +321,7 @@ class KeycloakAuthService implements AuthServiceInterface
                 loginCode: strtolower($userCode),
                 password: $password,
                 userType: $roleName,
-                school: $school->code,
+                school: $roleName === 'SAAS_ADMIN' && ! $hasExplicitSchool ? null : (string) $school->code,
             ));
         } catch (\Throwable) {
             return new AuthTokenResponseDto(
@@ -329,8 +343,8 @@ class KeycloakAuthService implements AuthServiceInterface
                 role: $roleName,
                 roles: [$roleName],
                 schoolId: (int) $school->id,
-                schoolCode: (string) $school->code,
-                schoolName: (string) $school->name,
+                schoolCode: $roleName === 'SAAS_ADMIN' && ! $hasExplicitSchool ? 'SAAS' : (string) $school->code,
+                schoolName: $roleName === 'SAAS_ADMIN' && ! $hasExplicitSchool ? '' : (string) $school->name,
                 require2fa: false,
                 requireSetup: false,
             );
@@ -548,7 +562,7 @@ class KeycloakAuthService implements AuthServiceInterface
         string $fullName,
         string $password,
         string $roleName,
-        School $school,
+        ?School $school,
         string $userCode
     ): string {
         $adminToken = $this->getKeycloakAdminToken();
@@ -565,8 +579,8 @@ class KeycloakAuthService implements AuthServiceInterface
             'enabled' => true,
             'emailVerified' => true,
             'attributes' => [
-                'school_id' => [(string) $school->id],
-                'school_code' => [strtoupper($school->code)],
+                'school_id' => [$school !== null ? (string) $school->id : '0'],
+                'school_code' => [$school !== null ? strtoupper((string) $school->code) : 'SAAS'],
                 'user_code' => [strtoupper($userCode)],
             ],
             'credentials' => [

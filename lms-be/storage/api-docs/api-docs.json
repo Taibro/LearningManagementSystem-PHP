@@ -700,8 +700,7 @@
                 "required": [
                     "fullName",
                     "email",
-                    "password",
-                    "school"
+                    "password"
                 ],
                 "properties": {
                     "fullName": {
@@ -714,8 +713,9 @@
                         "type": "string"
                     },
                     "school": {
-                        "description": "School code (e.g. HUIT, HCMUT)",
-                        "type": "string"
+                        "description": "School code (e.g. HUIT, HCMUT). Optional for SAAS_ADMIN",
+                        "type": "string",
+                        "nullable": true
                     },
                     "userCode": {
                         "description": "Primary user code / Keycloak username",
@@ -735,7 +735,7 @@
                         "nullable": true
                     },
                     "userType": {
-                        "description": "STUDENT | LECTURER | SCHOOL_ADMIN | DEAN_OF_FACULTY | DEAN_OF_DEPARTMENT",
+                        "description": "STUDENT | LECTURER | SCHOOL_ADMIN | DEAN_OF_FACULTY | DEAN_OF_DEPARTMENT | SAAS_ADMIN",
                         "type": "string",
                         "nullable": true
                     },

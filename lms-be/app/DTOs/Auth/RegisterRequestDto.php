@@ -9,7 +9,7 @@ use OpenApi\Attributes as OA;
     schema: 'RegisterRequestDto',
     title: 'Register Request',
     description: 'Payload to register a new user in Keycloak and PostgreSQL',
-    required: ['fullName', 'email', 'password', 'school'],
+    required: ['fullName', 'email', 'password'],
 )]
 final class RegisterRequestDto
 {
@@ -23,8 +23,8 @@ final class RegisterRequestDto
         #[OA\Property]
         public readonly string $password,
 
-        #[OA\Property(description: 'School code (e.g. HUIT, HCMUT)')]
-        public readonly string $school,
+        #[OA\Property(description: 'School code (e.g. HUIT, HCMUT). Optional for SAAS_ADMIN', nullable: true)]
+        public readonly ?string $school = null,
 
         #[OA\Property(description: 'Primary user code / Keycloak username', nullable: true)]
         public readonly ?string $userCode = null,
@@ -38,7 +38,7 @@ final class RegisterRequestDto
         #[OA\Property(nullable: true)]
         public readonly ?string $teacherCode = null,
 
-        #[OA\Property(description: 'STUDENT | LECTURER | SCHOOL_ADMIN | DEAN_OF_FACULTY | DEAN_OF_DEPARTMENT', nullable: true)]
+        #[OA\Property(description: 'STUDENT | LECTURER | SCHOOL_ADMIN | DEAN_OF_FACULTY | DEAN_OF_DEPARTMENT | SAAS_ADMIN', nullable: true)]
         public readonly ?string $userType = 'STUDENT',
 
         #[OA\Property(nullable: true)]
@@ -77,7 +77,7 @@ final class RegisterRequestDto
             'studentCode' => ['nullable', 'string', 'max:50'],
             'teacherCode' => ['nullable', 'string', 'max:50'],
             'userType' => ['nullable', 'string'],
-            'school' => ['required', 'string'],
+            'school' => ['nullable', 'string'],
             'phone' => ['nullable', 'string', 'max:20'],
             'major' => ['nullable', 'string', 'max:100'],
             'degreeLevel' => ['nullable', 'string', 'max:50'],
@@ -92,7 +92,7 @@ final class RegisterRequestDto
             fullName: $validated['fullName'],
             email: $validated['email'],
             password: $validated['password'],
-            school: $validated['school'],
+            school: $validated['school'] ?? null,
             userCode: $validated['userCode'] ?? null,
             loginCode: $validated['loginCode'] ?? null,
             studentCode: $validated['studentCode'] ?? null,

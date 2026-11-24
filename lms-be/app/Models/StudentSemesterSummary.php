@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $academic_rank
  * @property bool $is_eligible_scholarship
  * @property string|null $scholarship_type
+ * @property float $scholarship_amount
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * 
@@ -47,7 +48,8 @@ class StudentSemesterSummary extends Model
 		'gpa_4' => 'float',
 		'credits_earned' => 'int',
 		'conduct_score' => 'int',
-		'is_eligible_scholarship' => 'bool'
+		'is_eligible_scholarship' => 'bool',
+		'scholarship_amount' => 'float',
 	];
 
 	protected $fillable = [
@@ -62,7 +64,8 @@ class StudentSemesterSummary extends Model
 		'conduct_rank',
 		'academic_rank',
 		'is_eligible_scholarship',
-		'scholarship_type'
+		'scholarship_type',
+		'scholarship_amount',
 	];
 
 	public function school()

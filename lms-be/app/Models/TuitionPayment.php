@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $payment_method
  * @property Carbon $payment_date
  * @property string $status
+ * @property array<int, array<string, mixed>>|null $course_data
+ * @property Carbon|null $expires_at
  * @property string|null $notes
  * @property Carbon $created_at
  * 
@@ -39,7 +41,9 @@ class TuitionPayment extends Model
 		'school_id' => 'int',
 		'invoice_id' => 'int',
 		'amount_paid' => 'float',
-		'payment_date' => 'datetime'
+		'payment_date' => 'datetime',
+		'course_data' => 'array',
+		'expires_at' => 'datetime',
 	];
 
 	protected $fillable = [
@@ -51,6 +55,8 @@ class TuitionPayment extends Model
 		'payment_method',
 		'payment_date',
 		'status',
+		'course_data',
+		'expires_at',
 		'notes'
 	];
 

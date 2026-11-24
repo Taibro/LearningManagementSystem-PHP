@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $student_id
  * @property Carbon $enrolled_at
  * @property string $status
+ * @property string $enrollment_type
  * @property float|null $attendance_score
  * @property float|null $regular_score1
  * @property float|null $regular_score2
@@ -72,6 +73,7 @@ class Enrollment extends Model
 		'student_id',
 		'enrolled_at',
 		'status',
+		'enrollment_type',
 		'attendance_score',
 		'regular_score1',
 		'regular_score2',

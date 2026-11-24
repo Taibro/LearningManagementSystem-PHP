@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $student_code
  * @property Carbon|null $date_of_birth
  * @property string|null $gender
+ * @property string|null $citizen_id_number
  * @property string|null $address
  * @property Carbon|null $enrollment_date
  * @property string|null $placeofbirth
@@ -70,6 +71,7 @@ class Student extends Model
 		'student_code',
 		'date_of_birth',
 		'gender',
+		'citizen_id_number',
 		'address',
 		'enrollment_date',
 		'placeofbirth',

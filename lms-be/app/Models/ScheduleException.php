@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $new_date
  * @property string|null $new_start_time
  * @property string|null $new_end_time
+ * @property int|null $new_start_period
+ * @property int|null $new_end_period
  * @property int|null $new_room_id
  * @property int|null $substitute_teacher_id
  * @property string|null $reason
@@ -52,6 +54,8 @@ class ScheduleException extends Model
 		'new_date' => 'datetime',
 		'new_start_time' => 'string',
 		'new_end_time' => 'string',
+		'new_start_period' => 'int',
+		'new_end_period' => 'int',
 		'new_room_id' => 'int',
 		'substitute_teacher_id' => 'int',
 		'approved_by' => 'int',
@@ -69,6 +73,8 @@ class ScheduleException extends Model
 		'new_date',
 		'new_start_time',
 		'new_end_time',
+		'new_start_period',
+		'new_end_period',
 		'new_room_id',
 		'substitute_teacher_id',
 		'reason',

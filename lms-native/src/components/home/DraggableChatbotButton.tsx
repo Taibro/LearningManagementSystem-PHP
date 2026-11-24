@@ -44,7 +44,6 @@ export const DraggableChatbotButton: React.FC<Props> = ({ onPress }) => {
       },
       onPanResponderRelease: (_, gestureState) => {
         pan.flattenOffset();
-        // Nếu không di chuyển đáng kể -> coi là Click/Tap
         if (!isDragging.current && Math.abs(gestureState.dx) < 6 && Math.abs(gestureState.dy) < 6) {
           onPress();
         }

@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
 
-/**
- * Custom hook quản lý trạng thái pull-to-refresh
- */
+
 export const useRefresh = (onRefreshCallback: () => Promise<void> | void, timeoutMs = 8000) => {
   const [refreshing, setRefreshing] = useState(false);
 

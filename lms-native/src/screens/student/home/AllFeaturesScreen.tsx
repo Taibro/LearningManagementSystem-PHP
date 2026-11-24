@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../../../components/common/AppHeader';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface Props {
   onBack: () => void;
@@ -11,6 +12,10 @@ interface Props {
 }
 
 export const AllFeaturesScreen: React.FC<Props> = ({ onBack, onNavigate }) => {
+  const { user } = useAuth();
+  const isHcmut = user?.schoolCode === 'HCMUT' || user?.studentCode?.startsWith('200122');
+  const aiAssistantLabel = isHcmut ? 'Trợ lý AI Bách Khoa (HCMUT)' : 'Trợ lý AI HUIT';
+
   const groups = [
     {
       title: 'HỌC TẬP & KẾT QUẢ',
@@ -35,7 +40,7 @@ export const AllFeaturesScreen: React.FC<Props> = ({ onBack, onNavigate }) => {
       title: 'DỊCH VỤ SINH VIÊN & HỆ THỐNG',
       items: [
         { label: 'Hồ sơ thông tin sinh viên', icon: 'person-outline', color: '#2563EB', bg: '#EFF6FF', action: 'student_info' },
-        { label: 'Trợ lý AI HUIT', icon: 'sparkles-outline', color: '#4F46E5', bg: '#EEF2FF', action: 'chatbot' },
+        { label: aiAssistantLabel, icon: 'sparkles-outline', color: '#4F46E5', bg: '#EEF2FF', action: 'chatbot' },
         { label: 'Tin tức & Thông báo mới', icon: 'newspaper-outline', color: '#3B82F6', bg: '#EFF6FF', action: 'news' },
         { label: 'Khảo sát chất lượng đào tạo', icon: 'bar-chart-outline', color: '#0D9488', bg: '#F0FDFA', action: 'survey' },
         { label: 'Đổi mật khẩu tài khoản', icon: 'key-outline', color: '#8B5CF6', bg: '#F5F3FF', action: 'change_password' },

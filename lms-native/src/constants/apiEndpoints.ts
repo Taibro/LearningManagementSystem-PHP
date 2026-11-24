@@ -1,6 +1,4 @@
-/**
- * Centralized API Endpoints cho hệ thống LMS Mobile
- */
+
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',

@@ -14,15 +14,15 @@ import {
 } from '../types/student.types';
 
 export const mockStudentProfile: StudentProfile = {
-  studentCode: '2001210001',
-  fullName: 'Nguyễn Thành Tài',
-  email: '2001210001@huit.edu.vn',
+  studentCode: '2001220001',
+  fullName: 'Sinh viên LMS',
+  email: 'student@lms.local',
   phone: '0987654321',
   gender: 'MALE',
   birthDate: '15/08/2003',
   idCard: '079203001234',
   birthPlace: 'TP. Hồ Chí Minh',
-  className: '12DHTH01',
+  className: '14DHTH01',
   majorName: 'Công nghệ thông tin',
   facultyName: 'Khoa Công nghệ thông tin',
   enrollmentYear: '2023 - 2027',
@@ -31,7 +31,7 @@ export const mockStudentProfile: StudentProfile = {
 };
 
 export const mockStudentOverview: StudentOverview = {
-  fullName: 'Nguyễn Thành Tài',
+  fullName: 'Sinh viên LMS',
   yearLevel: 3,
   academicYear: '2023 - 2027',
   trainingDuration: 4.0,

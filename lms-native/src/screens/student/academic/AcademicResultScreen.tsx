@@ -82,7 +82,7 @@ export const AcademicResultScreen: React.FC<Props> = ({ onBack }) => {
 
   const renderHeader = () => (
     <View>
-      {/* Overview Banner */}
+      
       {overview && (
         <View style={[styles.overviewCard, Shadows.md]}>
           <Text style={styles.overviewTitle}>Tổng kết quá trình đào tạo</Text>
@@ -105,13 +105,15 @@ export const AcademicResultScreen: React.FC<Props> = ({ onBack }) => {
 
           <View style={styles.subStatsRow}>
             <Text style={styles.subStatText}>• Năm đào tạo: Năm thứ {overview.yearLevel}</Text>
-            <Text style={styles.subStatText}>• Tín chỉ nợ: {overview.creditsDebt}</Text>
+            {overview.creditsDebt > 0 && (
+              <Text style={[styles.subStatText, { color: Colors.danger }]}>• Tín chỉ nợ: {overview.creditsDebt}</Text>
+            )}
             <Text style={styles.subStatText}>• Cần tích lũy: {overview.creditsRequired} TC</Text>
           </View>
         </View>
       )}
 
-      {/* Semester Filter Tabs */}
+      
       <Text style={styles.sectionTitle}>Bảng điểm theo học kỳ</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.semScroll}>
         {semesters.map((sem, idx) => {
@@ -131,7 +133,7 @@ export const AcademicResultScreen: React.FC<Props> = ({ onBack }) => {
         })}
       </ScrollView>
 
-      {/* Semester Stats Bar */}
+      
       {currentSemester && (
         <View style={styles.semSummaryBar}>
           <View style={styles.semSummaryItem}>

@@ -25,9 +25,7 @@ class ApiClient {
     return this.token;
   }
 
-  /**
-   * Đăng ký callback khi nhận lỗi 401 Unauthorized
-   */
+  
   onUnauthorized(callback: UnauthorizedCallback): () => void {
     this.unauthorizedListeners.push(callback);
     return () => {
@@ -50,7 +48,6 @@ class ApiClient {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-    // Khôi phục token từ storage nếu RAM chưa có
     if (!this.token) {
       const savedToken = await storageService.getToken();
       if (savedToken) {
@@ -81,9 +78,24 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       if (response.status === 401) {
+        let errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        try {
+          const errorData = await response.json();
+          if (errorData?.message) {
+            errorMessage = errorData.message;
+          } else if (errorData?.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+        }
+
+        if (endpoint.includes('/auth/login')) {
+          throw new Error(errorMessage);
+        }
+
         console.warn(`[ApiClient] 401 Unauthorized on ${endpoint}. Triggering logout interceptor.`);
         this.handleUnauthorized();
-        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        throw new Error(errorMessage);
       }
 
       if (!response.ok) {
@@ -96,7 +108,6 @@ class ApiClient {
             errorMessage = errorData.error;
           }
         } catch {
-          // Response body was not JSON
         }
         throw new Error(errorMessage);
       }

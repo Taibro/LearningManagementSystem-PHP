@@ -6,6 +6,7 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { Colors } from '../../../constants/colors';
 import { Shadows } from '../../../constants/theme';
 import { studentApi } from '../../../api/studentApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { SurveyItem } from '../../../types/student.types';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export const SurveyScreen: React.FC<Props> = ({ onBack }) => {
+  const { user } = useAuth();
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +31,8 @@ export const SurveyScreen: React.FC<Props> = ({ onBack }) => {
       Alert.alert('Thông báo', 'Bạn đã hoàn thành phiếu khảo sát này trước đó.');
       return;
     }
-    const url = 'https://portal.huit.edu.vn/khao-sat';
+    const isHcmut = user?.schoolCode === 'HCMUT' || user?.studentCode?.startsWith('200122');
+    const url = isHcmut ? 'https://mybk.hcmut.edu.vn/khao-sat' : 'https://portal.huit.edu.vn/khao-sat';
     const canOpen = await Linking.canOpenURL(url).catch(() => false);
     if (canOpen) {
       await Linking.openURL(url);

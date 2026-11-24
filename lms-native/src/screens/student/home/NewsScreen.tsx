@@ -33,7 +33,7 @@ export const NewsScreen: React.FC<Props> = ({ onBack }) => {
     <View style={styles.container}>
       <AppHeader title="Tin tức & Sự kiện" onBack={onBack} />
 
-      {/* Category Pills */}
+      
       <View style={styles.catBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catScroll}>
           {categories.map((cat) => {
@@ -86,7 +86,7 @@ export const NewsScreen: React.FC<Props> = ({ onBack }) => {
         )}
       </ScrollView>
 
-      {/* Article Detail Modal */}
+      
       {selectedArticle && (
         <Modal visible={true} animationType="slide" onRequestClose={() => setSelectedArticle(null)}>
           <SafeAreaView style={styles.modalContainer}>

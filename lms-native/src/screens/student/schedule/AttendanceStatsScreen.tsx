@@ -28,14 +28,14 @@ export const AttendanceStatsScreen: React.FC<Props> = ({ onBack }) => {
       <AppHeader title="Thống kê chuyên cần" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Banner Tổng kết */}
+        
         <View style={[styles.banner, Shadows.md]}>
           <Text style={styles.bannerLabel}>Tỷ lệ chuyên cần trung bình HK2</Text>
           <Text style={styles.bannerVal}>{overallRate}%</Text>
           <Text style={styles.bannerSub}>Đủ điều kiện dự thi 100% các học phần đã đăng ký</Text>
         </View>
 
-        {/* Breakdown bar */}
+        
         <View style={styles.summaryBox}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryNum}>{totalSessions}</Text>

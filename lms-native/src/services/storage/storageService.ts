@@ -1,10 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Tầng dịch vụ lưu trữ bền vững (Persistent Storage Service)
- * Sử dụng @react-native-async-storage/async-storage chuẩn doanh nghiệp
- * Hoạt động bền vững trên cả Android, iOS và Web (không bị mất khi tắt app).
- */
+
 
 const STORAGE_KEYS = {
   TOKEN: 'lms_auth_token',
@@ -65,7 +61,6 @@ class StorageService {
     }
   }
 
-  // --- Auth Helpers ---
   async getToken(): Promise<string | null> {
     return this.getItem(STORAGE_KEYS.TOKEN);
   }

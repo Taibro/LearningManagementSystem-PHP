@@ -11,7 +11,6 @@ export interface AppState {
   unreadNotificationsCount: number;
 }
 
-// In-memory singleton state
 let globalAppState: AppState = {
   theme: 'light',
   language: 'vi',
@@ -51,9 +50,7 @@ export const appStore = {
   },
 };
 
-/**
- * React hook để lắng nghe và tương tác với Global App Store
- */
+
 export const useAppStore = () => {
   const [, setTick] = useState(0);
 

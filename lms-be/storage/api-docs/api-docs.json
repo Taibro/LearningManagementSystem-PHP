@@ -532,6 +532,162 @@
                     }
                 }
             }
+        },
+        "/api/{version}/student/profile": {
+            "get": {
+                "tags": [
+                    "Student Profile"
+                ],
+                "summary": "Get authenticated student profile",
+                "description": "Retrieve the full academic and personal profile of the currently authenticated student",
+                "operationId": "getStudentProfile",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Student profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentProfileResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (requires STUDENT role)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Student profile not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Student Profile"
+                ],
+                "summary": "Update authenticated student personal contact information",
+                "description": "Update editable personal contact fields (email, phone, gender, address) for the authenticated student",
+                "operationId": "updateStudentProfile",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version (e.g. v1)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStudentProfileRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Student profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentProfileResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (requires STUDENT role)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Student profile not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error or duplicate email within school",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1010,6 +1166,109 @@
                     }
                 },
                 "type": "object"
+            },
+            "StudentProfileResponseDto": {
+                "title": "Student Profile Response",
+                "description": "Detailed student profile payload for Student Portal",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "studentCode": {
+                        "type": "string"
+                    },
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "dateOfBirth": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "citizenIdNumber": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "className": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "major": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "degreeLevel": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trainingType": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "departmentId": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "departmentName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "enrollmentYear": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "enrollmentStatus": {
+                        "type": "string"
+                    },
+                    "schoolName": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateStudentProfileRequestDto": {
+                "title": "Update Student Profile Request",
+                "description": "Editable personal contact fields for authenticated student",
+                "required": [
+                    "email",
+                    "phone"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -1029,6 +1288,10 @@
         {
             "name": "System",
             "description": "System monitoring and health check endpoints"
+        },
+        {
+            "name": "Student Profile",
+            "description": "API endpoints for authenticated student profile and contact declaration"
         }
     ]
 }

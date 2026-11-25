@@ -61,7 +61,9 @@ class KeycloakAuthService implements AuthServiceInterface
     {
         $loginCode = $dto->loginCode;
         $password = $dto->password;
-        $normalizedType = strtoupper(trim($dto->userType));
+        $normalizedType = $dto->userType !== null && trim($dto->userType) !== ''
+            ? strtoupper(trim($dto->userType))
+            : null;
         $normalizedSchoolCode = $dto->school ? strtoupper(trim($dto->school)) : null;
 
         // Resolve school if provided
@@ -108,12 +110,12 @@ class KeycloakAuthService implements AuthServiceInterface
 
         $jwtRoles = $this->extractRolesFromPayload($payload);
         if (empty($jwtRoles)) {
-            $jwtRoles = $this->resolveDatabaseRolesForPayload($payload, $normalizedType);
+            $jwtRoles = $this->resolveDatabaseRolesForPayload($payload, $normalizedType ?? 'STUDENT');
         }
         $primaryRole = $this->resolvePrimaryRole($jwtRoles);
 
-        // Verify role access for the portal the user is logging into
-        if (! $this->isRoleAllowedForPortal($jwtRoles, $normalizedType)) {
+        // Verify role access only when the client explicitly requested a specific portal
+        if ($normalizedType !== null && ! $this->isRoleAllowedForPortal($jwtRoles, $normalizedType)) {
             throw ValidationException::withMessages([
                 'userType' => ["Tài khoản của bạn không có quyền truy cập phân hệ {$normalizedType}."],
             ]);
@@ -123,7 +125,7 @@ class KeycloakAuthService implements AuthServiceInterface
         $jwtSchoolCode = isset($payload->school_code) ? strtoupper((string) $payload->school_code) : null;
         $jwtSchoolId = isset($payload->school_id) ? (int) $payload->school_id : null;
 
-        if ($normalizedType !== 'SAAS_ADMIN' && $school) {
+        if ($primaryRole !== 'SAAS_ADMIN' && $normalizedType !== 'SAAS_ADMIN' && $school) {
             if ($jwtSchoolCode && $jwtSchoolCode !== 'SAAS' && $jwtSchoolCode !== strtoupper($school->code)) {
                 throw ValidationException::withMessages([
                     'school' => ["Tài khoản này thuộc trường {$jwtSchoolCode}, không thuộc trường {$school->code}."],

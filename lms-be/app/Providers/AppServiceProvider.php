@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Auth\AuthCookieService;
 use App\Services\Auth\KeycloakAuthService;
 use App\Services\Auth\KeycloakJwksService;
 use App\Services\Auth\KeycloakJwtGuard;
@@ -52,11 +53,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Register stateless Keycloak JWT Guard for API requests
         Auth::extend('keycloak', function ($app, $name, array $config) {
-            return new KeycloakJwtGuard(
+            $guard = new KeycloakJwtGuard(
                 $app->make(KeycloakJwksService::class),
                 $app->make(AuthServiceInterface::class),
+                $app->make(AuthCookieService::class),
                 $app['request']
             );
+
+            $app->refresh('request', $guard, 'setRequest');
+
+            return $guard;
         });
 
         Queue::before(fn () => PostgresContextService::clearContext());

@@ -14,5 +14,17 @@ return [
     'leeway' => (int) env('KEYCLOAK_JWT_LEEWAY', 60),
     'http_timeout' => (int) env('KEYCLOAK_HTTP_TIMEOUT', 10),
     'verify_ssl' => (bool) env('KEYCLOAK_VERIFY_SSL', true),
+
+    'cookie' => [
+        'access_name' => env('AUTH_ACCESS_COOKIE', 'lms_access_token'),
+        'refresh_name' => env('AUTH_REFRESH_COOKIE', 'lms_refresh_token'),
+        'refresh_ttl_minutes' => (int) env('AUTH_REFRESH_COOKIE_TTL', 60 * 24 * 7),
+        'domain' => env('AUTH_COOKIE_DOMAIN', env('SESSION_DOMAIN')),
+        'secure' => env('AUTH_COOKIE_SECURE') !== null
+            ? filter_var(env('AUTH_COOKIE_SECURE'), FILTER_VALIDATE_BOOLEAN)
+            : (bool) env('SESSION_SECURE_COOKIE', false),
+        'same_site' => env('AUTH_COOKIE_SAME_SITE', env('SESSION_SAME_SITE', 'lax')),
+        'hide_tokens_in_body' => (bool) env('AUTH_HIDE_TOKENS_IN_BODY', false),
+    ],
 ];
 

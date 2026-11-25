@@ -19,6 +19,7 @@ use App\DTOs\Common\ErrorResponseDto;
 use App\DTOs\Common\MessageResponseDto;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Auth\AuthCookieService;
 use App\Services\Contracts\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class AuthController extends Controller
 
     public function __construct(
         private readonly AuthServiceInterface $authService,
+        private readonly AuthCookieService $authCookieService,
     ) {}
 
     /**
@@ -128,7 +130,15 @@ class AuthController extends Controller
         $dto = LoginRequestDto::fromRequest($request);
 
         try {
-            return response()->json($this->authService->login($dto));
+            $result = $this->authService->login($dto);
+            $response = response()->json($this->authCookieService->sanitizeAuthResponse($result, $request));
+
+            return $this->authCookieService->attachAuthCookies(
+                response: $response,
+                accessToken: $result->accessToken,
+                refreshToken: $result->refreshToken,
+                expiresInSeconds: $result->expiresIn,
+            );
         } catch (ValidationException $e) {
             $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Thông tin đăng nhập không hợp lệ.');
 
@@ -192,7 +202,15 @@ class AuthController extends Controller
         $dto = RegisterRequestDto::fromRequest($request);
 
         try {
-            return response()->json($this->authService->register($dto), 201);
+            $result = $this->authService->register($dto);
+            $response = response()->json($this->authCookieService->sanitizeAuthResponse($result, $request), 201);
+
+            return $this->authCookieService->attachAuthCookies(
+                response: $response,
+                accessToken: $result->accessToken,
+                refreshToken: $result->refreshToken,
+                expiresInSeconds: $result->expiresIn,
+            );
         } catch (ValidationException $e) {
             $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Dữ liệu đăng ký không hợp lệ.');
 
@@ -229,7 +247,7 @@ class AuthController extends Controller
             ),
         ],
         requestBody: new OA\RequestBody(
-            required: true,
+            required: false,
             content: new OA\JsonContent(ref: RefreshTokenRequestDto::class)
         ),
         responses: [
@@ -250,7 +268,15 @@ class AuthController extends Controller
         $dto = RefreshTokenRequestDto::fromRequest($request);
 
         try {
-            return response()->json($this->authService->refreshToken($dto));
+            $result = $this->authService->refreshToken($dto);
+            $response = response()->json($this->authCookieService->sanitizeRefreshResponse($result, $request));
+
+            return $this->authCookieService->attachAuthCookies(
+                response: $response,
+                accessToken: $result->accessToken,
+                refreshToken: $result->refreshToken,
+                expiresInSeconds: $result->expiresIn,
+            );
         } catch (ValidationException $e) {
             $firstError = (string) (collect($e->errors())->flatten()->first() ?: 'Phiên đăng nhập đã hết hạn.');
 
@@ -296,8 +322,9 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $dto = LogoutRequestDto::fromRequest($request);
+        $response = response()->json($this->authService->logout($dto));
 
-        return response()->json($this->authService->logout($dto));
+        return $this->authCookieService->clearAuthCookies($response);
     }
 
     /**
@@ -453,7 +480,7 @@ class AuthController extends Controller
         return response()->json($this->authService->verifyLogin2fa(
             dto: $dto,
             user: $user instanceof User ? $user : null,
-            token: $request->bearerToken(),
+            token: $this->authCookieService->extractAccessToken($request),
         ));
     }
 }

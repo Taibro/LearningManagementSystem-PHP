@@ -16,6 +16,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
 use App\Repositories\Contracts\SchoolRepositoryInterface;
+use App\Services\Auth\AuthCookieService;
 use App\Services\Auth\KeycloakAuthService;
 use App\Services\Auth\KeycloakJwksService;
 use App\Services\Contracts\AuthServiceInterface;
@@ -29,15 +30,18 @@ test('AuthServiceInterface resolves to KeycloakAuthService via container', funct
     expect($service)->toBeInstanceOf(KeycloakAuthService::class);
 });
 
-test('AuthController only depends on AuthServiceInterface and keeps repository/mapping out of controller', function () {
+test('AuthController only depends on AuthServiceInterface and AuthCookieService', function () {
     $reflection = new ReflectionClass(AuthController::class);
     $params = $reflection->getConstructor()?->getParameters() ?? [];
 
-    expect($params)->toHaveCount(1);
+    expect($params)->toHaveCount(2);
 
-    $type = $params[0]->getType();
-    expect($type)->toBeInstanceOf(ReflectionNamedType::class)
-        ->and($type->getName())->toBe(AuthServiceInterface::class);
+    $firstType = $params[0]->getType();
+    $secondType = $params[1]->getType();
+    expect($firstType)->toBeInstanceOf(ReflectionNamedType::class)
+        ->and($firstType->getName())->toBe(AuthServiceInterface::class)
+        ->and($secondType)->toBeInstanceOf(ReflectionNamedType::class)
+        ->and($secondType->getName())->toBe(AuthCookieService::class);
 });
 
 test('KeycloakAuthService maps active schools, user profile, logout, and 2FA DTOs', function () {

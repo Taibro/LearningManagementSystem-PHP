@@ -21,4 +21,11 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function findByEmailWithRoles(string $email): ?User;
 
     public function refreshWithProfiles(User $user): User;
+
+    public function existsByEmailInSchoolExceptUser(string $email, int $schoolId, int $excludeUserId): bool;
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateContact(User $user, array $data): User;
 }

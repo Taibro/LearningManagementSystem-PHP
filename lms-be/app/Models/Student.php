@@ -37,7 +37,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $created_by
  * @property int|null $updated_by
  * 
- * @property School $school
+ * @property School|null $school
  * @property User|null $user
  * @property Department|null $department
  * @property Collection|Enrollment[] $enrollments
@@ -85,7 +85,10 @@ class Student extends Model
 		'updated_by'
 	];
 
-	public function school()
+	/**
+	 * @return BelongsTo<School, $this>
+	 */
+	public function school(): BelongsTo
 	{
 		return $this->belongsTo(School::class);
 	}
@@ -98,7 +101,10 @@ class Student extends Model
 		return $this->belongsTo(User::class, 'user_id');
 	}
 
-	public function department()
+	/**
+	 * @return BelongsTo<Department, $this>
+	 */
+	public function department(): BelongsTo
 	{
 		return $this->belongsTo(Department::class);
 	}

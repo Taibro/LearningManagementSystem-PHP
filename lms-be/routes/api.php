@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Student\StudentProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,13 @@ Route::prefix('{version}')->where(['version' => 'v[0-9]+'])->middleware('throttl
             Route::get('/me', [AuthController::class, 'me'])->name('version.auth.me');
         });
     });
+
+    Route::prefix('student')
+        ->middleware(['auth:api', 'role:STUDENT'])
+        ->group(function () {
+            Route::get('/profile', [StudentProfileController::class, 'show'])->name('version.student.profile.show');
+            Route::put('/profile', [StudentProfileController::class, 'update'])->name('version.student.profile.update');
+        });
 
     Route::get('/user', function (Request $request) {
         return $request->user();

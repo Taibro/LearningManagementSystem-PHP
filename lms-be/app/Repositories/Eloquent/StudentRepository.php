@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Student;
 use App\Repositories\Contracts\StudentRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @extends BaseRepository<Student>
@@ -46,5 +47,35 @@ class StudentRepository extends BaseRepository implements StudentRepositoryInter
                 'enrollment_status' => 'ENROLLED',
             ]
         );
+    }
+
+    /**
+     * Build a query on the default tenant RLS connection instead of pgsql_owner.
+     *
+     * @return Builder<Student>
+     */
+    protected function tenantQuery(): Builder
+    {
+        /** @var Builder<Student> $builder */
+        $builder = $this->model->newQuery();
+
+        return $builder;
+    }
+
+    public function findProfileByUserId(int $userId, int $schoolId): ?Student
+    {
+        return $this->tenantQuery()
+            ->with(['user', 'department', 'school'])
+            ->where('user_id', $userId)
+            ->where('school_id', $schoolId)
+            ->first();
+    }
+
+    public function updateProfile(Student $student, array $data): Student
+    {
+        $student->setConnection(null);
+        $student->update($data);
+
+        return $student->fresh(['user', 'department', 'school']) ?? $student;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @extends BaseRepository<User>
@@ -65,5 +66,35 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         $user->setConnection($this->connection);
 
         return $user->fresh(['student', 'teacher']) ?? $user;
+    }
+
+    /**
+     * Build a query on the default tenant RLS connection instead of pgsql_owner.
+     *
+     * @return Builder<User>
+     */
+    protected function tenantQuery(): Builder
+    {
+        /** @var Builder<User> $builder */
+        $builder = $this->model->newQuery();
+
+        return $builder;
+    }
+
+    public function existsByEmailInSchoolExceptUser(string $email, int $schoolId, int $excludeUserId): bool
+    {
+        return $this->tenantQuery()
+            ->where('school_id', $schoolId)
+            ->where('id', '!=', $excludeUserId)
+            ->whereRaw('LOWER(email) = ?', [strtolower(trim($email))])
+            ->exists();
+    }
+
+    public function updateContact(User $user, array $data): User
+    {
+        $user->setConnection(null);
+        $user->update($data);
+
+        return $user->fresh() ?? $user;
     }
 }

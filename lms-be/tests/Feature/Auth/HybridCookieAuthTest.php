@@ -367,3 +367,59 @@ test('actingAs on api guard preserves authenticated user when a new request trig
         ->assertOk()
         ->assertExactJson(['ok' => true]);
 });
+
+test('CORS middleware allows configured origins with credentials and blocks untrusted origins', function () {
+    $schoolRepo = Mockery::mock(SchoolRepositoryInterface::class);
+    $schoolRepo->shouldReceive('getActiveSchools')->andReturn(new \Illuminate\Database\Eloquent\Collection);
+
+    $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('schools')->andReturn($schoolRepo);
+    $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
+
+    $preflightAllowed = $this->withHeaders([
+        'Origin' => 'http://localhost:5173',
+        'Access-Control-Request-Method' => 'POST',
+    ])->options('/api/v1/auth/login');
+
+    $preflightAllowed->assertStatus(204)
+        ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $getAllowed = $this->withHeaders([
+        'Origin' => 'http://127.0.0.1:5173',
+    ])->getJson('/api/v1/schools/active');
+
+    $getAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5173')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesAllowed = $this->withHeaders([
+        'Origin' => 'https://lms-fe-r8v.pages.dev',
+    ])->getJson('/api/v1/schools/active');
+
+    $pagesAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://lms-fe-r8v.pages.dev')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesPreviewAllowed = $this->withHeaders([
+        'Origin' => 'https://7b9d3613.lms-fe-r8v.pages.dev',
+    ])->getJson('/api/v1/schools/active');
+
+    $pagesPreviewAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://7b9d3613.lms-fe-r8v.pages.dev')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesStrangerBlocked = $this->withHeaders([
+        'Origin' => 'https://other-project.pages.dev',
+    ])->getJson('/api/v1/schools/active');
+
+    $pagesStrangerBlocked->assertOk();
+    expect($pagesStrangerBlocked->headers->get('Access-Control-Allow-Origin'))->toBeNull();
+
+    $getBlocked = $this->withHeaders([
+        'Origin' => 'https://evil.example.com',
+    ])->getJson('/api/v1/schools/active');
+
+    $getBlocked->assertOk();
+    expect($getBlocked->headers->get('Access-Control-Allow-Origin'))->toBeNull();
+});

@@ -3,6 +3,7 @@ import './SaaSAdminLogin.css';
 import { CheckCircle2, XCircle, School, Key, AlertTriangle, Info, Mail, Lock, EyeOff, Eye, Shield } from 'lucide-react';
 import {
   fetchActiveSchools,
+  hasAuthenticatedUserPayload,
   loginViaApi,
   setup2faViaApi,
   verifySetup2faViaApi,
@@ -77,10 +78,10 @@ export default function SaaSAdminLogin() {
         school: sSchool,
       });
 
-      const token = data?.accessToken || data?.token;
-      if (!token) {
+      if (!hasAuthenticatedUserPayload(data)) {
         throw new Error('Email hoặc mật khẩu không đúng.');
       }
+      const token = data?.accessToken || data?.token || '';
 
       if (data.require2fa) {
         setPendingSchoolAuth(data);
@@ -150,10 +151,10 @@ export default function SaaSAdminLogin() {
         password: saPass,
       });
 
-      const token = data?.accessToken || data?.token;
-      if (!token) {
+      if (!hasAuthenticatedUserPayload(data)) {
         throw new Error('Tài khoản hệ thống hoặc mật khẩu không chính xác.');
       }
+      const token = data?.accessToken || data?.token || '';
 
       if (data.requireSetup) {
         setPendingSaasAuth(data);

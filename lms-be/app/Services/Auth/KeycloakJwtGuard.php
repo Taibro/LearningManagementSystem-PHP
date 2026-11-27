@@ -27,8 +27,10 @@ class KeycloakJwtGuard implements Guard
     public function setRequest(Request $request): static
     {
         $this->request = $request;
-        $this->user = null;
-        $this->tokenPayload = null;
+        if ($this->tokenPayload !== null) {
+            $this->user = null;
+            $this->tokenPayload = null;
+        }
 
         return $this;
     }

@@ -352,3 +352,18 @@ test('POST /api/v1/auth/refresh and /logout work with empty JSON body by falling
         ->assertCookieExpired('lms_access_token')
         ->assertCookieExpired('lms_refresh_token');
 });
+
+test('actingAs on api guard preserves authenticated user when a new request triggers setRequest()', function () {
+    Route::prefix('api/v1')
+        ->middleware(['auth:api', 'role:STUDENT'])
+        ->get('/_test/acting-as-guard', fn () => response()->json(['ok' => true]));
+
+    $user = makeCookieStudentUser();
+    $user->setAttribute('jwt_role', 'STUDENT');
+    $user->setAttribute('jwt_roles', ['STUDENT']);
+
+    $this->actingAs($user, 'api')
+        ->getJson('/api/v1/_test/acting-as-guard')
+        ->assertOk()
+        ->assertExactJson(['ok' => true]);
+});

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import {
-  PORTAL_STORAGE_KEYS,
+  hasStoredPortalSessionHint,
+  isCookieAuthMode,
   verifyOrRefreshPortalSession,
 } from '../config/apiConfig';
 
@@ -10,34 +11,51 @@ export default function PortalProtectedRoute({
   loginPath = '/login',
   children,
 }) {
-  const storageKeys = PORTAL_STORAGE_KEYS[portal];
-  const hasStoredSession = Boolean(
-    storageKeys &&
-      (localStorage.getItem(storageKeys.tokenKey) ||
-        localStorage.getItem(storageKeys.refreshTokenKey))
-  );
+  const cookieMode = isCookieAuthMode();
+  const hasStoredHint = hasStoredPortalSessionHint(portal);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(hasStoredSession);
+  const [authState, setAuthState] = useState(() => {
+    if (hasStoredHint) return 'authenticated';
+    return cookieMode ? 'checking' : 'unauthenticated';
+  });
 
   useEffect(() => {
     let isMounted = true;
 
-    if (!hasStoredSession) {
+    if (!hasStoredHint && !cookieMode) {
       return undefined;
     }
 
     verifyOrRefreshPortalSession(portal).then((result) => {
-      if (isMounted && !result.authenticated) {
-        setIsAuthenticated(false);
+      if (!isMounted) {
+        return;
       }
+      setAuthState(result.authenticated ? 'authenticated' : 'unauthenticated');
     });
 
     return () => {
       isMounted = false;
     };
-  }, [portal, hasStoredSession]);
+  }, [portal, hasStoredHint, cookieMode]);
 
-  if (!hasStoredSession || !isAuthenticated) {
+  if (authState === 'checking') {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#64748b',
+          fontSize: '14px',
+        }}
+      >
+        Đang xác thực phiên đăng nhập...
+      </div>
+    );
+  }
+
+  if (authState === 'unauthenticated') {
     return <Navigate to={loginPath} replace />;
   }
 

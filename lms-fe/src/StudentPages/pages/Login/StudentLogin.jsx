@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import './StudentLogin.css';
 import {
   fetchActiveSchools,
+  hasAuthenticatedUserPayload,
   loginViaApi,
   registerViaApi,
   savePortalSession,
@@ -91,7 +92,7 @@ export default function StudentLogin({ initialSchool }) {
         school,
       });
 
-      if (data && (data.accessToken || data.token)) {
+      if (hasAuthenticatedUserPayload(data)) {
         saveSessionAndRedirect(data);
       } else {
         setGeneralError('Đăng nhập thất bại. Vui lòng thử lại.');
@@ -132,7 +133,7 @@ export default function StudentLogin({ initialSchool }) {
         password: regPassword,
       });
 
-      if (data && (data.accessToken || data.token)) {
+      if (hasAuthenticatedUserPayload(data)) {
         saveSessionAndRedirect(data);
       } else {
         setLoading(false);

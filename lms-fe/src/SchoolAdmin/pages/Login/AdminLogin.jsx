@@ -5,6 +5,7 @@ import './AdminLogin.css';
 import { BarChart, Check, CheckCircle2, XCircle, GraduationCap, School, AlertTriangle, Info, PartyPopper, Rocket, Globe, Mail, Lock, EyeOff, Eye, Circle, Upload, Hand, Shield, Zap } from 'lucide-react';
 import {
   fetchActiveSchools,
+  hasAuthenticatedUserPayload,
   loginViaApi,
   registerViaApi,
   setup2faViaApi,
@@ -91,10 +92,10 @@ export default function AdminLogin({ initialSchool }) {
         school,
       });
 
-      const token = data?.accessToken || data?.token;
-      if (!token) {
+      if (!hasAuthenticatedUserPayload(data)) {
         throw new Error('Phản hồi đăng nhập không hợp lệ.');
       }
+      const token = data?.accessToken || data?.token || '';
 
       if (data.requireSetup) {
         setPendingAdminAuth(data);
@@ -141,7 +142,7 @@ export default function AdminLogin({ initialSchool }) {
         password: regPass,
       });
 
-      if (data && (data.accessToken || data.token)) {
+      if (hasAuthenticatedUserPayload(data)) {
         savePortalSession('admin', data, getSelectedSchool());
         addToast('Đăng ký tài khoản Quản trị trường thành công!', 'green');
         setTimeout(() => navigate('/dashboard'), 1000);
@@ -171,10 +172,10 @@ export default function AdminLogin({ initialSchool }) {
         password: saPass,
       });
 
-      const token = data?.accessToken || data?.token;
-      if (!token) {
+      if (!hasAuthenticatedUserPayload(data)) {
         throw new Error('Sai thông tin Super Admin.');
       }
+      const token = data?.accessToken || data?.token || '';
 
       if (data.require2fa) {
         setPendingSaasAuth(data);

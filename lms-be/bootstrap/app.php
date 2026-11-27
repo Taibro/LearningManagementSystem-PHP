@@ -12,6 +12,7 @@ use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -23,8 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-
-        $middleware->statefulApi();
 
         $middleware->encryptCookies(except: [
             'lms_access_token',
@@ -117,6 +116,20 @@ return Application::configure(basePath: dirname(__DIR__))
                     requestId: $resolveRequestId($request),
                 ),
                 429
+            );
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) use ($isApiRequest, $resolveRequestId) {
+            if (! $isApiRequest($request)) {
+                return null;
+            }
+
+            return response()->json(
+                new ErrorResponseDto(
+                    message: $e->getMessage() ?: 'Yêu cầu không hợp lệ.',
+                    requestId: $resolveRequestId($request),
+                ),
+                $e->getStatusCode()
             );
         });
 

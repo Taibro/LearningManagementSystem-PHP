@@ -114,6 +114,13 @@ class AuthCookieService
             }
         }
 
+        $allowedPatterns = (array) config('cors.allowed_origins_patterns', []);
+        foreach ($allowedPatterns as $pattern) {
+            if (is_string($pattern) && $pattern !== '' && @preg_match($pattern, $requestOrigin) === 1) {
+                return true;
+            }
+        }
+
         return false;
     }
 

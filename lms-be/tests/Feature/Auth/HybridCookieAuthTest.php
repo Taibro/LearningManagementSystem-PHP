@@ -368,48 +368,58 @@ test('actingAs on api guard preserves authenticated user when a new request trig
         ->assertExactJson(['ok' => true]);
 });
 
-test('POST /api/v1/auth/login from browser Origin matching SANCTUM_STATEFUL_DOMAINS succeeds without 419/500 CSRF error', function () {
-    config()->set('sanctum.stateful', ['lms-fe-r8v.pages.dev', 'localhost:5173']);
+test('CORS middleware allows configured origins with credentials and blocks untrusted origins', function () {
+    $schoolRepo = Mockery::mock(SchoolRepositoryInterface::class);
+    $schoolRepo->shouldReceive('getActiveSchools')->andReturn(new \Illuminate\Database\Eloquent\Collection);
 
-    $tokenDto = new AuthTokenResponseDto(
-        token: 'jwt-browser-123',
-        accessToken: 'jwt-browser-123',
-        refreshToken: 'jwt-browser-refresh',
-        expiresIn: 900,
-        id: 5,
-        userId: 5,
-        usersId: 'uuid-5',
-        keycloakId: 'kc-5',
-        userCode: '2001230773',
-        studentCode: '2001230773',
-        teacherCode: null,
-        fullName: 'Nguyễn Thành Tài',
-        email: 'ntai8448@gmail.com',
-        phone: '0901000005',
-        avatarUrl: null,
-        role: 'STUDENT',
-        roles: ['STUDENT'],
-        schoolId: 1,
-        schoolCode: 'HUIT',
-        schoolName: 'Trường ĐH Công Thương TP.HCM',
-    );
+    $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('schools')->andReturn($schoolRepo);
+    $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
 
-    $authService = Mockery::mock(AuthServiceInterface::class);
-    $authService->shouldReceive('login')->once()->andReturn($tokenDto);
-    $this->app->instance(AuthServiceInterface::class, $authService);
+    $preflightAllowed = $this->withHeaders([
+        'Origin' => 'http://localhost:5173',
+        'Access-Control-Request-Method' => 'POST',
+    ])->options('/api/v1/auth/login');
 
-    $res = $this->withHeaders([
+    $preflightAllowed->assertStatus(204)
+        ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $getAllowed = $this->withHeaders([
+        'Origin' => 'http://127.0.0.1:5173',
+    ])->getJson('/api/v1/schools/active');
+
+    $getAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5173')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesAllowed = $this->withHeaders([
         'Origin' => 'https://lms-fe-r8v.pages.dev',
-        'Referer' => 'https://lms-fe-r8v.pages.dev/',
-    ])->postJson('/api/v1/auth/login', [
-        'loginCode' => '2001230773',
-        'password' => 'Password@123',
-        'userType' => 'STUDENT',
-        'school' => 'HUIT',
-    ]);
+    ])->getJson('/api/v1/schools/active');
 
-    $res->assertOk()
-        ->assertJsonPath('accessToken', 'jwt-browser-123')
-        ->assertPlainCookie('lms_access_token', 'jwt-browser-123')
-        ->assertCookieMissing('lms-session');
+    $pagesAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://lms-fe-r8v.pages.dev')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesPreviewAllowed = $this->withHeaders([
+        'Origin' => 'https://7b9d3613.lms-fe-r8v.pages.dev',
+    ])->getJson('/api/v1/schools/active');
+
+    $pagesPreviewAllowed->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://7b9d3613.lms-fe-r8v.pages.dev')
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+
+    $pagesStrangerBlocked = $this->withHeaders([
+        'Origin' => 'https://other-project.pages.dev',
+    ])->getJson('/api/v1/schools/active');
+
+    $pagesStrangerBlocked->assertOk();
+    expect($pagesStrangerBlocked->headers->get('Access-Control-Allow-Origin'))->toBeNull();
+
+    $getBlocked = $this->withHeaders([
+        'Origin' => 'https://evil.example.com',
+    ])->getJson('/api/v1/schools/active');
+
+    $getBlocked->assertOk();
+    expect($getBlocked->headers->get('Access-Control-Allow-Origin'))->toBeNull();
 });

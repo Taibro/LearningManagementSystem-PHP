@@ -222,7 +222,7 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -795,7 +795,7 @@
                         "type": "string"
                     },
                     "userType": {
-                        "description": "STUDENT | LECTURER | SCHOOL_ADMIN | SAAS_ADMIN",
+                        "description": "Optional portal filter: STUDENT | LECTURER | SCHOOL_ADMIN | SAAS_ADMIN",
                         "type": "string",
                         "nullable": true
                     },
@@ -821,12 +821,11 @@
             "RefreshTokenRequestDto": {
                 "title": "Refresh Token Request",
                 "description": "Payload to exchange a refresh token for a new access token",
-                "required": [
-                    "refreshToken"
-                ],
                 "properties": {
                     "refreshToken": {
-                        "type": "string"
+                        "description": "Refresh token (optional when sent via HttpOnly cookie)",
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "type": "object"

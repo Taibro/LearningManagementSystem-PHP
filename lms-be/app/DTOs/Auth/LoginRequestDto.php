@@ -20,8 +20,8 @@ final class LoginRequestDto
         #[OA\Property]
         public readonly string $password,
 
-        #[OA\Property(description: 'STUDENT | LECTURER | SCHOOL_ADMIN | SAAS_ADMIN', nullable: true)]
-        public readonly string $userType = 'STUDENT',
+        #[OA\Property(description: 'Optional portal filter: STUDENT | LECTURER | SCHOOL_ADMIN | SAAS_ADMIN', nullable: true)]
+        public readonly ?string $userType = null,
 
         #[OA\Property(description: 'School code (e.g. HUIT, HCMUT)', nullable: true)]
         public readonly ?string $school = null,
@@ -36,10 +36,12 @@ final class LoginRequestDto
             'school' => ['nullable', 'string'],
         ]);
 
+        $rawType = isset($validated['userType']) ? trim((string) $validated['userType']) : '';
+
         return new self(
             loginCode: $validated['loginCode'],
             password: $validated['password'],
-            userType: $validated['userType'] ?? 'STUDENT',
+            userType: $rawType !== '' ? $rawType : null,
             school: $validated['school'] ?? null,
         );
     }

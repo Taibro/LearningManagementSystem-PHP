@@ -23,6 +23,11 @@ final class LogoutRequestDto
             'refreshToken' => ['nullable', 'string'],
         ]);
 
-        return new self(refreshToken: $validated['refreshToken'] ?? null);
+        $cookieName = (string) config('keycloak.cookie.refresh_name', 'lms_refresh_token');
+        $cookieRefresh = $request->cookie($cookieName);
+        $resolved = $validated['refreshToken']
+            ?? (is_string($cookieRefresh) && trim($cookieRefresh) !== '' ? trim($cookieRefresh) : null);
+
+        return new self(refreshToken: $resolved);
     }
 }

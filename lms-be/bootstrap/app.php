@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->statefulApi();
 
+        $middleware->encryptCookies(except: [
+            'lms_access_token',
+            'lms_refresh_token',
+        ]);
+
         $middleware->prepend(RequestLoggingMiddleware::class);
         $middleware->append(SecurityHeadersMiddleware::class);
 

@@ -8,6 +8,7 @@ use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
 
 class KeycloakJwtGuard implements Guard
@@ -19,8 +20,20 @@ class KeycloakJwtGuard implements Guard
     public function __construct(
         private readonly KeycloakJwksService $jwksService,
         private readonly AuthServiceInterface $authService,
-        private readonly Request $request,
+        private readonly AuthCookieService $cookieService,
+        private Request $request,
     ) {}
+
+    public function setRequest(Request $request): static
+    {
+        $this->request = $request;
+        if ($this->tokenPayload !== null) {
+            $this->user = null;
+            $this->tokenPayload = null;
+        }
+
+        return $this;
+    }
 
     public function user(): ?Authenticatable
     {
@@ -28,13 +41,21 @@ class KeycloakJwtGuard implements Guard
             return $this->user;
         }
 
-        $bearer = $this->request->bearerToken();
-        if (! $bearer) {
+        ['token' => $token, 'source' => $source] = $this->cookieService->extractAccessTokenWithSource($this->request);
+        if (! $token) {
             return null;
         }
 
+        if (
+            $source === 'cookie'
+            && ! in_array(strtoupper($this->request->getMethod()), ['GET', 'HEAD', 'OPTIONS'], true)
+            && ! $this->cookieService->isTrustedBrowserOrigin($this->request)
+        ) {
+            throw new AccessDeniedHttpException('Yêu cầu xác thực qua Cookie từ nguồn (Origin) không hợp lệ.');
+        }
+
         try {
-            $payload = $this->jwksService->decodeToken($bearer);
+            $payload = $this->jwksService->decodeToken($token);
             $this->tokenPayload = $payload;
 
             $roles = $this->authService->extractRolesFromPayload($payload);

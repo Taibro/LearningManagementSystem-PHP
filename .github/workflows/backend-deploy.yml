@@ -58,6 +58,11 @@ jobs:
           LMS_KC_CLIENT_SECRET: ${{ secrets.LMS_KC_CLIENT_SECRET }}
           LMS_KC_ADMIN_USERNAME: ${{ secrets.LMS_KC_ADMIN_USERNAME }}
           LMS_KC_ADMIN_PASSWORD: ${{ secrets.LMS_KC_ADMIN_PASSWORD }}
+          LMS_R2_ACCESS_KEY_ID: ${{ secrets.LMS_R2_ACCESS_KEY_ID }}
+          LMS_R2_SECRET_ACCESS_KEY: ${{ secrets.LMS_R2_SECRET_ACCESS_KEY }}
+          LMS_R2_BUCKET: ${{ secrets.LMS_R2_BUCKET }}
+          LMS_R2_ENDPOINT: ${{ secrets.LMS_R2_ENDPOINT }}
+          LMS_R2_PUBLIC_URL: ${{ secrets.LMS_R2_PUBLIC_URL }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GHCR_OWNER: ${{ env.REPO_OWNER }}
           IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}

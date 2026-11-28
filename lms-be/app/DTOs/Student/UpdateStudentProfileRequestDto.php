@@ -25,6 +25,11 @@ final class UpdateStudentProfileRequestDto
 
         #[OA\Property(nullable: true)]
         public readonly ?string $address = null,
+
+        #[OA\Property(nullable: true, description: 'Confirmed ImageUpload ID (category = AVATAR) to link as user avatar')]
+        public readonly ?int $avatarUploadId = null,
+
+        private readonly bool $hasAvatarUploadId = false,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -34,16 +39,25 @@ final class UpdateStudentProfileRequestDto
             'phone' => ['required', 'string', 'max:20'],
             'gender' => ['nullable', 'string', 'in:MALE,FEMALE,OTHER'],
             'address' => ['nullable', 'string', 'max:500'],
+            'avatarUploadId' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $rawGender = isset($validated['gender']) ? trim((string) $validated['gender']) : '';
         $rawAddress = isset($validated['address']) ? trim((string) $validated['address']) : '';
+        $hasAvatarUploadId = $request->exists('avatarUploadId');
 
         return new self(
             email: strtolower(trim((string) $validated['email'])),
             phone: trim((string) $validated['phone']),
             gender: $rawGender !== '' ? strtoupper($rawGender) : null,
             address: $rawAddress !== '' ? $rawAddress : null,
+            avatarUploadId: isset($validated['avatarUploadId']) ? (int) $validated['avatarUploadId'] : null,
+            hasAvatarUploadId: $hasAvatarUploadId,
         );
+    }
+
+    public function hasAvatarUploadId(): bool
+    {
+        return $this->hasAvatarUploadId || $this->avatarUploadId !== null;
     }
 }

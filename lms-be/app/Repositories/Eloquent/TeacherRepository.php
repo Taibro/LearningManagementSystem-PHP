@@ -10,8 +10,6 @@ use App\Repositories\Contracts\TeacherRepositoryInterface;
  */
 class TeacherRepository extends BaseRepository implements TeacherRepositoryInterface
 {
-    protected ?string $connection = 'pgsql_owner';
-
     public function __construct(Teacher $model)
     {
         parent::__construct($model);

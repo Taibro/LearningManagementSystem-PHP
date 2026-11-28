@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class ClassMaterial
@@ -18,13 +19,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $class_id
  * @property string $title
  * @property string|null $description
- * @property string $file_url
+ * @property int|null $file_upload_id
  * @property string|null $file_type
  * @property int|null $file_size
  * @property int $uploaded_by
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * 
+ * @property ImageUpload|null $fileUpload
  * @property School $school
  * @property CourseClass $class
  * @property User $user
@@ -39,6 +41,7 @@ class ClassMaterial extends Model
 		'class_materials_id' => 'string',
 		'school_id' => 'int',
 		'class_id' => 'int',
+		'file_upload_id' => 'int',
 		'file_size' => 'int',
 		'uploaded_by' => 'int'
 	];
@@ -49,11 +52,19 @@ class ClassMaterial extends Model
 		'class_id',
 		'title',
 		'description',
-		'file_url',
+		'file_upload_id',
 		'file_type',
 		'file_size',
 		'uploaded_by'
 	];
+
+	/**
+	 * @return BelongsTo<ImageUpload, $this>
+	 */
+	public function fileUpload(): BelongsTo
+	{
+		return $this->belongsTo(ImageUpload::class, 'file_upload_id');
+	}
 
 	public function school()
 	{

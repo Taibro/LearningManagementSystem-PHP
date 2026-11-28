@@ -132,6 +132,7 @@ test('Unified login without userType infers real role from Keycloak JWT and keep
     $userRoleRepo->shouldReceive('ensureUserRole')->once();
 
     $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('asSystemOwner')->andReturnUsing(static fn (Closure $cb) => $cb());
     $repoWrapper->shouldReceive('schools')->andReturn($schoolRepo);
     $repoWrapper->shouldReceive('teachers')->andReturn($teacherRepo);
     $repoWrapper->shouldReceive('students')->andReturn($studentRepo);
@@ -373,6 +374,7 @@ test('CORS middleware allows configured origins with credentials and blocks untr
     $schoolRepo->shouldReceive('getActiveSchools')->andReturn(new \Illuminate\Database\Eloquent\Collection);
 
     $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('asSystemOwner')->andReturnUsing(static fn (Closure $cb) => $cb());
     $repoWrapper->shouldReceive('schools')->andReturn($schoolRepo);
     $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
 

@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class School
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $address
  * @property string|null $phone
  * @property string|null $email
- * @property string|null $logo_url
+ * @property int|null $logo_upload_id
  * @property string $subscription_status
  * @property bool $is_active
  * @property Carbon $created_at
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $created_by
  * @property int|null $updated_by
  * 
+ * @property ImageUpload|null $logoUpload
  * @property User|null $user
  * @property Collection|SchoolBranch[] $school_branches
  * @property Collection|AcademicYear[] $academic_years
@@ -68,6 +70,7 @@ class School extends Model
 
 	protected $casts = [
 		'school_id' => 'string',
+		'logo_upload_id' => 'int',
 		'is_active' => 'bool',
 		'created_by' => 'int',
 		'updated_by' => 'int'
@@ -81,12 +84,20 @@ class School extends Model
 		'address',
 		'phone',
 		'email',
-		'logo_url',
+		'logo_upload_id',
 		'subscription_status',
 		'is_active',
 		'created_by',
 		'updated_by'
 	];
+
+	/**
+	 * @return BelongsTo<ImageUpload, $this>
+	 */
+	public function logoUpload(): BelongsTo
+	{
+		return $this->belongsTo(ImageUpload::class, 'logo_upload_id');
+	}
 
 	public function user()
 	{

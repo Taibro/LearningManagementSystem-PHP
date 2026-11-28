@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Collection;
  */
 class SchoolRepository extends BaseRepository implements SchoolRepositoryInterface
 {
-    protected ?string $connection = 'pgsql_owner';
-
     public function __construct(School $model)
     {
         parent::__construct($model);

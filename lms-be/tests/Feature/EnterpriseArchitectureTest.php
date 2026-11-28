@@ -1,6 +1,7 @@
 <?php
 
 use App\DTOs\Common\PagedResultDto;
+use App\Repositories\Contracts\ImageUploadRepositoryInterface;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\SchoolRepositoryInterface;
@@ -8,6 +9,7 @@ use App\Repositories\Contracts\StudentRepositoryInterface;
 use App\Repositories\Contracts\TeacherRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\UserRoleRepositoryInterface;
+use App\Repositories\Eloquent\BaseRepository;
 use App\Repositories\Eloquent\RepositoryWrapper;
 
 test('RepositoryWrapperInterface resolves as scoped Unit of Work and lazy-loads all repositories', function () {
@@ -23,7 +25,32 @@ test('RepositoryWrapperInterface resolves as scoped Unit of Work and lazy-loads 
         ->and($wrapperA->roles())->toBeInstanceOf(RoleRepositoryInterface::class)
         ->and($wrapperA->userRoles())->toBeInstanceOf(UserRoleRepositoryInterface::class)
         ->and($wrapperA->students())->toBeInstanceOf(StudentRepositoryInterface::class)
-        ->and($wrapperA->teachers())->toBeInstanceOf(TeacherRepositoryInterface::class);
+        ->and($wrapperA->teachers())->toBeInstanceOf(TeacherRepositoryInterface::class)
+        ->and($wrapperA->imageUploads())->toBeInstanceOf(ImageUploadRepositoryInterface::class);
+});
+
+test('All repositories default to null (RLS) connection and asSystemOwner scopes override safely', function () {
+    $wrapper = app(RepositoryWrapperInterface::class);
+
+    foreach ([
+        $wrapper->schools(),
+        $wrapper->users(),
+        $wrapper->roles(),
+        $wrapper->userRoles(),
+        $wrapper->students(),
+        $wrapper->teachers(),
+        $wrapper->imageUploads(),
+    ] as $repo) {
+        $prop = new ReflectionProperty($repo, 'connection');
+        expect($prop->getValue($repo))->toBeNull();
+    }
+
+    config(['database.default' => 'pgsql']);
+    expect(BaseRepository::currentConnectionOverride())->toBeNull();
+
+    $inside = $wrapper->asSystemOwner(fn () => BaseRepository::currentConnectionOverride());
+    expect($inside)->toBe('pgsql_owner')
+        ->and(BaseRepository::currentConnectionOverride())->toBeNull();
 });
 
 test('PagedResultDto serializes to standardized enterprise pagination structure', function () {

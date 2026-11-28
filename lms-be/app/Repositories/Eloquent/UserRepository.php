@@ -4,15 +4,12 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @extends BaseRepository<User>
  */
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
-    protected ?string $connection = 'pgsql_owner';
-
     public function __construct(User $model)
     {
         parent::__construct($model);
@@ -33,7 +30,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         string $primaryRole
     ): ?User {
         return $this->query()
-            ->with(['student', 'teacher'])
+            ->with(['student', 'teacher', 'avatarUpload'])
             ->where(function ($q) use ($keycloakId, $email, $schoolId, $primaryRole) {
                 if ($keycloakId !== '') {
                     $q->where('keycloak_id', $keycloakId);
@@ -63,27 +60,17 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function refreshWithProfiles(User $user): User
     {
-        $user->setConnection($this->connection);
+        $conn = $this->resolveConnectionName();
+        if ($conn !== null) {
+            $user->setConnection($conn);
+        }
 
-        return $user->fresh(['student', 'teacher']) ?? $user;
-    }
-
-    /**
-     * Build a query on the default tenant RLS connection instead of pgsql_owner.
-     *
-     * @return Builder<User>
-     */
-    protected function tenantQuery(): Builder
-    {
-        /** @var Builder<User> $builder */
-        $builder = $this->model->newQuery();
-
-        return $builder;
+        return $user->fresh(['student', 'teacher', 'avatarUpload']) ?? $user;
     }
 
     public function existsByEmailInSchoolExceptUser(string $email, int $schoolId, int $excludeUserId): bool
     {
-        return $this->tenantQuery()
+        return $this->query()
             ->where('school_id', $schoolId)
             ->where('id', '!=', $excludeUserId)
             ->whereRaw('LOWER(email) = ?', [strtolower(trim($email))])
@@ -92,9 +79,8 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function updateContact(User $user, array $data): User
     {
-        $user->setConnection(null);
         $user->update($data);
 
-        return $user->fresh() ?? $user;
+        return $user->fresh(['avatarUpload']) ?? $user;
     }
 }

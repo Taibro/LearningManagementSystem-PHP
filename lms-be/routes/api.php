@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Storage\FileUploadController;
 use App\Http\Controllers\Student\StudentProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,15 @@ Route::prefix('{version}')->where(['version' => 'v[0-9]+'])->middleware('throttl
         ->group(function () {
             Route::get('/profile', [StudentProfileController::class, 'show'])->name('version.student.profile.show');
             Route::put('/profile', [StudentProfileController::class, 'update'])->name('version.student.profile.update');
+        });
+
+    Route::prefix('uploads')
+        ->middleware('auth:api')
+        ->group(function () {
+            Route::post('/presign', [FileUploadController::class, 'presignUpload'])->name('version.uploads.presign');
+            Route::post('/{id}/confirm', [FileUploadController::class, 'confirm'])->whereNumber('id')->name('version.uploads.confirm');
+            Route::get('/{id}/download-url', [FileUploadController::class, 'presignDownload'])->whereNumber('id')->name('version.uploads.download-url');
+            Route::delete('/{id}', [FileUploadController::class, 'destroy'])->whereNumber('id')->name('version.uploads.destroy');
         });
 
     Route::get('/user', function (Request $request) {

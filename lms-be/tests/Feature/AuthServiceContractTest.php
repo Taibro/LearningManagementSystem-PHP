@@ -56,6 +56,9 @@ test('KeycloakAuthService maps active schools, user profile, logout, and 2FA DTO
         ->andReturn(new EloquentCollection([$school]));
 
     $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('asSystemOwner')
+        ->once()
+        ->andReturnUsing(static fn (Closure $cb) => $cb());
     $repoWrapper->shouldReceive('schools')
         ->once()
         ->andReturn($schoolRepo);

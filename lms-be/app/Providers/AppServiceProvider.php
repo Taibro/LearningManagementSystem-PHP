@@ -7,7 +7,9 @@ use App\Services\Auth\KeycloakAuthService;
 use App\Services\Auth\KeycloakJwksService;
 use App\Services\Auth\KeycloakJwtGuard;
 use App\Services\Contracts\AuthServiceInterface;
+use App\Services\Contracts\FileStorageServiceInterface;
 use App\Services\Database\PostgresContextService;
+use App\Services\Storage\R2FileStorageService;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->bind(AuthServiceInterface::class, KeycloakAuthService::class);
+        $this->app->bind(FileStorageServiceInterface::class, R2FileStorageService::class);
     }
 
     /**

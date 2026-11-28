@@ -40,8 +40,11 @@ class KeycloakAuthService implements AuthServiceInterface
      */
     public function getActiveSchools(): array
     {
-        return $this->repositories->schools()
-            ->getActiveSchools()
+        $schools = $this->repositories->asSystemOwner(
+            fn () => $this->repositories->schools()->getActiveSchools()
+        );
+
+        return $schools
             ->map(static fn (School $school): SchoolResponseDto => new SchoolResponseDto(
                 id: (int) $school->id,
                 value: (string) $school->code,
@@ -66,10 +69,12 @@ class KeycloakAuthService implements AuthServiceInterface
             : null;
         $normalizedSchoolCode = $dto->school ? strtoupper(trim($dto->school)) : null;
 
-        // Resolve school if provided
+        // Resolve school if provided (pre-auth lookup bypasses RLS via asSystemOwner)
         $school = null;
         if ($normalizedSchoolCode && $normalizedType !== 'SAAS_ADMIN') {
-            $school = $this->repositories->schools()->findByCode($normalizedSchoolCode);
+            $school = $this->repositories->asSystemOwner(
+                fn (): ?School => $this->repositories->schools()->findByCode($normalizedSchoolCode)
+            );
 
             if (! $school) {
                 throw ValidationException::withMessages([
@@ -173,7 +178,7 @@ class KeycloakAuthService implements AuthServiceInterface
             fullName: (string) $user->full_name,
             email: (string) $user->email,
             phone: $user->phone ? (string) $user->phone : null,
-            avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+            avatarUrl: $user->resolveAvatarUrl(),
             role: $primaryRole,
             roles: $jwtRoles,
             schoolId: (int) $user->school_id,
@@ -198,21 +203,7 @@ class KeycloakAuthService implements AuthServiceInterface
         $schoolCode = $dto->school !== null ? strtoupper(trim($dto->school)) : '';
         $hasExplicitSchool = $schoolCode !== '' && $schoolCode !== 'SAAS';
 
-        if ($hasExplicitSchool) {
-            $school = $this->repositories->schools()->findByCode($schoolCode);
-            if (! $school) {
-                throw ValidationException::withMessages([
-                    'school' => ["Không tìm thấy trường học với mã {$schoolCode}."],
-                ]);
-            }
-        } elseif ($roleName === 'SAAS_ADMIN') {
-            $school = $this->repositories->schools()->findFirstOrderedById();
-            if (! $school) {
-                throw ValidationException::withMessages([
-                    'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
-                ]);
-            }
-        } else {
+        if (! $hasExplicitSchool && $roleName !== 'SAAS_ADMIN') {
             throw ValidationException::withMessages([
                 'school' => ['Vui lòng chọn trường / đơn vị đào tạo.'],
             ]);
@@ -224,24 +215,54 @@ class KeycloakAuthService implements AuthServiceInterface
         $password = $dto->password;
         $phone = $dto->phone !== null ? trim($dto->phone) : null;
 
-        // Check existing email in this school
-        if ($this->repositories->users()->existsByEmailInSchool($email, (int) $school->id)) {
-            throw ValidationException::withMessages([
-                'email' => ['Email này đã được đăng ký tại trường của bạn.'],
-            ]);
-        }
+        $school = $this->repositories->asSystemOwner(function () use (
+            $hasExplicitSchool,
+            $schoolCode,
+            $roleName,
+            $email,
+            $userCode
+        ): School {
+            if ($hasExplicitSchool) {
+                $school = $this->repositories->schools()->findByCode($schoolCode);
+                if (! $school) {
+                    throw ValidationException::withMessages([
+                        'school' => ["Không tìm thấy trường học với mã {$schoolCode}."],
+                    ]);
+                }
+            } elseif ($roleName === 'SAAS_ADMIN') {
+                $school = $this->repositories->schools()->findFirstOrderedById();
+                if (! $school) {
+                    throw ValidationException::withMessages([
+                        'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
+                    ]);
+                }
+            } else {
+                throw ValidationException::withMessages([
+                    'school' => ['Vui lòng chọn trường / đơn vị đào tạo.'],
+                ]);
+            }
 
-        if ($roleName === 'STUDENT' && $this->repositories->students()->existsByCode($userCode)) {
-            throw ValidationException::withMessages([
-                'userCode' => ['Mã sinh viên này đã tồn tại trên hệ thống.'],
-            ]);
-        }
+            // Check existing email in this school
+            if ($this->repositories->users()->existsByEmailInSchool($email, (int) $school->id)) {
+                throw ValidationException::withMessages([
+                    'email' => ['Email này đã được đăng ký tại trường của bạn.'],
+                ]);
+            }
 
-        if ($roleName === 'LECTURER' && $this->repositories->teachers()->existsByCode($userCode)) {
-            throw ValidationException::withMessages([
-                'userCode' => ['Mã giảng viên này đã tồn tại trên hệ thống.'],
-            ]);
-        }
+            if ($roleName === 'STUDENT' && $this->repositories->students()->existsByCode($userCode)) {
+                throw ValidationException::withMessages([
+                    'userCode' => ['Mã sinh viên này đã tồn tại trên hệ thống.'],
+                ]);
+            }
+
+            if ($roleName === 'LECTURER' && $this->repositories->teachers()->existsByCode($userCode)) {
+                throw ValidationException::withMessages([
+                    'userCode' => ['Mã giảng viên này đã tồn tại trên hệ thống.'],
+                ]);
+            }
+
+            return $school;
+        });
 
         // 1. Create User in Keycloak via Admin REST API
         $keycloakUserId = $this->createKeycloakUser(
@@ -255,7 +276,7 @@ class KeycloakAuthService implements AuthServiceInterface
         );
 
         // 2. Create User, UserRole, and Student/Teacher profile inside Unit of Work transaction
-        $user = $this->repositories->transaction(function () use (
+        $user = $this->repositories->asSystemOwner(fn (): User => $this->repositories->transaction(function () use (
             $school,
             $keycloakUserId,
             $email,
@@ -315,7 +336,7 @@ class KeycloakAuthService implements AuthServiceInterface
             }
 
             return $newUser;
-        }, 'pgsql_owner');
+        }, 'pgsql_owner'));
 
         // 3. Automatically obtain JWT token from Keycloak so user can log in immediately
         try {
@@ -341,7 +362,7 @@ class KeycloakAuthService implements AuthServiceInterface
                 fullName: (string) $user->full_name,
                 email: (string) $user->email,
                 phone: $user->phone ? (string) $user->phone : null,
-                avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+                avatarUrl: $user->resolveAvatarUrl(),
                 role: $roleName,
                 roles: [$roleName],
                 schoolId: (int) $school->id,
@@ -451,7 +472,7 @@ class KeycloakAuthService implements AuthServiceInterface
             fullName: (string) $user->full_name,
             email: (string) $user->email,
             phone: $user->phone ? (string) $user->phone : null,
-            avatarUrl: $user->avatar_url ? (string) $user->avatar_url : null,
+            avatarUrl: $user->resolveAvatarUrl(),
             role: $role,
             roles: $roles,
             schoolId: (int) $user->school_id,
@@ -720,89 +741,99 @@ class KeycloakAuthService implements AuthServiceInterface
         $fullName = trim((string) ($payload->name ?? (($payload->family_name ?? '').' '.($payload->given_name ?? ''))))
             ?: ($preferredUsername ?: $email);
 
-        $jwtSchoolId = (int) ($payload->school_id ?? 0);
-        $jwtSchoolCode = isset($payload->school_code) ? strtoupper((string) $payload->school_code) : null;
-
-        if (! $school) {
-            if ($jwtSchoolId > 0) {
-                $school = $this->repositories->schools()->findById($jwtSchoolId);
-            }
-            if (! $school && $jwtSchoolCode && $jwtSchoolCode !== 'SAAS') {
-                $school = $this->repositories->schools()->findByCode($jwtSchoolCode);
-            }
-            if (! $school && $primaryRole === 'SAAS_ADMIN') {
-                $school = $this->repositories->schools()->findFirstOrderedById();
-            }
-        }
-
-        if (! $school) {
-            throw ValidationException::withMessages([
-                'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
-            ]);
-        }
-
-        $resolvedSchoolId = (int) $school->id;
-
-        return $this->repositories->transaction(function () use (
+        return $this->repositories->asSystemOwner(function () use (
+            $payload,
+            $school,
             $keycloakId,
             $email,
             $fullName,
             $userCode,
-            $primaryRole,
-            $resolvedSchoolId
+            $primaryRole
         ): User {
-            $user = $this->repositories->users()->findForJwtSync(
-                keycloakId: $keycloakId,
-                email: $email,
-                schoolId: $resolvedSchoolId,
-                primaryRole: $primaryRole
-            );
+            $jwtSchoolId = (int) ($payload->school_id ?? 0);
+            $jwtSchoolCode = isset($payload->school_code) ? strtoupper((string) $payload->school_code) : null;
 
-            if (! $user) {
-                $user = $this->repositories->users()->create([
-                    'school_id' => $resolvedSchoolId,
-                    'keycloak_id' => $keycloakId ?: null,
-                    'email' => $email ?: ($userCode.'@lms.local'),
-                    'full_name' => $fullName,
-                    'is_active' => true,
-                    'is_verified' => true,
-                    'last_login_at' => now(),
-                ]);
-            } else {
-                $updates = ['last_login_at' => now()];
-                if (empty($user->keycloak_id) && $keycloakId !== '') {
-                    $updates['keycloak_id'] = $keycloakId;
+            if (! $school) {
+                if ($jwtSchoolId > 0) {
+                    $school = $this->repositories->schools()->findById($jwtSchoolId);
                 }
-                $user = $this->repositories->users()->update($user, $updates);
+                if (! $school && $jwtSchoolCode && $jwtSchoolCode !== 'SAAS') {
+                    $school = $this->repositories->schools()->findByCode($jwtSchoolCode);
+                }
+                if (! $school && $primaryRole === 'SAAS_ADMIN') {
+                    $school = $this->repositories->schools()->findFirstOrderedById();
+                }
             }
 
-            // Ensure role mapping exists in user_roles
-            $roleRecord = $this->repositories->roles()->findByName($primaryRole);
-            if ($roleRecord) {
-                $this->repositories->userRoles()->ensureUserRole(
-                    schoolId: (int) $user->school_id,
-                    userId: (int) $user->id,
-                    roleId: (int) $roleRecord->id
-                );
+            if (! $school) {
+                throw ValidationException::withMessages([
+                    'school' => ['Không tìm thấy trường / đơn vị đào tạo trong hệ thống.'],
+                ]);
             }
 
-            // Ensure student or teacher profile exists if applicable
-            if ($primaryRole === 'STUDENT' && ! $user->student && $userCode !== '') {
-                $this->repositories->students()->firstOrCreateForUser(
-                    schoolId: (int) $user->school_id,
-                    userId: (int) $user->id,
-                    studentCode: $userCode
-                );
-            } elseif ($primaryRole === 'LECTURER' && ! $user->teacher && $userCode !== '') {
-                $this->repositories->teachers()->firstOrCreateForUser(
-                    schoolId: (int) $user->school_id,
-                    userId: (int) $user->id,
-                    teacherCode: $userCode
-                );
-            }
+            $resolvedSchoolId = (int) $school->id;
 
-            return $this->repositories->users()->refreshWithProfiles($user);
-        }, 'pgsql_owner');
+            return $this->repositories->transaction(function () use (
+                $keycloakId,
+                $email,
+                $fullName,
+                $userCode,
+                $primaryRole,
+                $resolvedSchoolId
+            ): User {
+                $user = $this->repositories->users()->findForJwtSync(
+                    keycloakId: $keycloakId,
+                    email: $email,
+                    schoolId: $resolvedSchoolId,
+                    primaryRole: $primaryRole
+                );
+
+                if (! $user) {
+                    $user = $this->repositories->users()->create([
+                        'school_id' => $resolvedSchoolId,
+                        'keycloak_id' => $keycloakId ?: null,
+                        'email' => $email ?: ($userCode.'@lms.local'),
+                        'full_name' => $fullName,
+                        'is_active' => true,
+                        'is_verified' => true,
+                        'last_login_at' => now(),
+                    ]);
+                } else {
+                    $updates = ['last_login_at' => now()];
+                    if (empty($user->keycloak_id) && $keycloakId !== '') {
+                        $updates['keycloak_id'] = $keycloakId;
+                    }
+                    $user = $this->repositories->users()->update($user, $updates);
+                }
+
+                // Ensure role mapping exists in user_roles
+                $roleRecord = $this->repositories->roles()->findByName($primaryRole);
+                if ($roleRecord) {
+                    $this->repositories->userRoles()->ensureUserRole(
+                        schoolId: (int) $user->school_id,
+                        userId: (int) $user->id,
+                        roleId: (int) $roleRecord->id
+                    );
+                }
+
+                // Ensure student or teacher profile exists if applicable
+                if ($primaryRole === 'STUDENT' && ! $user->student && $userCode !== '') {
+                    $this->repositories->students()->firstOrCreateForUser(
+                        schoolId: (int) $user->school_id,
+                        userId: (int) $user->id,
+                        studentCode: $userCode
+                    );
+                } elseif ($primaryRole === 'LECTURER' && ! $user->teacher && $userCode !== '') {
+                    $this->repositories->teachers()->firstOrCreateForUser(
+                        schoolId: (int) $user->school_id,
+                        userId: (int) $user->id,
+                        teacherCode: $userCode
+                    );
+                }
+
+                return $this->repositories->users()->refreshWithProfiles($user);
+            }, 'pgsql_owner');
+        });
     }
 
     /**
@@ -815,7 +846,9 @@ class KeycloakAuthService implements AuthServiceInterface
         $email = strtolower(trim((string) ($payload->email ?? '')));
 
         if ($email !== '') {
-            $user = $this->repositories->users()->findByEmailWithRoles($email);
+            $user = $this->repositories->asSystemOwner(
+                fn (): ?User => $this->repositories->users()->findByEmailWithRoles($email)
+            );
             if ($user && $user->roles->isNotEmpty()) {
                 return $user->roles->pluck('name')->all();
             }
@@ -835,15 +868,19 @@ class KeycloakAuthService implements AuthServiceInterface
         }
 
         if ($schoolId) {
-            $student = $this->repositories->students()->findByCodeInSchool($trimmed, $schoolId);
-            if ($student && $student->user) {
-                return strtolower($trimmed);
-            }
+            return $this->repositories->asSystemOwner(function () use ($trimmed, $schoolId): string {
+                $student = $this->repositories->students()->findByCodeInSchool($trimmed, $schoolId);
+                if ($student && $student->user) {
+                    return strtolower($trimmed);
+                }
 
-            $teacher = $this->repositories->teachers()->findByCodeInSchool($trimmed, $schoolId);
-            if ($teacher && $teacher->user) {
+                $teacher = $this->repositories->teachers()->findByCodeInSchool($trimmed, $schoolId);
+                if ($teacher && $teacher->user) {
+                    return strtolower($trimmed);
+                }
+
                 return strtolower($trimmed);
-            }
+            });
         }
 
         return strtolower($trimmed);

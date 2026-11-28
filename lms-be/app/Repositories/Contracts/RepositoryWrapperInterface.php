@@ -18,6 +18,8 @@ interface RepositoryWrapperInterface
 
     public function teachers(): TeacherRepositoryInterface;
 
+    public function imageUploads(): ImageUploadRepositoryInterface;
+
     /**
      * Execute a callback within a database transaction (Unit of Work).
      *
@@ -27,6 +29,16 @@ interface RepositoryWrapperInterface
      * @return TReturn
      */
     public function transaction(Closure $callback, ?string $connection = null): mixed;
+
+    /**
+     * Execute a callback using the privileged owner connection (bypasses RLS for pre-auth/system operations).
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    public function asSystemOwner(Closure $callback): mixed;
 
     public function beginTransaction(?string $connection = null): void;
 

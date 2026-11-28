@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Repositories\Contracts\ImageUploadRepositoryInterface;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\SchoolRepositoryInterface;
@@ -26,6 +27,8 @@ class RepositoryWrapper implements RepositoryWrapperInterface
     private ?StudentRepositoryInterface $studentRepository = null;
 
     private ?TeacherRepositoryInterface $teacherRepository = null;
+
+    private ?ImageUploadRepositoryInterface $imageUploadRepository = null;
 
     public function __construct(
         private readonly Container $container,
@@ -61,9 +64,21 @@ class RepositoryWrapper implements RepositoryWrapperInterface
         return $this->teacherRepository ??= $this->container->make(TeacherRepositoryInterface::class);
     }
 
+    public function imageUploads(): ImageUploadRepositoryInterface
+    {
+        return $this->imageUploadRepository ??= $this->container->make(ImageUploadRepositoryInterface::class);
+    }
+
     public function transaction(Closure $callback, ?string $connection = null): mixed
     {
         return DB::connection($connection)->transaction($callback);
+    }
+
+    public function asSystemOwner(Closure $callback): mixed
+    {
+        $ownerConnection = $this->resolveOwnerConnectionName();
+
+        return BaseRepository::withConnection($ownerConnection, $callback);
     }
 
     public function beginTransaction(?string $connection = null): void
@@ -79,5 +94,16 @@ class RepositoryWrapper implements RepositoryWrapperInterface
     public function rollBack(?string $connection = null): void
     {
         DB::connection($connection)->rollBack();
+    }
+
+    private function resolveOwnerConnectionName(): ?string
+    {
+        $default = (string) config('database.default');
+
+        return match ($default) {
+            'pgsql', 'pgsql_owner' => 'pgsql_owner',
+            'pgsql_server', 'pgsql_server_owner' => 'pgsql_server_owner',
+            default => null,
+        };
     }
 }

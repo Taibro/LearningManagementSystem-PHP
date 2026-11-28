@@ -27,7 +27,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $password_hash
  * @property string $full_name
  * @property string|null $phone
- * @property string|null $avatar_url
+ * @property int|null $avatar_upload_id
  * @property bool $is_active
  * @property bool $is_verified
  * @property Carbon|null $last_login_at
@@ -36,6 +36,7 @@ use Illuminate\Notifications\Notifiable;
  * @property int|null $created_by
  * @property int|null $updated_by
  *
+ * @property ImageUpload|null $avatarUpload
  * @property School|null $school
  * @property Student|null $student
  * @property Teacher|null $teacher
@@ -51,6 +52,7 @@ class User extends Authenticatable
         'users_id' => 'string',
         'school_id' => 'int',
         'keycloak_id' => 'string',
+        'avatar_upload_id' => 'int',
         'is_active' => 'bool',
         'is_verified' => 'bool',
         'last_login_at' => 'datetime',
@@ -66,7 +68,7 @@ class User extends Authenticatable
         'password_hash',
         'full_name',
         'phone',
-        'avatar_url',
+        'avatar_upload_id',
         'is_active',
         'is_verified',
         'last_login_at',
@@ -92,6 +94,23 @@ class User extends Authenticatable
     public function teacher(): HasOne
     {
         return $this->hasOne(Teacher::class, 'user_id');
+    }
+
+    /**
+     * @return BelongsTo<ImageUpload, $this>
+     */
+    public function avatarUpload(): BelongsTo
+    {
+        return $this->belongsTo(ImageUpload::class, 'avatar_upload_id');
+    }
+
+    public function resolveAvatarUrl(): ?string
+    {
+        if ($this->avatar_upload_id === null) {
+            return null;
+        }
+
+        return $this->avatarUpload?->resolvePublicUrl();
     }
 
     /**

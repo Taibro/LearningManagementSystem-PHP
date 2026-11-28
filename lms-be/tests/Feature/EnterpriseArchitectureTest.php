@@ -100,3 +100,10 @@ test('Unknown API route returns standardized JSON error with requestId', functio
             'requestId' => 'test-trace-id-123',
         ]);
 });
+
+test('Unauthenticated API request without Accept json header returns 401 instead of 500 Route login not defined', function () {
+    $this->get('/api/v1/uploads/1/download-url', [
+        'Accept' => '*/*',
+    ])->assertStatus(401)
+        ->assertJsonStructure(['message', 'requestId']);
+});

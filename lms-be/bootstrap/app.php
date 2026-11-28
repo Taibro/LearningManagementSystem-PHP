@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RequireRole::class,
         ]);
+
+        $middleware->redirectGuestsTo(static fn (Request $request): ?string => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

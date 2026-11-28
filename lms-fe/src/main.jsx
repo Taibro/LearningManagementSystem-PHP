@@ -1,10 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
+import { setupHttpAuthInterceptors } from './config/httpClient.js'
 import AppSaaS from './SaaSAdminSystem/AppSaaS.jsx'
 import AppStudent from './StudentPages/AppStudent.jsx'
 import AppAdmin from './SchoolAdmin/AppAdmin.jsx'
 import AppLecturer from './LecturerPages/AppLecturer.jsx'
+
+setupHttpAuthInterceptors();
 
 const currentPath = window.location.pathname;
 const pathParts = currentPath.split('/').filter(Boolean);

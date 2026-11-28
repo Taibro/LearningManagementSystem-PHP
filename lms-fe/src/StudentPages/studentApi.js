@@ -1,15 +1,10 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../config/apiConfig';
+import { API_BASE_URL, getPortalRequestConfig } from '../config/apiConfig';
 
 
 const BASE_URL = `${API_BASE_URL}/student`;
 
-// Lấy token từ localStorage (được lưu khi login)
-const getHeaders = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  },
-});
+const getHeaders = () => getPortalRequestConfig('student');
 
 // ── PROFILE ─────────────────────────────────────────────────────────────────
 export const getProfile = () =>

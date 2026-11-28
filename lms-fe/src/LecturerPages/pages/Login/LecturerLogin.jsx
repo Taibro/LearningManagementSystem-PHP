@@ -4,6 +4,7 @@ import SearchableSelect from '../../../components/SearchableSelect';
 import { BookOpen, Lock, User, GraduationCap, AlertCircle, ArrowRight, Loader2, School, Mail } from 'lucide-react';
 import {
   fetchActiveSchools,
+  hasAuthenticatedUserPayload,
   loginViaApi,
   registerViaApi,
   savePortalSession,
@@ -69,7 +70,7 @@ const LecturerLogin = ({ initialSchool }) => {
         school,
       });
 
-      if (data && (data.accessToken || data.token)) {
+      if (hasAuthenticatedUserPayload(data)) {
         saveSessionAndRedirect(data);
       } else {
         setError('Mã giảng viên hoặc mật khẩu không chính xác!');
@@ -106,7 +107,7 @@ const LecturerLogin = ({ initialSchool }) => {
         password: regPassword,
       });
 
-      if (data && (data.accessToken || data.token)) {
+      if (hasAuthenticatedUserPayload(data)) {
         saveSessionAndRedirect(data);
       } else {
         setSuccessMsg('Đăng ký tài khoản Giảng viên thành công! Vui lòng đăng nhập.');

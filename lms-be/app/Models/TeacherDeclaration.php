@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class TeacherDeclaration
@@ -22,13 +23,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $description
  * @property float $claimed_hours
  * @property float|null $approved_hours
- * @property string|null $evidence_url
+ * @property int|null $evidence_upload_id
  * @property string $status
  * @property int|null $approved_by
  * @property Carbon|null $approved_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * 
+ * @property ImageUpload|null $evidenceUpload
  * @property School $school
  * @property Teacher $teacher
  * @property Semester $semester
@@ -47,6 +49,7 @@ class TeacherDeclaration extends Model
 		'semester_id' => 'int',
 		'claimed_hours' => 'float',
 		'approved_hours' => 'float',
+		'evidence_upload_id' => 'int',
 		'approved_by' => 'int',
 		'approved_at' => 'datetime'
 	];
@@ -61,11 +64,19 @@ class TeacherDeclaration extends Model
 		'description',
 		'claimed_hours',
 		'approved_hours',
-		'evidence_url',
+		'evidence_upload_id',
 		'status',
 		'approved_by',
 		'approved_at'
 	];
+
+	/**
+	 * @return BelongsTo<ImageUpload, $this>
+	 */
+	public function evidenceUpload(): BelongsTo
+	{
+		return $this->belongsTo(ImageUpload::class, 'evidence_upload_id');
+	}
 
 	public function school()
 	{

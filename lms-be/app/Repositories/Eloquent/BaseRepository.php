@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 abstract class BaseRepository implements BaseRepositoryInterface
 {
+    private static ?string $connectionOverride = null;
+
     protected ?string $connection = null;
 
     /**
@@ -27,14 +29,45 @@ abstract class BaseRepository implements BaseRepositoryInterface
     ) {}
 
     /**
+     * Temporarily override the repository connection within a callback (e.g. 'pgsql_owner' for pre-auth lookups).
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function withConnection(?string $connection, Closure $callback): mixed
+    {
+        $previous = self::$connectionOverride;
+        self::$connectionOverride = $connection;
+
+        try {
+            return $callback();
+        } finally {
+            self::$connectionOverride = $previous;
+        }
+    }
+
+    public static function currentConnectionOverride(): ?string
+    {
+        return self::$connectionOverride;
+    }
+
+    protected function resolveConnectionName(): ?string
+    {
+        return self::$connectionOverride ?? $this->connection;
+    }
+
+    /**
      * @return Builder<TModel>
      */
     protected function query(): Builder
     {
-        if ($this->connection !== null) {
+        $conn = $this->resolveConnectionName();
+        if ($conn !== null) {
             /** @var Builder<TModel> $builder */
             $builder = $this->model->newModelInstance()
-                ->setConnection($this->connection)
+                ->setConnection($conn)
                 ->newQuery();
 
             return $builder;
@@ -157,8 +190,9 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     public function update(Model $model, array $data): Model
     {
-        if ($this->connection !== null) {
-            $model->setConnection($this->connection);
+        $conn = $this->resolveConnectionName();
+        if ($conn !== null) {
+            $model->setConnection($conn);
         }
 
         $model->update($data);
@@ -180,8 +214,9 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     public function delete(Model $model): bool
     {
-        if ($this->connection !== null) {
-            $model->setConnection($this->connection);
+        $conn = $this->resolveConnectionName();
+        if ($conn !== null) {
+            $model->setConnection($conn);
         }
 
         return (bool) $model->delete();

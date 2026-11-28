@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\ImageUploadRepositoryInterface;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\SchoolRepositoryInterface;
@@ -9,6 +10,7 @@ use App\Repositories\Contracts\StudentRepositoryInterface;
 use App\Repositories\Contracts\TeacherRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\UserRoleRepositoryInterface;
+use App\Repositories\Eloquent\ImageUploadRepository;
 use App\Repositories\Eloquent\RepositoryWrapper;
 use App\Repositories\Eloquent\RoleRepository;
 use App\Repositories\Eloquent\SchoolRepository;
@@ -32,6 +34,7 @@ class RepositoryServiceProvider extends ServiceProvider
         UserRoleRepositoryInterface::class => UserRoleRepository::class,
         StudentRepositoryInterface::class => StudentRepository::class,
         TeacherRepositoryInterface::class => TeacherRepository::class,
+        ImageUploadRepositoryInterface::class => ImageUploadRepository::class,
     ];
 
     /**

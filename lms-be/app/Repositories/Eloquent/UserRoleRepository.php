@@ -10,8 +10,6 @@ use App\Repositories\Contracts\UserRoleRepositoryInterface;
  */
 class UserRoleRepository extends BaseRepository implements UserRoleRepositoryInterface
 {
-    protected ?string $connection = 'pgsql_owner';
-
     public function __construct(UserRole $model)
     {
         parent::__construct($model);

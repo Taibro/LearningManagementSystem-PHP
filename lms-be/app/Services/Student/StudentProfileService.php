@@ -4,6 +4,7 @@ namespace App\Services\Student;
 
 use App\DTOs\Student\StudentProfileResponseDto;
 use App\DTOs\Student\UpdateStudentProfileRequestDto;
+use App\Models\ImageUpload;
 use App\Models\Student;
 use App\Models\User;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
@@ -49,12 +50,20 @@ class StudentProfileService
             ]);
         }
 
-        return $this->repositories->transaction(function () use ($user, $student, $dto): StudentProfileResponseDto {
-            $updatedUser = $this->repositories->users()->updateContact($user, [
+        $resolvedAvatarUploadId = $this->resolveValidatedAvatarUploadId($user, $schoolId, $dto);
+
+        return $this->repositories->transaction(function () use ($user, $student, $dto, $resolvedAvatarUploadId): StudentProfileResponseDto {
+            $userData = [
                 'email' => $dto->email,
                 'phone' => $dto->phone,
                 'updated_by' => (int) $user->id,
-            ]);
+            ];
+
+            if ($dto->hasAvatarUploadId()) {
+                $userData['avatar_upload_id'] = $resolvedAvatarUploadId;
+            }
+
+            $updatedUser = $this->repositories->users()->updateContact($user, $userData);
 
             $studentData = [
                 'address' => $dto->address,
@@ -69,6 +78,44 @@ class StudentProfileService
 
             return $this->mapToResponseDto($updatedStudent, $updatedUser);
         });
+    }
+
+    private function resolveValidatedAvatarUploadId(
+        User $user,
+        int $schoolId,
+        UpdateStudentProfileRequestDto $dto
+    ): ?int {
+        if (! $dto->hasAvatarUploadId() || $dto->avatarUploadId === null) {
+            return null;
+        }
+
+        $upload = $this->repositories->imageUploads()->findByIdForSchool($dto->avatarUploadId, $schoolId);
+
+        if ($upload === null) {
+            throw ValidationException::withMessages([
+                'avatarUploadId' => ['Ảnh đại diện không tồn tại hoặc không thuộc trường của bạn.'],
+            ]);
+        }
+
+        if ($upload->category !== ImageUpload::CATEGORY_AVATAR) {
+            throw ValidationException::withMessages([
+                'avatarUploadId' => ['Tệp được chọn không thuộc danh mục ảnh đại diện (AVATAR).'],
+            ]);
+        }
+
+        if ($upload->status !== ImageUpload::STATUS_UPLOADED) {
+            throw ValidationException::withMessages([
+                'avatarUploadId' => ['Ảnh đại diện chưa hoàn tất xác nhận tải lên (UPLOADED).'],
+            ]);
+        }
+
+        if ($upload->uploaded_by !== null && (int) $upload->uploaded_by !== (int) $user->id) {
+            throw ValidationException::withMessages([
+                'avatarUploadId' => ['Bạn không có quyền sử dụng tệp ảnh đại diện của người dùng khác.'],
+            ]);
+        }
+
+        return (int) $upload->id;
     }
 
     private function resolveSchoolId(User $user): int
@@ -90,7 +137,7 @@ class StudentProfileService
             email: (string) $profileUser->email,
             phone: $profileUser->phone,
             address: $student->address,
-            avatarUrl: $profileUser->avatar_url,
+            avatarUrl: $profileUser->resolveAvatarUrl(),
             className: $student->administrativeclass,
             major: $student->major,
             degreeLevel: $student->degreelevel,

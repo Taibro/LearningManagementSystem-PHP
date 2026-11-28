@@ -533,6 +533,339 @@
                 }
             }
         },
+        "/api/{version}/uploads/presign": {
+            "post": {
+                "tags": [
+                    "File Uploads"
+                ],
+                "summary": "Generate a temporary presigned PUT URL for uploading a file directly to Cloudflare R2",
+                "description": "POST /api/{version}/uploads/presign",
+                "operationId": "createPresignedUploadUrl",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePresignedUploadRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Presigned upload URL generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PresignedUploadResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/{version}/uploads/{id}/confirm": {
+            "post": {
+                "tags": [
+                    "File Uploads"
+                ],
+                "summary": "Confirm a direct R2 upload, verify magic bytes, and mark the image_uploads record as UPLOADED",
+                "description": "POST /api/{version}/uploads/{id}/confirm",
+                "operationId": "confirmPresignedUpload",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ImageUpload record ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload confirmed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadFileResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Upload record not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Object not yet uploaded to R2",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid file magic bytes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/{version}/uploads/{id}/download-url": {
+            "get": {
+                "tags": [
+                    "File Uploads"
+                ],
+                "summary": "Generate a temporary presigned GET URL to view or download a confirmed file from Cloudflare R2",
+                "description": "GET /api/{version}/uploads/{id}/download-url",
+                "operationId": "getPresignedDownloadUrl",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ImageUpload record ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "disposition",
+                        "in": "query",
+                        "description": "inline or attachment",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "inline"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Presigned download URL generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PresignedDownloadResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Upload record not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "File is not yet confirmed as UPLOADED",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/{version}/uploads/{id}": {
+            "delete": {
+                "tags": [
+                    "File Uploads"
+                ],
+                "summary": "Delete a file from Cloudflare R2 and remove its image_uploads record",
+                "description": "DELETE /api/{version}/uploads/{id}",
+                "operationId": "deleteUploadedFile",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "description": "API version",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ImageUpload record ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Upload record not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/{version}/student/profile": {
             "get": {
                 "tags": [
@@ -1166,6 +1499,150 @@
                 },
                 "type": "object"
             },
+            "CreatePresignedUploadRequestDto": {
+                "title": "Create Presigned Upload Request",
+                "description": "Metadata payload used to generate a temporary Cloudflare R2 PUT presigned URL",
+                "required": [
+                    "category",
+                    "fileName",
+                    "mimeType",
+                    "fileSize"
+                ],
+                "properties": {
+                    "category": {
+                        "description": "Upload category: AVATAR | SCHOOL_LOGO | CLASS_MATERIAL | TEACHER_EVIDENCE | GENERAL",
+                        "type": "string"
+                    },
+                    "fileName": {
+                        "description": "Original client file name including extension",
+                        "type": "string"
+                    },
+                    "mimeType": {
+                        "description": "MIME type of the file to be uploaded",
+                        "type": "string"
+                    },
+                    "fileSize": {
+                        "description": "File size in bytes",
+                        "type": "integer"
+                    },
+                    "visibility": {
+                        "description": "Access visibility: PRIVATE | PUBLIC",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PresignedDownloadResponseDto": {
+                "title": "Presigned Download Response",
+                "description": "Temporary Cloudflare R2 GET presigned URL for downloading or viewing a file",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uploadId": {
+                        "type": "string"
+                    },
+                    "originalName": {
+                        "type": "string"
+                    },
+                    "mimeType": {
+                        "type": "string"
+                    },
+                    "fileSize": {
+                        "type": "integer"
+                    },
+                    "downloadUrl": {
+                        "type": "string"
+                    },
+                    "expiresAt": {
+                        "description": "ISO-8601 expiration timestamp of the presigned GET URL",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PresignedUploadResponseDto": {
+                "title": "Presigned Upload Response",
+                "description": "Presigned PUT URL and metadata record created in PENDING state",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uploadId": {
+                        "description": "Public UUID of the image_uploads record",
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "objectKey": {
+                        "type": "string"
+                    },
+                    "uploadUrl": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "description": "HTTP method to upload directly to R2 (PUT)",
+                        "type": "string"
+                    },
+                    "headers": {
+                        "description": "Required HTTP headers to send with the PUT request to R2",
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "expiresAt": {
+                        "description": "ISO-8601 expiration timestamp of the presigned URL",
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UploadFileResponseDto": {
+                "title": "Upload File Response",
+                "description": "Confirmed uploaded file metadata stored in image_uploads",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uploadId": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "visibility": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "objectKey": {
+                        "type": "string"
+                    },
+                    "originalName": {
+                        "type": "string"
+                    },
+                    "mimeType": {
+                        "type": "string"
+                    },
+                    "fileSize": {
+                        "type": "integer"
+                    },
+                    "publicUrl": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "uploadedAt": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "StudentProfileResponseDto": {
                 "title": "Student Profile Response",
                 "description": "Detailed student profile payload for Student Portal",
@@ -1265,6 +1742,11 @@
                     "address": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "avatarUploadId": {
+                        "description": "Confirmed ImageUpload ID (category = AVATAR) to link as user avatar",
+                        "type": "integer",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -1287,6 +1769,10 @@
         {
             "name": "System",
             "description": "System monitoring and health check endpoints"
+        },
+        {
+            "name": "File Uploads",
+            "description": "Cloudflare R2 presigned upload and download URL endpoints"
         },
         {
             "name": "Student Profile",

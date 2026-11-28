@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Student\StudentProfileController;
 use App\Models\Department;
+use App\Models\ImageUpload;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
+use App\Repositories\Contracts\ImageUploadRepositoryInterface;
 use App\Repositories\Contracts\RepositoryWrapperInterface;
 use App\Repositories\Contracts\StudentRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -19,7 +21,7 @@ function makeStudentUser(int $id = 5, int $schoolId = 1, array $roles = ['STUDEN
     $user->full_name = 'Nguyễn Thành Tài';
     $user->email = 'ntai8448@gmail.com';
     $user->phone = '0901000005';
-    $user->avatar_url = null;
+    $user->avatar_upload_id = null;
     $user->is_active = true;
     $user->setAttribute('jwt_role', $roles[0] ?? 'STUDENT');
     $user->setAttribute('jwt_roles', $roles);
@@ -296,4 +298,160 @@ test('PUT /api/v1/student/profile updates whitelisted fields inside transaction 
             'major' => 'Công nghệ thông tin',
             'enrollmentStatus' => 'ENROLLED',
         ]);
+});
+
+test('PUT /api/v1/student/profile links confirmed AVATAR ImageUpload via avatar_upload_id and resolves avatarUrl', function () {
+    config([
+        'filesystems.disks.r2.url' => 'https://cdn.example.r2.dev',
+    ]);
+
+    $user = makeStudentUser();
+    $student = makeStudentRecord($user);
+
+    $upload = new ImageUpload([
+        'image_uploads_id' => '44444444-4444-4444-8444-444444444444',
+        'school_id' => 1,
+        'uploaded_by' => 5,
+        'disk' => 'r2',
+        'bucket' => 'lms-bucket',
+        'object_key' => 'schools/1/avatar/2026/11/avatar-5.png',
+        'original_name' => 'avatar-5.png',
+        'mime_type' => 'image/png',
+        'file_size' => 10240,
+        'category' => ImageUpload::CATEGORY_AVATAR,
+        'visibility' => ImageUpload::VISIBILITY_PUBLIC,
+        'status' => ImageUpload::STATUS_UPLOADED,
+    ]);
+    $upload->id = 42;
+
+    $updatedUser = clone $user;
+    $updatedUser->avatar_upload_id = 42;
+    $updatedUser->setRelation('avatarUpload', $upload);
+
+    $updatedStudent = clone $student;
+    $updatedStudent->setRelation('user', $updatedUser);
+
+    $studentRepo = Mockery::mock(StudentRepositoryInterface::class);
+    $studentRepo->shouldReceive('findProfileByUserId')->once()->with(5, 1)->andReturn($student);
+    $studentRepo->shouldReceive('updateProfile')->once()->andReturn($updatedStudent);
+
+    $userRepo = Mockery::mock(UserRepositoryInterface::class);
+    $userRepo->shouldReceive('existsByEmailInSchoolExceptUser')->once()->with('ntai8448@gmail.com', 1, 5)->andReturn(false);
+    $userRepo->shouldReceive('updateContact')
+        ->once()
+        ->with($user, [
+            'email' => 'ntai8448@gmail.com',
+            'phone' => '0901000005',
+            'updated_by' => 5,
+            'avatar_upload_id' => 42,
+        ])
+        ->andReturn($updatedUser);
+
+    $uploadRepo = Mockery::mock(ImageUploadRepositoryInterface::class);
+    $uploadRepo->shouldReceive('findByIdForSchool')->once()->with(42, 1)->andReturn($upload);
+
+    $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('students')->twice()->andReturn($studentRepo);
+    $repoWrapper->shouldReceive('users')->twice()->andReturn($userRepo);
+    $repoWrapper->shouldReceive('imageUploads')->once()->andReturn($uploadRepo);
+    $repoWrapper->shouldReceive('transaction')
+        ->once()
+        ->andReturnUsing(static fn (Closure $callback) => $callback());
+
+    $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
+
+    $this->actingAs($user, 'api')
+        ->putJson('/api/v1/student/profile', [
+            'email' => 'ntai8448@gmail.com',
+            'phone' => '0901000005',
+            'avatarUploadId' => 42,
+        ])
+        ->assertOk()
+        ->assertJsonPath('avatarUrl', 'https://cdn.example.r2.dev/schools/1/avatar/2026/11/avatar-5.png');
+});
+
+test('PUT /api/v1/student/profile rejects avatarUploadId when upload is unconfirmed or wrong category', function (string $category, string $status) {
+    $user = makeStudentUser();
+    $student = makeStudentRecord($user);
+
+    $upload = new ImageUpload([
+        'school_id' => 1,
+        'uploaded_by' => 5,
+        'category' => $category,
+        'status' => $status,
+    ]);
+    $upload->id = 55;
+
+    $studentRepo = Mockery::mock(StudentRepositoryInterface::class);
+    $studentRepo->shouldReceive('findProfileByUserId')->once()->with(5, 1)->andReturn($student);
+
+    $userRepo = Mockery::mock(UserRepositoryInterface::class);
+    $userRepo->shouldReceive('existsByEmailInSchoolExceptUser')->once()->with('ntai8448@gmail.com', 1, 5)->andReturn(false);
+
+    $uploadRepo = Mockery::mock(ImageUploadRepositoryInterface::class);
+    $uploadRepo->shouldReceive('findByIdForSchool')->once()->with(55, 1)->andReturn($upload);
+
+    $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('students')->once()->andReturn($studentRepo);
+    $repoWrapper->shouldReceive('users')->once()->andReturn($userRepo);
+    $repoWrapper->shouldReceive('imageUploads')->once()->andReturn($uploadRepo);
+
+    $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
+
+    $this->actingAs($user, 'api')
+        ->putJson('/api/v1/student/profile', [
+            'email' => 'ntai8448@gmail.com',
+            'phone' => '0901000005',
+            'avatarUploadId' => 55,
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['avatarUploadId']);
+})->with([
+    'still pending' => [ImageUpload::CATEGORY_AVATAR, ImageUpload::STATUS_PENDING],
+    'wrong category' => [ImageUpload::CATEGORY_CLASS_MATERIAL, ImageUpload::STATUS_UPLOADED],
+]);
+
+test('PUT /api/v1/student/profile clears avatar_upload_id when avatarUploadId is explicitly null', function () {
+    $user = makeStudentUser();
+    $user->avatar_upload_id = 42;
+    $student = makeStudentRecord($user);
+
+    $updatedUser = clone $user;
+    $updatedUser->avatar_upload_id = null;
+    $updatedStudent = clone $student;
+    $updatedStudent->setRelation('user', $updatedUser);
+
+    $studentRepo = Mockery::mock(StudentRepositoryInterface::class);
+    $studentRepo->shouldReceive('findProfileByUserId')->once()->with(5, 1)->andReturn($student);
+    $studentRepo->shouldReceive('updateProfile')->once()->andReturn($updatedStudent);
+
+    $userRepo = Mockery::mock(UserRepositoryInterface::class);
+    $userRepo->shouldReceive('existsByEmailInSchoolExceptUser')->once()->andReturn(false);
+    $userRepo->shouldReceive('updateContact')
+        ->once()
+        ->with($user, [
+            'email' => 'ntai8448@gmail.com',
+            'phone' => '0901000005',
+            'updated_by' => 5,
+            'avatar_upload_id' => null,
+        ])
+        ->andReturn($updatedUser);
+
+    $repoWrapper = Mockery::mock(RepositoryWrapperInterface::class);
+    $repoWrapper->shouldReceive('students')->twice()->andReturn($studentRepo);
+    $repoWrapper->shouldReceive('users')->twice()->andReturn($userRepo);
+    $repoWrapper->shouldReceive('transaction')
+        ->once()
+        ->andReturnUsing(static fn (Closure $callback) => $callback());
+
+    $this->app->instance(RepositoryWrapperInterface::class, $repoWrapper);
+
+    $this->actingAs($user, 'api')
+        ->putJson('/api/v1/student/profile', [
+            'email' => 'ntai8448@gmail.com',
+            'phone' => '0901000005',
+            'avatarUploadId' => null,
+        ])
+        ->assertOk()
+        ->assertJsonPath('avatarUrl', null);
 });
